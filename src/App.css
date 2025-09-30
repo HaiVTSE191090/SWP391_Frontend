@@ -28,10 +28,22 @@
   color: #61dafb;
 }
 
-body {
-  background-color: #515050; /* xám */
+ /* body {
+  background-color: #515050; 
   color: #f8f9fa; 
+}  */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #3b3939;
+  opacity: .5;
+  z-index: 1040;
 }
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
