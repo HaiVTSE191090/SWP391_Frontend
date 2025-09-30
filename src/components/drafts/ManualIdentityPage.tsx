@@ -1,10 +1,10 @@
 import React from "react";
-import ManualIdentityForm from "../components/ManualIdentityForm";
+// import ManualIdentityForm from "../components/drafts/ManualIdentityForm";
 
 export default function ManualIdentityPage() {
   return (
     <div className="container my-4">
-      <ManualIdentityForm />
+      {/* <ManualIdentityForm /> */}
     </div>
   );
 }
