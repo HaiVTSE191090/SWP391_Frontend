@@ -1,7 +1,6 @@
 import React from "react";
-import logo from "../../images/logo.png"; // logo trong src/images
+import logo from "../../images/favicon.png"; // logo trong src/images
 import { useState } from "react";
-import '../../App.css';
 
 const Navbar: React.FC = () => {
   const [showModal, setShowModal] = useState(false);

@@ -1,11 +1,11 @@
 import React from "react";
-import rectangle44 from "./img/Rectangle 44.png";
-import rectangle50 from "./img/Rectangle 50.png";
-import rectangle51 from "./img/Rectangle 51.png";
-import rectangle52 from "./img/Rectangle 52.png";
-import rectangle53 from "./img/Rectangle 53.png";
-import rectangle54 from "./img/Rectangle 54.png";
-import rectangle55 from "./img/Rectangle 55.png";
+import rectangle44 from "../../images/guide-img/dangki.png";
+import rectangle50 from "../../images/guide-img/thutucdongian.png";
+import rectangle51 from "../../images/guide-img/thanhtoandedang.jpg";
+import rectangle52 from "../../images/guide-img/Diemdendedang.jpg";
+import rectangle53 from "../../images/guide-img/nhanxe.png";
+import rectangle54 from "../../images/guide-img/laixe.png";
+import rectangle55 from "../../images/guide-img/danhgia.jpg";
 // import "../guide-component/guide-style.css";
 
 export const Guide: React.FC = () => {

@@ -1,8 +1,8 @@
 import { HeroCarousel } from "./HeroCarousel";
-import page1 from "./img/image 12.png";
-import page2 from "./img/image 36.png";
-import page3 from "./img/image 37.png";
-import page4 from "./img/image 38.png";
+import page1 from "../../images/hero-banner/image 12.png";
+import page2 from "../../images/hero-banner/image 36.png";
+import page3 from "../../images/hero-banner/image 37.png";
+import page4 from "../../images/hero-banner/image 38.png";
 
 export default function HomeHero() {
   const slides = [

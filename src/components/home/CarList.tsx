@@ -1,12 +1,12 @@
 import React from "react";
-import vf9 from "../car-list/img/Car.png"; 
-import vf7 from "../car-list/img/Car-2.png";
-import vf6 from "../car-list/img/Car-7.png";
-import vf3p from "../car-list/img/source/vf31.png";
-import vf3b from "../car-list/img/source/vf3-blue.jpg";
-import vf3r from "../car-list/img/source/vf3-red.png";
-import vf5 from "../car-list/img/Car-4.png";
-import vf8 from "../car-list/img/Car-1.png";
+import vf9 from "../../images/car-list/Car.png"; 
+import vf7 from "../../images/car-list/Car-2.png";
+import vf6 from "../../images/car-list/Car-7.png";
+import vf3p from "../../images/car-list/source/vf31.png";
+import vf3b from "../../images/car-list/source/vf3-blue.jpg";
+import vf3r from "../../images/car-list/source/vf3-red.png";
+import vf5 from "../../images/car-list/Car-4.png";
+import vf8 from "../../images/car-list/Car-1.png";
 
 type Car = {
   id: number;

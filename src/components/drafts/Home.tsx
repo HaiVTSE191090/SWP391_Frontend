@@ -1,8 +1,8 @@
 import React from "react";
-import HomeHero from "../components/layouts/hero-banner/HomeHero";
-import { CarList } from "../components/layouts/car-list/carlist";
-import { Guide } from "../components/layouts/guide-component/guide";
-import SearchBar from "../components/drafts/SearchBar";
+import HomeHero from "../home/HomeHero";
+import { CarList } from "../home/CarList";
+import { Guide } from "../home/Guide";
+import SearchBar from "../home/SearchBar";
 
 export default function Home() {
   return (
