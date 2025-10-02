@@ -1,7 +1,8 @@
 // src/routes/AppRouter.tsx
 import React, { lazy, Suspense } from "react";
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "../components/layouts/Layout";
+import SignUpForm from "../containers/auth/SignUpForm";
 
 // Lazy load các trang (tối ưu bundle)
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -18,6 +19,8 @@ const router = createBrowserRouter([
         children: [
             // index = route mặc định khi path = "/"
             { index: true, element: <HomePage /> },
+
+            {path: "/sign-up" , element: <SignUpForm/>}
 
 
             // // 404 bắt mọi thứ còn lại
