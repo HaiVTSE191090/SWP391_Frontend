@@ -1,0 +1,277 @@
+.renter-dashboard {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f5f6fa;
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.dashboard-header h1 {
+  color: #2c3e50;
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.dashboard-header p {
+  color: #7f8c8d;
+  font-size: 18px;
+  margin: 0;
+}
+
+.no-rentals {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.no-rentals h3 {
+  color: #27ae60;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.no-rentals p {
+  color: #7f8c8d;
+  font-size: 16px;
+  margin: 0;
+}
+
+.rentals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 30px;
+}
+
+.rental-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rental-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.rental-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f1f2f6;
+}
+
+.vehicle-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vehicle-image {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.vehicle-info h3 {
+  margin: 0 0 4px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.vehicle-info p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.rental-period .label {
+  display: block;
+  color: #7f8c8d;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.rental-period .value {
+  color: #3498db;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.cost-summary {
+  margin-bottom: 24px;
+}
+
+.cost-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.cost-item .label {
+  color: #555;
+  font-weight: 500;
+}
+
+.cost-item .value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.additional-fees {
+  background-color: #fff5f5;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  border-left: 4px solid #e74c3c;
+}
+
+.additional-fees .label {
+  display: block;
+  color: #e74c3c;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.fee-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.fee-desc {
+  color: #666;
+}
+
+.fee-amount {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.total-additional {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid #e74c3c;
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.total-additional .value {
+  color: #e74c3c;
+}
+
+.cost-item.deposit {
+  background-color: #f0f9ff;
+  padding: 12px;
+  border-radius: 6px;
+  border: none;
+}
+
+.cost-item.deposit .value {
+  color: #3498db;
+}
+
+.final-amount {
+  background-color: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  border: 2px solid transparent;
+}
+
+.final-amount.refund {
+  background-color: #f0fff4;
+  border-color: #27ae60;
+}
+
+.final-amount.refund .value {
+  color: #27ae60;
+}
+
+.final-amount.payment {
+  background-color: #fff5f5;
+  border-color: #e74c3c;
+}
+
+.final-amount.payment .value {
+  color: #e74c3c;
+}
+
+.rental-details {
+  background-color: #fafbfc;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.detail-row .label {
+  color: #666;
+  font-size: 14px;
+}
+
+.detail-row .value {
+  color: #2c3e50;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.view-details-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background: linear-gradient(135deg, #2980b9, #21618c);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(52, 152, 219, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rentals-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .rental-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .vehicle-info {
+    width: 100%;
+  }
+}

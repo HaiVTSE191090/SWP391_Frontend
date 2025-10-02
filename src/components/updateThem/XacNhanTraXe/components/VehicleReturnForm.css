@@ -1,0 +1,380 @@
+.vehicle-return-form {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 2px solid #e1e5e9;
+  background-color: #f8f9fa;
+}
+
+.form-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #7f8c8d;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.form-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.section {
+  padding: 20px 30px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.section h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Handover Info */
+.handover-info {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 30px;
+  align-items: start;
+}
+
+.handover-image {
+  width: 100%;
+}
+
+.info-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f2f6;
+}
+
+.stat .label {
+  font-weight: 600;
+  color: #555;
+}
+
+.stat .value {
+  color: #2c3e50;
+}
+
+/* Images */
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.image-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8f9fa;
+  text-align: center;
+}
+
+.image-item img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.image-item span {
+  display: block;
+  padding: 8px;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.remove-img-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Image Upload */
+.image-upload {
+  margin-bottom: 20px;
+}
+
+.image-upload input[type=\"file\"] {
+  display: none;
+}
+
+.upload-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #3498db;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 16px;
+}
+
+.upload-btn:hover {
+  background-color: #2980b9;
+}
+
+/* Current Stats */
+.current-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-weight: 600;
+  color: #555;
+}
+
+.input-group input {
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.input-group small {
+  color: #27ae60;
+  font-weight: 500;
+}
+
+/* Condition Checklist */
+.condition-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.condition-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.condition-item label {
+  font-weight: 600;
+  color: #555;
+}
+
+.condition-item select {
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+}
+
+/* Fees */
+.add-fee-btn {
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.add-fee-btn:hover {
+  background-color: #219a52;
+}
+
+.fee-item {
+  display: grid;
+  grid-template-columns: 120px 1fr 120px 40px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.fee-item select,
+.fee-item input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.remove-fee-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.total-fees {
+  text-align: right;
+  padding: 15px 0;
+  font-size: 18px;
+  color: #e74c3c;
+}
+
+/* Notes */
+textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+/* Form Actions */
+.form-actions {
+  padding: 20px 30px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  background-color: #f8f9fa;
+}
+
+.cancel-btn {
+  padding: 12px 24px;
+  background-color: #7f8c8d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #6c7b7d;
+}
+
+.confirm-btn {
+  padding: 12px 24px;
+  background-color: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.confirm-btn:hover {
+  background-color: #219a52;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .vehicle-return-form {
+    padding: 10px;
+  }
+  
+  .form-content {
+    max-height: 95vh;
+  }
+  
+  .section {
+    padding: 15px 20px;
+  }
+  
+  .form-header {
+    padding: 15px 20px;
+  }
+  
+  .form-actions {
+    padding: 15px 20px;
+  }
+  
+  .handover-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .current-stats,
+  .condition-checklist {
+    grid-template-columns: 1fr;
+  }
+  
+  .fee-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

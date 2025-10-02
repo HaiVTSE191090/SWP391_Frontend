@@ -1,0 +1,51 @@
+body {
+  background: #fff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 100vh;
+  padding: 0 10%;
+}
+
+.hero-text h1 {
+  font-size: 5rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.hero-text h2 {
+  font-size: 2rem;
+  color: #666;
+}
+
+.hero-text p {
+  color: #999;
+  margin: 20px 0;
+}
+
+.btn-custom {
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  padding: 10px 25px;
+  color: #666;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.btn-custom:hover {
+  background: linear-gradient(to right, #00c6ff, #0072ff);
+  color: white;
+}
+
+.astronaut {
+  max-width: 350px;
+  background: radial-gradient(circle, rgba(173, 216, 255, 0.4), transparent 70%);
+  border-radius: 50%;
+  padding: 20px;
+}
