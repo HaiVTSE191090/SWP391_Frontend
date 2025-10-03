@@ -1,18 +1,17 @@
 import { SignUpRequest } from "../models/SignUpRequest";
+import axios from "axios";
 
-const baseURL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+// SignUpRequest sign =new SignUpRequest();
+
+const baseURL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
 
 const signUpApi = async (data: SignUpRequest) => {
-  const res = await fetch(`${baseURL}/sign-up`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => null);
-    throw new Error(errorData?.message || "Sign up failed");
-  }
-  return res.json();
+  const response = await axios.post(`${baseURL}/sign-up`, data)
+    .then((res) => {
+      return res.data;
+    })
+    .catch((err) => err.response.data);
+  return response.data;
 };
 
 export default signUpApi;

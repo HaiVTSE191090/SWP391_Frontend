@@ -48,6 +48,34 @@ export default function SearchBar({ onSearch }: Props) {
     return `${timeSel.startTime} - ${timeSel.endTime}, ${d(timeSel.startDate)}`;
   }, [timeSel]);
 
+  const handleSearchClick = async () => {
+    let loc = location;
+
+    // Nếu người dùng nhập tay mà chưa có coords → convert
+    if (location.coords === null && location.label) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location.label)}`
+        );
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lng = parseFloat(data[0].lon);
+          loc = { label: location.label, coords: { lat, lng } };
+        } else {
+          alert("Không tìm thấy địa chỉ này, map sẽ giữ nguyên.");
+        }
+      } catch (err) {
+        console.error("Lỗi geocoding:", err);
+        alert("Không thể chuyển địa chỉ thành tọa độ!");
+      }
+    }
+
+    onSearch?.(loc, timeSel);
+  };
+
+
   return (
     <section className="container">
       <div className="bg-white rounded-4 shadow p-3">
@@ -62,7 +90,7 @@ export default function SearchBar({ onSearch }: Props) {
             >
               <span className="me-2">📍</span>
               {location.label}
-              <span className="float-end">▾</span>
+<span className="float-end">▾</span>
             </button>
           </div>
 
@@ -84,9 +112,9 @@ export default function SearchBar({ onSearch }: Props) {
           <div className="col-12 col-md-2 d-grid">
             <button
               className="btn btn-success btn-lg"
-              onClick={() => onSearch?.(location, timeSel)}
+              onClick={handleSearchClick}
             >
-              Tìm xe
+              Tìm trạm
             </button>
           </div>
         </div>
@@ -160,7 +188,7 @@ function LocationModal({ current, onSave }: LocationModalProps) {
           </div>
           <div className="modal-body">
             <div className="mb-3">
-              <label className="form-label small">Nhập địa điểm</label>
+<label className="form-label small">Nhập địa điểm</label>
               <div className="input-group">
                 <span className="input-group-text">📍</span>
                 <input
@@ -242,7 +270,7 @@ function TimeModal({ current, onSave }: TimeModalProps) {
           <div className="modal-body">
             {/* Tabs chọn chế độ */}
             <ul className="nav nav-pills gap-2 mb-3">
-              <li className="nav-item">
+<li className="nav-item">
                 <button
                   className={`nav-link ${mode === "day" ? "active" : ""}`}
                   onClick={() => setMode("day")}
@@ -319,7 +347,7 @@ function TimeModal({ current, onSave }: TimeModalProps) {
                       onChange={(e) => setStartDate(e.target.value)}
                     />
                   </div>
-                  <div className="col-md-6">
+<div className="col-md-6">
                     <label className="form-label small">Khung giờ</label>
                     <div className="d-flex gap-2">
                       <input

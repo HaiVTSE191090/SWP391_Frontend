@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { SignUpRequest } from "../../models/SignUpRequest";
-import InputField from "../../components/common/InputField";
-import AlertMessage from "../../components/common/AlertMessage";
+import InputField from "../common/InputField";
+import AlertMessage from "../common/AlertMessage";
 import signUpApi from "../../services/authService";
 
 const SignUpForm: React.FC = () => {
@@ -15,15 +15,17 @@ const SignUpForm: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
+    
+    
 
     //không hiểu lắm
     const updateField = (field: keyof SignUpRequest, value: string) => {
         setForm({ ...form, [field]: value });
     };
 
+    
     const onSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+        
 
         const result = await signUpApi(form);
         if (result.error) {
@@ -34,11 +36,11 @@ const SignUpForm: React.FC = () => {
             setError("");
         }
 
-        setLoading(false);
+        
     };
 
     return (
-        <form onSubmit={onSubmit}>
+        <form onSubmit={onSubmit} >
             <InputField
                 placeholder="Số điện thoại"
                 value={form.phone}

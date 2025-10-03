@@ -2,7 +2,7 @@
 import React, { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "../components/layouts/Layout";
-import SignUpForm from "../containers/auth/SignUpForm";
+import SignUpForm from "../components/auth/SignUpForm";
 
 // Lazy load các trang (tối ưu bundle)
 const HomePage = lazy(() => import("../pages/HomePage"));
