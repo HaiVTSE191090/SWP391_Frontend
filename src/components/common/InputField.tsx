@@ -11,7 +11,7 @@ const InputField: React.FC<InputFieldProps> = ({ type = "", placeholder, value, 
   <div className="mb-4">
     <input
       type={type}
-      className="form-control"
+      className="form-control modal-input"
       placeholder={placeholder}
       value={value}
       onChange={onChange}

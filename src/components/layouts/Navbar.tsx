@@ -1,6 +1,7 @@
 import React from "react";
 import logo from "../../images/favicon.png"; // logo trong src/images
 import { useState } from "react";
+import SignUpForm from "../auth/SignUpForm";
 
 
 
@@ -16,7 +17,7 @@ const Navbar: React.FC = () => {
             <img
               src={logo}
               alt="EV Station"
-              height="80" // 👈 chỉnh to hơn
+              height="80"
               className="me-3"
             />
             <span className="fw-bold text-primary fs-1">EV Station</span>
@@ -33,26 +34,49 @@ const Navbar: React.FC = () => {
           </button>
 
           {/* Menu */}
-            <div className="collapse navbar-collapse" id="navbarNav">
-              <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
-                <li className="nav-item mx-3">
-                  <a className="nav-link" href="#">Đăng nhập</a>
-                </li>
-                <li className="nav-item">
-                  <button
-                    className="btn btn-primary rounded-pill px-4 py-2"
-                    onClick={() => setShowModal(true)}
-                  >
-                    Đăng kí miễn phí
-                  </button>
-                </li>
-              </ul>
-            </div>
+          <div className="collapse navbar-collapse" id="navbarNav">
+            <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
+              <li className="nav-item mx-3">
+                <a className="nav-link" href="#">Đăng nhập</a>
+              </li>
+              <li className="nav-item">
+                <button
+                  className="btn btn-primary rounded-pill px-4 py-2"
+                  onClick={() => setShowModal(true)}
+                >
+                  Đăng ký miễn phí
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </nav>
+
       {/* Modal */}
-      {showModal
-      }
+      {showModal && (
+        <div className="modal fade show d-block" tabIndex={-1}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content p-4">
+              <div className="modal-header">
+                <h5 className="modal-title">Đăng ký tài khoản</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <SignUpForm />
+              </div>
+            </div>
+          </div>
+          {/* backdrop */}
+          <div
+            className="modal-backdrop fade show"
+            onClick={() => setShowModal(false)}
+          ></div>
+        </div>
+      )}
     </>
   );
 };

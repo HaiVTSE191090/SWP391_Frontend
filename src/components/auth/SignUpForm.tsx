@@ -3,8 +3,14 @@ import { SignUpRequest } from "../../models/SignUpRequest";
 import InputField from "../common/InputField";
 import AlertMessage from "../common/AlertMessage";
 import signUpApi from "../../services/authService";
+import { useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+
+
 
 const SignUpForm: React.FC = () => {
+
     const [form, setForm] = useState<SignUpRequest>({
         phone: "",
         displayName: "",
@@ -15,17 +21,18 @@ const SignUpForm: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
-    
-    
+    const navigate = useNavigate();
+
 
     //không hiểu lắm
     const updateField = (field: keyof SignUpRequest, value: string) => {
         setForm({ ...form, [field]: value });
+
     };
 
-    
+
     const onSubmit = async (e: React.FormEvent) => {
-        
+
 
         const result = await signUpApi(form);
         if (result.error) {
@@ -36,42 +43,51 @@ const SignUpForm: React.FC = () => {
             setError("");
         }
 
-        
+
     };
 
     return (
-        <form onSubmit={onSubmit} >
-            <InputField
-                placeholder="Số điện thoại"
-                value={form.phone}
-                onChange={(e) => updateField("phone", e.target.value)}
-            />
-            <InputField
-                placeholder="Tên hiển thị"
-                value={form.displayName}
-                onChange={(e) => updateField("displayName", e.target.value)}
-            />
-            <InputField
-                type="password"
-                placeholder="Mật khẩu"
-                value={form.password}
-                onChange={(e) => updateField("password", e.target.value)}
-            />
-            <InputField
-                type="password"
-                placeholder="Xác nhận mật khẩu"
-                value={form.confirmPassword}
-                onChange={(e) => updateField("confirmPassword", e.target.value)}
-            />
+        <>
+            <form onSubmit={onSubmit} >
+                <InputField
+                    placeholder="Số điện thoại"
+                    value={form.phone}
+                    onChange={(e) => updateField("phone", e.target.value)}
+
+                />
+                <InputField
+                    placeholder="Tên hiển thị"
+                    value={form.displayName}
+                    onChange={(e) => updateField("displayName", e.target.value)}
+                />
+                <InputField
+                    type="password"
+                    placeholder="Mật khẩu"
+                    value={form.password}
+                    onChange={(e) => updateField("password", e.target.value)}
+                />
+                <InputField
+                    type="password"
+                    placeholder="Xác nhận mật khẩu"
+                    value={form.confirmPassword}
+                    onChange={(e) => updateField("confirmPassword", e.target.value)}
+                />
+
+                <button type="submit" className="btn btn-success w-100" disabled={loading}>
+                    {loading ? "Đang xử lý..." : "Đăng ký"}
+                </button>
+
+
+                <AlertMessage type="success" message={message} />
+                <AlertMessage type="danger" message={error} />
+            </form>
 
             <button type="submit" className="btn btn-success w-100" disabled={loading}>
-                {loading ? "Đang xử lý..." : "Đăng ký"}
-            </button>
+                {loading ? "Đang xử lý..." : "Đăng ký bằng google"}
 
-            <AlertMessage type="success" message={message} />
-            <AlertMessage type="danger" message={error} />
-        </form>
-        //có thể cải thiện lại cái thằng AlertMessage này sau 
+            </button>
+        </>
+
     );
 };
 
