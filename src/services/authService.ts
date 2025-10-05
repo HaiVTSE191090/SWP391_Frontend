@@ -3,10 +3,10 @@ import axios from "axios";
 
 // SignUpRequest sign =new SignUpRequest();
 
-const baseURL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+const baseURL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 
 const signUpApi = async (data: SignUpRequest) => {
-  const response = await axios.post(`${baseURL}/sign-up`, data)
+  const response = await axios.post(`${baseURL}/register`, data)
     .then((res) => {
       return res.data;
     })

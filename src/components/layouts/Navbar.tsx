@@ -6,7 +6,6 @@ import SignUpForm from "../auth/SignUpForm";
 
 
 const Navbar: React.FC = () => {
-  const [showModal, setShowModal] = useState(false);
 
   return (
     <>
@@ -37,15 +36,17 @@ const Navbar: React.FC = () => {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
               <li className="nav-item mx-3">
-                <a className="nav-link" href="#">Đăng nhập</a>
+                <a className="nav-link" href="#">Đăng nhập</a> {/* cái này phải là một cái button nếu muốn làm popup*/}
               </li>
               <li className="nav-item">
                 <button
-                  className="btn btn-primary rounded-pill px-4 py-2"
-                  onClick={() => setShowModal(true)}
-                >
+                  className="btn btn-primary rounded-pill shadow w-100 px-4 py-2"
+                  data-bs-toggle="modal"
+                  data-bs-target="#signUpForm"
+                  >
                   Đăng ký miễn phí
                 </button>
+                  <SignUpForm/>
               </li>
             </ul>
           </div>
@@ -53,30 +54,8 @@ const Navbar: React.FC = () => {
       </nav>
 
       {/* Modal */}
-      {showModal && (
-        <div className="modal fade show d-block" tabIndex={-1}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content p-4">
-              <div className="modal-header">
-                <h5 className="modal-title">Đăng ký tài khoản</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowModal(false)}
-                ></button>
-              </div>
-              <div className="modal-body">
-                <SignUpForm />
-              </div>
-            </div>
-          </div>
-          {/* backdrop */}
-          <div
-            className="modal-backdrop fade show"
-            onClick={() => setShowModal(false)}
-          ></div>
-        </div>
-      )}
+
+
     </>
   );
 };

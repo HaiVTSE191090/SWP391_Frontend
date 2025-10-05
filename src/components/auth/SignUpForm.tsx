@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { use, useState } from "react";
 import { SignUpRequest } from "../../models/SignUpRequest";
 import InputField from "../common/InputField";
 import AlertMessage from "../common/AlertMessage";
@@ -11,29 +11,20 @@ import { jwtDecode } from "jwt-decode";
 
 const SignUpForm: React.FC = () => {
 
-    const [form, setForm] = useState<SignUpRequest>({
-        phone: "",
-        displayName: "",
-        password: "",
-        confirmPassword: "",
-    });
-
+    const [phone, setPhone] = useState("");
+    const [displayName, setdisplayName] = useState("");
+    const [password, setpassword] = useState("");
+    const [confirmPassword, setconfirmPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
-    const navigate = useNavigate();
 
 
-    //không hiểu lắm
-    const updateField = (field: keyof SignUpRequest, value: string) => {
-        setForm({ ...form, [field]: value });
 
-    };
 
 
     const onSubmit = async (e: React.FormEvent) => {
-
-
+        const form: SignUpRequest = { phone, displayName, password, confirmPassword };
         const result = await signUpApi(form);
         if (result.error) {
             setError(result.message);
@@ -47,48 +38,80 @@ const SignUpForm: React.FC = () => {
     };
 
     return (
-        <>
-            <form onSubmit={onSubmit} >
-                <InputField
-                    placeholder="Số điện thoại"
-                    value={form.phone}
-                    onChange={(e) => updateField("phone", e.target.value)}
+        <div
+            id="signUpForm"
+            className="modal fade"
+        >
+            <div className="modal-dialog modal-dialog-centered">
+                <div className="modal-content p-4 shadow-lg">
+                    {/* Header */}
+                    <div className="modal-header border-0">
+                        <h5 className="modal-title fw-bold text-success">
+                            Đăng ký tài khoản
+                        </h5>
+                        <button
+                            type="button"
+                            className="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"
+                        ></button>
+                    </div>
 
-                />
-                <InputField
-                    placeholder="Tên hiển thị"
-                    value={form.displayName}
-                    onChange={(e) => updateField("displayName", e.target.value)}
-                />
-                <InputField
-                    type="password"
-                    placeholder="Mật khẩu"
-                    value={form.password}
-                    onChange={(e) => updateField("password", e.target.value)}
-                />
-                <InputField
-                    type="password"
-                    placeholder="Xác nhận mật khẩu"
-                    value={form.confirmPassword}
-                    onChange={(e) => updateField("confirmPassword", e.target.value)}
-                />
+                    {/* Body */}
+                    <div className="modal-body">
+                        <form onSubmit={onSubmit} className="d-flex flex-column gap-3">
+                            <InputField
+                                placeholder="Số điện thoại"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                            />
+                            <InputField
+                                placeholder="Tên hiển thị"
+                                value={displayName}
+                                onChange={(e) => setdisplayName(e.target.value)}
+                            />
+                            <InputField
+                                type="password"
+                                placeholder="Mật khẩu"
+                                value={password}
+                                onChange={(e) => setpassword(e.target.value)}
+                            />
+                            <InputField
+                                type="password"
+                                placeholder="Xác nhận mật khẩu"
+                                value={confirmPassword}
+                                onChange={(e) => setconfirmPassword(e.target.value)}
+                            />
 
-                <button type="submit" className="btn btn-success w-100" disabled={loading}>
-                    {loading ? "Đang xử lý..." : "Đăng ký"}
-                </button>
+                            <button
+                                type="submit"
+                                className="btn btn-success w-100 mt-2"
+                                disabled={loading}
+                            >
+                                {loading ? "Đang xử lý..." : "Đăng ký"}
+                            </button>
 
+                            {/* Hiển thị thông báo */}
+                            <AlertMessage type="success" message={message} />
+                            <AlertMessage type="danger" message={error} />
+                        </form>
+                    </div>
 
-                <AlertMessage type="success" message={message} />
-                <AlertMessage type="danger" message={error} />
-            </form>
-
-            <button type="submit" className="btn btn-success w-100" disabled={loading}>
-                {loading ? "Đang xử lý..." : "Đăng ký bằng google"}
-
-            </button>
-        </>
-
+                    {/* Footer */}
+                    <div className="modal-footer border-0 flex-column gap-2">
+                        <button
+                            type="button"
+                            className="btn btn-outline-danger w-100"
+                            disabled={loading}
+                        >
+                            {loading ? "Đang xử lý..." : "Đăng ký bằng Google"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
+
 };
 
 export default SignUpForm;

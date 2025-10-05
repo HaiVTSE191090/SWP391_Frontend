@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import SearchBar, { LocationSelection, TimeSelection } from "./search/SearchBar";
+import SearchBar, { LocationSelection, TimeSelection } from "../search/SearchBar";
 import Mapbox from "./MapBox";
 
 export default function SearchPage() {

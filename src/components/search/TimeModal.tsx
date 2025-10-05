@@ -1,7 +1,7 @@
 // src/components/search/TimeModal.tsx
 import React, { useMemo, useState } from "react";
-import { TimeSelection, RentalMode, getTodayDate } from "../../../models/SearchModel";
-import { closeModal } from "../../../controller/SearchController";
+import { TimeSelection, RentalMode, getTodayDate } from "../../models/SearchModel";
+import { closeModal } from "../../controller/SearchController";
 
 type Props = {
   current: TimeSelection;

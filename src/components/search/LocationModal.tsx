@@ -1,7 +1,7 @@
 // src/components/search/LocationModal.tsx
 import React, { useState } from "react";
-import { LocationSelection, SUGGESTED_AIRPORTS } from "../../../models/SearchModel";
-import { getCurrentPosition, closeModal } from "../../../controller/SearchController";
+import { LocationSelection, SUGGESTED_AIRPORTS } from "../../models/SearchModel";
+import { getCurrentPosition, closeModal } from "../../controller/SearchController";
 
 type Props = {
     current: LocationSelection;
@@ -48,6 +48,7 @@ export default function LocationModal({ current, onSave }: Props) {
                             data-bs-dismiss="modal"
                             aria-label="Đóng"
                         />
+                        
                     </div>
 
                     <div className="modal-body">

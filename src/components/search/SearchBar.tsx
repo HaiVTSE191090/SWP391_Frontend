@@ -7,8 +7,8 @@ import {
   getDefaultTimeSelection,
   formatTimeDisplay,
   getTodayDate,
-} from "../../../models/SearchModel";
-import { processSearch } from "../../../controller/SearchController";
+} from "../../models/SearchModel";
+import { processSearch } from "../../controller/SearchController";
 import LocationModal from "./LocationModal";
 import TimeModal from "./TimeModal";
 
