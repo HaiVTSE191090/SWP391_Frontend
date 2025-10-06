@@ -1,8 +1,8 @@
 import React, { use, useState } from "react";
-import { SignUpRequest } from "../../models/SignUpRequest";
+import { SignUpRequest } from "../../models/AuthModel";
 import InputField from "../common/InputField";
 import AlertMessage from "../common/AlertMessage";
-import signUpApi from "../../services/authService";
+import { signUpApi } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
@@ -91,9 +91,7 @@ const SignUpForm: React.FC = () => {
                                 {loading ? "Đang xử lý..." : "Đăng ký"}
                             </button>
 
-                            {/* Hiển thị thông báo */}
-                            <AlertMessage type="success" message={message} />
-                            <AlertMessage type="danger" message={error} />
+
                         </form>
                     </div>
 
@@ -107,6 +105,10 @@ const SignUpForm: React.FC = () => {
                             {loading ? "Đang xử lý..." : "Đăng ký bằng Google"}
                         </button>
                     </div>
+
+                    {/* Hiển thị thông báo */}
+                    <AlertMessage type="success" message={message} />
+                    <AlertMessage type="danger" message={error} />
                 </div>
             </div>
         </div>

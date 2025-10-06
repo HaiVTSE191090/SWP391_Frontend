@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import signUp from '../../services/authService';
-import { SignUpRequest } from '../../models/SignUpRequest';
+import { signUpApi } from '../../services/authService';
+import { SignUpRequest } from '../../models/AuthModel';
 
 const SignUp: React.FC = () => {
     const [phone, setPhone] = useState('');
@@ -19,7 +19,7 @@ const SignUp: React.FC = () => {
             phone, displayName, password, confirmPassword
         };
 
-        const obj = await signUp(data);
+        const obj = await signUpApi(data);
 
         if (obj.error) {
             setMessage(obj.message || "Đăng ký thành công!");
