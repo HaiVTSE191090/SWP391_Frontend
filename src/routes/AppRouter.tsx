@@ -3,6 +3,8 @@ import React, { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "../components/layouts/Layout";
 import SignUpForm from "../components/auth/SignUpForm";
+import path from "path";
+import ManualIdentityPage from "../pages/ManualIdentityPage";
 
 // Lazy load các trang (tối ưu bundle)
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -20,7 +22,9 @@ const router = createBrowserRouter([
             // index = route mặc định khi path = "/"
             { index: true, element: <HomePage /> },
 
-            {path: "/sign-up" , element: <SignUpForm/>}
+            {path: "/sign-up" , element: <SignUpForm/>},
+
+            {path: "/manualIdentity" , element: <ManualIdentityPage/>}
 
 
             // // 404 bắt mọi thứ còn lại
