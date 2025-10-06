@@ -1,42 +1,17 @@
-import React, { useState } from "react";
-import { LoginRequest } from "../../models/AuthModel";
-import { loginApi } from "../../services/authService";
+import React from "react";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { useLoginController } from "../../controller/useLoginController";
 
 const LoginForm: React.FC = () => {
-    const [form, setForm] = useState<LoginRequest>({
-        phone: "",
-        password: ""
-    });
-
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
-        setMessage("");
-
-        try {
-            const result = await loginApi(form);
-
-            if (result.status === "success" || result.code === 200) {
-                setMessage("Đăng nhập thành công!");
-            } else {
-                setError(result.message || "Sai tài khoản hoặc mật khẩu");
-            }
-        } catch (err: any) {
-            setError("Lỗi kết nối máy chủ.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const {
+        form,
+        loading,
+        error,
+        message,
+        handleChange,
+        handleSubmit,
+        handleLoginWithGoogle,
+    } = useLoginController();
 
     return (
         <div
@@ -95,7 +70,7 @@ const LoginForm: React.FC = () => {
                             {error && <div className="alert alert-danger">{error}</div>}
                             {message && <div className="alert alert-success">{message}</div>}
 
-                            <div className="d-grid mb-2">
+                            <div className="d-grid mb-3">
                                 <button
                                     type="submit"
                                     className="btn btn-primary"
@@ -106,22 +81,20 @@ const LoginForm: React.FC = () => {
                             </div>
 
                             <div className="d-grid">
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-danger"
-                                    disabled={loading}
-                                >
-                                    {loading ? "Đang xử lý..." : "Đăng nhập bằng Google"}
-                                </button>
+                                <GoogleOAuthProvider clientId="255202154765-ff80kah50367qbbmods5oggb4d7j91fu.apps.googleusercontent.com">
+                                    <GoogleLogin
+                                        onSuccess={(credentialRes: any) => {
+                                            handleLoginWithGoogle(credentialRes.credential);
+                                        }}
+                                        onError={() => console.log("Login Failed")}
+                                    />
+                                </GoogleOAuthProvider>
                             </div>
                         </form>
                     </div>
-
-                    <div className="modal-footer border-0"></div>
                 </div>
             </div>
         </div>
-
     );
 };
 

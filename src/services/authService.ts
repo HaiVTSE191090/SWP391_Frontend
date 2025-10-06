@@ -25,6 +25,8 @@ const loginApi = async (data: LoginRequest) => {
 };
 
  const loginWithGoogle = async (token: string) => {
+
+  
   try {
     const res = await axios.post(`${baseURL}/login/google`, { token });
     return res.data;
@@ -32,5 +34,6 @@ const loginApi = async (data: LoginRequest) => {
     return err.response?.data;
   }
 };
+
 
 export { signUpApi, loginApi, loginWithGoogle };

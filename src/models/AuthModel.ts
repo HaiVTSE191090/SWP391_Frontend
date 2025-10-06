@@ -10,6 +10,13 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface LoginResponse {
+  code: number;
+  message: string;
+  token?: string;
+  user?: any;
+}
+
 export interface UserMenuProps {
   username: string;
   avatarUrl?: string;

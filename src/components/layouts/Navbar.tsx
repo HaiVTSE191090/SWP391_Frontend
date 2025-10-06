@@ -3,7 +3,6 @@ import logo from "../../images/favicon.png"; // logo trong src/images
 import { useState } from "react";
 import SignUpForm from "../auth/SignUpForm";
 import LoginForm from "../auth/LoginForm";
-import { loginApi } from "../../services/authService";
 
 
 
