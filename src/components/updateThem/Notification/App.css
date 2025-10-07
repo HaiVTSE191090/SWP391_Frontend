@@ -1,0 +1,136 @@
+#root {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7ff 0%, #e8f0fe 100%);
+  padding: 20px;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+h1 {
+  color: #3563E9;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+h2 {
+  color: #666;
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+}
+
+.test-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.test-btn {
+  padding: 15px 25px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 180px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.test-btn.valid {
+  background: #10b981;
+  color: white;
+}
+
+.test-btn.valid:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.test-btn.duplicate {
+  background: #ef4444;
+  color: white;
+}
+
+.test-btn.duplicate:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+.test-btn.age {
+  background: #f59e0b;
+  color: white;
+}
+
+.test-btn.age:hover {
+  background: #d97706;
+  transform: translateY(-2px);
+}
+
+.test-btn.review {
+  background: #3563E9;
+  color: white;
+  font-size: 18px;
+  padding: 18px 30px;
+  border: 2px solid #3563E9;
+}
+
+.test-btn.review:hover {
+  background: #2d4ac7;
+  border-color: #2d4ac7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(53, 99, 233, 0.3);
+}
+
+.info {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  text-align: left;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.info p {
+  margin: 8px 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+.info strong {
+  color: #3563E9;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 10px;
+  }
+
+  .test-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .test-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .info {
+    padding: 20px;
+  }
+}
