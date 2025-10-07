@@ -1,6 +1,13 @@
 import React from "react";
 import logo from "../../images/favicon.png"; // logo trong src/images
 import { useState } from "react";
+<<<<<<< Updated upstream
+=======
+import SignUpForm from "../auth/SignUpForm";
+import LoginForm from "../auth/SignUpForm";
+
+
+>>>>>>> Stashed changes
 
 const Navbar: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
@@ -31,6 +38,7 @@ const Navbar: React.FC = () => {
           </button>
 
           {/* Menu */}
+<<<<<<< Updated upstream
             <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
                 <li className="nav-item mx-3">
@@ -46,6 +54,43 @@ const Navbar: React.FC = () => {
                 </li>
               </ul>
             </div>
+=======
+          <div className="collapse navbar-collapse" id="navbarNav">
+            <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
+              {/* Nếu chưa đăng nhập */}
+              {!isLoggedIn ? (
+                <>
+                  <li className="nav-item mx-3">
+                    <button
+                      className="btn btn-outline-primary px-4"
+                      data-bs-toggle="modal"
+                      data-bs-target="#loginForm"
+                    >
+                      Đăng nhập
+                    </button>
+                    <LoginForm />
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      className="btn btn-primary rounded-pill shadow w-100 px-4 py-2"
+                      data-bs-toggle="modal"
+                      data-bs-target="#signUpForm"
+                    >
+                      Đăng ký miễn phí
+                    </button>
+                    <SignUpForm />
+                  </li>
+                </>
+              ) : (
+                // Nếu đã đăng nhập
+                <>
+                  <LoginForm/>
+                </>
+              )}
+            </ul>
+          </div>
+
+>>>>>>> Stashed changes
         </div>
       </nav>
       {/* Modal */}
