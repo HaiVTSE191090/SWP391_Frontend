@@ -1,5 +1,5 @@
 import React from 'react';
-import './ErrorPopup.css';
+import { Modal, Button, Alert } from 'react-bootstrap';
 
 interface ErrorPopupProps {
   errors: string[];
@@ -8,35 +8,27 @@ interface ErrorPopupProps {
 
 const ErrorPopup: React.FC<ErrorPopupProps> = ({ errors, onClose }) => {
   return (
-    <div className="popup-overlay" onClick={onClose}>
-      <div className="popup-container" onClick={(e) => e.stopPropagation()}>
-        <div className="popup-header">
-          <h3>Lỗi Xác Thực</h3>
-          <button className="close-btn" onClick={onClose}>
-            ×
-          </button>
-        </div>
-        
-        <div className="popup-body">
-          <div className="error-icon">
-            ⚠️
-          </div>
-          <div className="error-list">
+    <Modal show={true} onHide={onClose} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>⚠️ Lỗi Validation</Modal.Title>
+      </Modal.Header>
+      
+      <Modal.Body>
+        <Alert variant="danger" className="mb-0">
+          <ul className="mb-0 ps-3">
             {errors.map((error, index) => (
-              <div key={index} className="error-item">
-                • {error}
-              </div>
+              <li key={index}>{error}</li>
             ))}
-          </div>
-        </div>
-        
-        <div className="popup-footer">
-          <button className="ok-btn" onClick={onClose}>
-            Đã hiểu
-          </button>
-        </div>
-      </div>
-    </div>
+          </ul>
+        </Alert>
+      </Modal.Body>
+      
+      <Modal.Footer>
+        <Button variant="primary" onClick={onClose}>
+          Đã hiểu
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
 };
 

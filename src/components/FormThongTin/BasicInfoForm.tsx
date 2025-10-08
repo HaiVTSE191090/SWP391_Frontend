@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { Container, Row, Col, Form, Button } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './BasicInfoForm.css';
-import ErrorPopup from './ErrorPopup';
 
 interface FormData {
   hoTen: string;
@@ -17,141 +18,132 @@ const BasicInfoForm: React.FC = () => {
     matKhau: ''
   });
 
-  const [errors, setErrors] = useState<string[]>([]);
-  const [showErrorPopup, setShowErrorPopup] = useState<boolean>(false);
+  const [validated, setValidated] = useState(false);
 
-  // Giả lập database của các email và số điện thoại đã tồn tại
-  const existingEmails = ['test@example.com', 'user@gmail.com', 'admin@domain.com'];
-  const existingPhones = ['0123456789', '0987654321', '0369258147'];
+  // Danh sách email và số điện thoại đã tồn tại
+  const existingEmails = ['test@example.com', 'user@gmail.com'];
+  const existingPhones = ['0123456789', '0987654321'];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const validateForm = (): string[] => {
-    const newErrors: string[] = [];
-
-    // Kiểm tra các trường bắt buộc
-    if (!formData.hoTen.trim()) {
-      newErrors.push('Họ tên không được để trống');
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.push('Email không được để trống');
-    } else {
-      // Kiểm tra format email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        newErrors.push('Email không đúng định dạng');
-      }
-      // Kiểm tra email đã tồn tại
-      else if (existingEmails.includes(formData.email)) {
-        newErrors.push('Email này đã được sử dụng');
-      }
-    }
-
-    if (!formData.soDienThoai.trim()) {
-      newErrors.push('Số điện thoại không được để trống');
-    } else {
-      // Kiểm tra format số điện thoại Việt Nam
-      const phoneRegex = /^(0|\+84)[0-9]{9}$/;
-      if (!phoneRegex.test(formData.soDienThoai)) {
-        newErrors.push('Số điện thoại không đúng định dạng');
-      }
-      // Kiểm tra số điện thoại đã tồn tại
-      else if (existingPhones.includes(formData.soDienThoai)) {
-        newErrors.push('Số điện thoại này đã được sử dụng');
-      }
-    }
-
-    if (!formData.matKhau.trim()) {
-      newErrors.push('Mật khẩu không được để trống');
-    } else if (formData.matKhau.length < 6) {
-      newErrors.push('Mật khẩu phải có ít nhất 6 ký tự');
-    }
-
-    return newErrors;
+  const validateForm = () => {
+    const form = document.querySelector('form') as HTMLFormElement;
+    return form.checkValidity();
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
-      setShowErrorPopup(true);
+    setValidated(true);
+    
+    if (validateForm()) {
+      console.log('Form OK:', formData);
+      alert('Thông tin đã lưu thành công!');
     } else {
-      // Xử lý khi form hợp lệ
-      console.log('Form submitted successfully:', formData);
-      alert('Thông tin đã được lưu! Chuyển sang bước tiếp theo...');
+      alert('Vui lòng kiểm tra lại thông tin!');
     }
-  };
-
-  const closeErrorPopup = (): void => {
-    setShowErrorPopup(false);
-    setErrors([]);
   };
 
   return (
     <div className="form-container">
-      <div className="form-wrapper">
-        <h1 className="form-title">NHẬP THÔNG TIN CƠ BẢN</h1>
-        
-        <form onSubmit={handleSubmit} className="basic-info-form">
-          <input
-            type="text"
-            name="hoTen"
-            value={formData.hoTen}
-            onChange={handleInputChange}
-            placeholder="Họ và tên"
-            className="form-input"
-          />
+      <Container fluid className="h-100">
+        <Row className="justify-content-center align-items-center min-vh-100">
+          <Col xs={12} md={6} lg={5}>
+            <div className="form-wrapper bg-white rounded-4 shadow-lg p-5">
+              <h1 className="form-title text-center fw-bold mb-4">
+                NHẬP THÔNG TIN CƠ BẢN
+              </h1>
+              
+              <Form noValidate validated={validated} onSubmit={handleSubmit}>
+                {/* Họ tên */}
+                <Form.Group className="mb-3">
+                  <Form.Control
+                    type="text"
+                    name="hoTen"
+                    value={formData.hoTen}
+                    onChange={handleInputChange}
+                    placeholder="Họ và tên"
+                    size="lg"
+                    className="rounded-pill"
+                    required
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Vui lòng nhập họ tên
+                  </Form.Control.Feedback>
+                </Form.Group>
 
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            placeholder="Email"
-            className="form-input"
-          />
+                {/* Email */}
+                <Form.Group className="mb-3">
+                  <Form.Control
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Email"
+                    size="lg"
+                    className="rounded-pill"
+                    required
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Email không hợp lệ
+                  </Form.Control.Feedback>
+                </Form.Group>
 
-          <input
-            type="tel"
-            name="soDienThoai"
-            value={formData.soDienThoai}
-            onChange={handleInputChange}
-            placeholder="Số điện thoại"
-            className="form-input"
-          />
+                {/* Số điện thoại */}
+                <Form.Group className="mb-3">
+                  <Form.Control
+                    type="tel"
+                    name="soDienThoai"
+                    value={formData.soDienThoai}
+                    onChange={handleInputChange}
+                    placeholder="Số điện thoại"
+                    size="lg"
+                    className="rounded-pill"
+                    required
+                    pattern="[0-9]{10}"
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Số điện thoại không hợp lệ
+                  </Form.Control.Feedback>
+                </Form.Group>
 
-          <input
-            type="password"
-            name="matKhau"
-            value={formData.matKhau}
-            onChange={handleInputChange}
-            placeholder="Mật khẩu"
-            className="form-input"
-          />
+                {/* Mật khẩu */}
+                <Form.Group className="mb-4">
+                  <Form.Control
+                    type="password"
+                    name="matKhau"
+                    value={formData.matKhau}
+                    onChange={handleInputChange}
+                    placeholder="Mật khẩu"
+                    size="lg"
+                    className="rounded-pill"
+                    required
+                    minLength={6}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Mật khẩu tối thiểu 6 ký tự
+                  </Form.Control.Feedback>
+                </Form.Group>
 
-          <button type="submit" className="register-btn">
-            TIẾP TỤC
-          </button>
-        </form>
-
-
-      </div>
-
-      {showErrorPopup && (
-        <ErrorPopup 
-          errors={errors} 
-          onClose={closeErrorPopup}
-        />
-      )}
+                {/* Submit Button */}
+                <div className="d-grid">
+                  <Button 
+                    type="submit" 
+                    variant="primary"
+                    size="lg"
+                    className="rounded-pill fw-bold"
+                  >
+                    TIẾP TỤC
+                  </Button>
+                </div>
+              </Form>
+            </div>
+          </Col>
+        </Row>
+      </Container>
     </div>
   );
 };
