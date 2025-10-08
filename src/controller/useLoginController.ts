@@ -1,25 +1,40 @@
 import { useState } from "react";
-import { LoginRequest } from "../models/AuthModel";
-import { loginApi, loginWithGoogle } from "../services/authService";
-import { useNavigate } from "react-router-dom";
+import { LoginRequest, LoginResponse } from "../models/AuthModel";
+import { loginApi } from "../services/authService";
+
 
 export const useLoginController = () => {
-  const [form, setForm] = useState<LoginRequest>({ phone: "", password: "" });
+  const [form, setForm] = useState<LoginRequest>({ phone: +84, password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const navigate = useNavigate();
+  const [res, setRes] = useState<LoginResponse>({code: 0, message: ""})
+  
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLoginWithGoogle = (credentialRes: string) => {
-    console.log(credentialRes);
-    navigate(-1);
-    const data = loginWithGoogle(credentialRes);
-    // nhận dữ liệu từ backend
+  // nhận dữ liệu từ backend
+  const handleLoginWithGoogle = async (credentialRes: string) => {
+    
+    try {
+      // const data: LoginResponse = await loginWithGoogle(credentialRes);
+      const data: LoginResponse = {
+        code: 10,
+        message:"thang lon",
+        
+      };
+      return data;
+    } catch (error) {
+      console.error("Google login error:", error);
+      return {
+        code: 500,
+        message: "Đăng nhập Google thất bại",
+      };
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,8 +63,10 @@ export const useLoginController = () => {
     loading,
     error,
     message,
+    res,
     handleChange,
     handleSubmit,
     handleLoginWithGoogle,
+    setRes
   };
 };

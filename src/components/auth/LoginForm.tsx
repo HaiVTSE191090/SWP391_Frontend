@@ -1,17 +1,15 @@
 import React from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { useLoginController } from "../../controller/useLoginController";
+import { LoginResponse } from "../../models/AuthModel";
+import { useNavigate } from "react-router-dom";
+
 
 const LoginForm: React.FC = () => {
-    const {
-        form,
-        loading,
-        error,
-        message,
-        handleChange,
-        handleSubmit,
-        handleLoginWithGoogle,
-    } = useLoginController();
+
+    const navigate = useNavigate();
+
+    const { form, loading, error, message, res, setRes, handleChange, handleSubmit, handleLoginWithGoogle, } = useLoginController();
 
     return (
         <div
@@ -81,13 +79,16 @@ const LoginForm: React.FC = () => {
                             </div>
 
                             <div className="d-grid">
-                                <GoogleOAuthProvider clientId="255202154765-ff80kah50367qbbmods5oggb4d7j91fu.apps.googleusercontent.com">
+                                <GoogleOAuthProvider clientId={process.env.REACT_APP_CLIENT_ID!}>
                                     <GoogleLogin
-                                        onSuccess={(credentialRes: any) => {
-                                            handleLoginWithGoogle(credentialRes.credential);
+                                        onSuccess={async (credentialRes: any) => {
+                                            const data: LoginResponse = await handleLoginWithGoogle(credentialRes.credential);
+                                            setRes(data);
+                                            navigate(-1);
                                         }}
                                         onError={() => console.log("Login Failed")}
                                     />
+
                                 </GoogleOAuthProvider>
                             </div>
                         </form>

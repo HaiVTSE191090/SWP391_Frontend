@@ -6,7 +6,7 @@ export interface SignUpRequest {
 }
 
 export interface LoginRequest {
-  phone: string;
+  phone: number;
   password: string;
 }
 

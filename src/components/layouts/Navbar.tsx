@@ -3,13 +3,15 @@ import logo from "../../images/favicon.png"; // logo trong src/images
 import { useState } from "react";
 import SignUpForm from "../auth/SignUpForm";
 import LoginForm from "../auth/LoginForm";
+import { LoginResponse } from "../../models/AuthModel";
+import { useLoginController } from "../../controller/useLoginController";
 
 
 
 const Navbar: React.FC = () => {
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("Guest");
+  const [username, setUsername] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
@@ -18,6 +20,10 @@ const Navbar: React.FC = () => {
     setIsLoggedIn(false);
     alert("Đã đăng xuất!");
   };
+
+
+  const {res} = useLoginController();
+
 
 
 
