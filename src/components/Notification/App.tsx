@@ -1,9 +1,9 @@
 import { useState } from 'react'
+import { Container, Row, Col, Button, Card, Alert } from 'react-bootstrap'
 import NotificationPopup from './components/NotificationPopup'
 import ReviewConfirmPage from './components/ReviewConfirmPage'
 // @ts-ignore
 import { kiemTraCCCD } from './cccdCheck.js'
-import './App.css'
 
 function App() {
   const [popupType, setPopupType] = useState<string | null>(null);
@@ -126,41 +126,60 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <div className="container">
-        <h1>🚗 Hệ thống Thuê Xe Điện</h1>
-        <h2>Kiểm tra CCCD</h2>
-        
-        <div className="test-buttons">
-          <button 
-            className="test-btn valid"
-            onClick={() => testCCCD(duLieuTest[0])}
-          >
-            Test CCCD Hợp lệ
-          </button>
-          
-          <button 
-            className="test-btn duplicate"
-            onClick={() => testCCCD(duLieuTest[1])}
-          >
-            Test CCCD Đã đăng ký
-          </button>
-          
-          <button 
-            className="test-btn age"
-            onClick={() => testCCCD(duLieuTest[2])}
-          >
-            Test CCCD Chưa đủ tuổi
-          </button>
-        </div>
+    <Container className="py-4">
+      <Row className="justify-content-center">
+        <Col md={8}>
+          <Card>
+            <Card.Header>
+              <h1 className="mb-0">🚗 Hệ thống Thuê Xe Điện</h1>
+              <h2 className="mb-0 mt-2">Kiểm tra CCCD</h2>
+            </Card.Header>
+            <Card.Body>
+              <Row className="g-3 mb-4">
+                <Col md={4}>
+                  <Button 
+                    variant="success"
+                    size="lg"
+                    className="w-100"
+                    onClick={() => testCCCD(duLieuTest[0])}
+                  >
+                    Test CCCD Hợp lệ
+                  </Button>
+                </Col>
+                
+                <Col md={4}>
+                  <Button 
+                    variant="warning"
+                    size="lg"
+                    className="w-100"
+                    onClick={() => testCCCD(duLieuTest[1])}
+                  >
+                    Test CCCD Đã đăng ký
+                  </Button>
+                </Col>
+                
+                <Col md={4}>
+                  <Button 
+                    variant="danger"
+                    size="lg"
+                    className="w-100"
+                    onClick={() => testCCCD(duLieuTest[2])}
+                  >
+                    Test CCCD Chưa đủ tuổi
+                  </Button>
+                </Col>
+              </Row>
 
-        <div className="info">
-          <p><strong>Cách hoạt động:</strong></p>
-          <p>1. Sau khi OCR/nhập tay xong thông tin CCCD</p>
-          <p>2. Hệ thống kiểm tra trùng lặp và tuổi</p>
-          <p>3. Hiện popup tương ứng</p>
-        </div>
-      </div>
+              <Alert variant="info">
+                <Alert.Heading>Cách hoạt động:</Alert.Heading>
+                <p className="mb-1">1. Sau khi OCR/nhập tay xong thông tin CCCD</p>
+                <p className="mb-1">2. Hệ thống kiểm tra trùng lặp và tuổi</p>
+                <p className="mb-0">3. Hiện popup tương ứng</p>
+              </Alert>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
       <NotificationPopup
         type={popupType as 'duplicate' | 'age' | 'confirmation' | null}
@@ -170,7 +189,7 @@ function App() {
         onReject={xuLyKhongDongY}
         data={thongTinCCCD}
       />
-    </div>
+    </Container>
   )
 }
 
