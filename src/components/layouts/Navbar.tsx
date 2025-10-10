@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from "react";
 import logo from "../../images/favicon.png"; // logo trong src/images
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SignUpForm from "../auth/SignUpForm";
 import LoginForm from "../auth/LoginForm";
 import { FormProvider } from "../../context/FormContext";
@@ -11,10 +12,10 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 
 const Navbar: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
+  const navigate = useNavigate();
+
   // Sử dụng hook để lấy thông tin user từ API
   const { user: userProfile, loading: profileLoading } = useUserProfile();
-
   const userCtx = useContext(UserContext)
   if (userCtx === null) return null;
   const { logout } = userCtx
@@ -36,7 +37,7 @@ const Navbar: React.FC = () => {
       <nav className="navbar navbar-expand-lg bg-white border-bottom px-4">
         <div className="container-fluid">
           {/* Logo + Brand */}
-          <button className="navbar-brand d-flex align-items-center btn btn-link p-0" type="button">
+          <button className="navbar-brand d-flex align-items-center btn btn-link p-0" type="button" onClick={() => navigate("/")} >
             <img
               src={logo}
               alt="EV Station"
@@ -86,46 +87,48 @@ const Navbar: React.FC = () => {
               ) : (
                 // Nếu đã đăng nhập
                 <>
-                  <li className="nav-item dropdown">
-                    <button
-                      className="nav-link dropdown-toggle fw-bold btn btn-link"
-                      id="userMenu"
-                      data-bs-toggle="dropdown"
-                      type="button"
-                    >
-                      Xin chào, {userProfile?.fullName || userProfile?.email || "Guest"}
-                    </button>
-                    <ul className="dropdown-menu dropdown-menu-end">
-                      <li>
-                        <button className="dropdown-item" type="button">
-                          Lịch sử thuê xe
-                        </button>
-                      </li>
-                      <li>
-                        <button 
-                          className="dropdown-item" 
-                          type="button"
-                          onClick={() => window.location.href = '/kyc-verification'}
-                        >
-                          <i className="fas fa-id-card me-2"></i>
-                          Xác thực danh tính
-                        </button>
-                      </li>
-                      <li>
-                        <button className="dropdown-item" type="button">
-                          Tài khoản của tôi
-                        </button>
-                      </li>
-                      <li>
-                        <hr className="dropdown-divider" />
-                      </li>
-                      <li>
-                        <button className="dropdown-item text-danger" onClick={logout}>
-                          Đăng xuất
-                        </button>
-                      </li>
-                    </ul>
-                  </li>
+                  <ul className="navbar-nav ms-auto d-flex align-items-center gap-3">
+                    <li className="nav-item">
+                      <span className="fw-bold">
+                        Xin chào, {userProfile?.fullName || userProfile?.email || "Guest"}
+                      </span>
+                    </li>
+
+                    <li className="nav-item">
+                      <button className="btn btn-link text-decoration-none">
+                        Lịch sử thuê xe
+                      </button>
+                    </li>
+
+                    <li className="nav-item">
+                      <button
+                        className="btn btn-link text-decoration-none"
+                        onClick={() => navigate("/kyc-verification")}
+                      >
+                        <i className="fas fa-id-card me-2"></i>
+                        Xác thực danh tính
+                      </button>
+                    </li>
+
+                    <li className="nav-item">
+                      <button className="btn btn-link text-decoration-none">
+                        Tài khoản của tôi
+                      </button>
+                    </li>
+
+                    <li className="nav-item">
+                      <button 
+                        className="btn btn-link text-danger text-decoration-none" 
+                        onClick={() => {
+                          logout();
+                          navigate("/");
+                        }}
+                      >
+                        Đăng xuất
+                      </button>
+                    </li>
+                  </ul>
+
                 </>
               )}
             </ul>

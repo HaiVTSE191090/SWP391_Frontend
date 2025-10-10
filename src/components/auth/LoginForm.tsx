@@ -94,8 +94,17 @@ const LoginForm: React.FC = () => {
                                 />
                             </div>
 
-                            {error && <div className="alert alert-danger">{error}</div>}
-                            {message && <div className="alert alert-success">{message}</div>}
+
+                            <div>
+                                {message && <div className="alert alert-success">{message}</div>}
+                            </div>
+
+                            <div>
+                                {error && <div className="alert alert-danger">{error}</div>}
+                            </div>
+
+
+
 
                             <div className="d-grid mb-3">
                                 <button
@@ -103,7 +112,8 @@ const LoginForm: React.FC = () => {
                                     className="btn btn-primary"
                                     disabled={loading}
                                 >
-                                    {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                                    {loading ?
+                                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> : "Đăng nhập"}
                                 </button>
                             </div>
 

@@ -42,11 +42,10 @@ export const useUserProfile = (): UseUserProfileReturn => {
     setError(null);
 
     try {
-      // Gọi API lấy thông tin user
       const response = await api.get("/api/renter/profile");
       
       if (response && response.data) {
-        // Merge với dữ liệu từ localStorage nếu có (để đảm bảo có kycStatus)
+        
         const localUserData = localStorage.getItem("user");
         let mergedData = response.data;
         
@@ -58,7 +57,8 @@ export const useUserProfile = (): UseUserProfileReturn => {
               kycStatus: response.data.kycStatus || localData.kycStatus || 'NEED_UPLOAD'
             };
           } catch (e) {
-            // Ignore parse error
+            // Ignore
+            console.error(e);
           }
         }
         
@@ -70,7 +70,7 @@ export const useUserProfile = (): UseUserProfileReturn => {
       console.error("Lỗi khi lấy thông tin người dùng:", err);
       
       if (err.response?.status === 401 || err.response?.status === 403) {
-        // Token hết hạn, xóa token và user info
+       
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);

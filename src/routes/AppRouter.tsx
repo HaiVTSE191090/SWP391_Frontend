@@ -3,7 +3,6 @@ import React, { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "../components/layouts/Layout";
 import SignUpForm from "../components/auth/SignUpForm";
-import path from "path";
 import ManualIdentityPage from "../pages/ManualIdentityPage";
 import KycVerificationPage from "../pages/KycVerificationPage";
 
@@ -15,19 +14,17 @@ const HomePage = lazy(() => import("../pages/HomePage"));
 
 const router = createBrowserRouter([
     {
-        path: "/",                 // Route gốc dùng Layout
-        element: (
-            <Layout />
-        ),
+        path: "/",
+        element: (<Layout />),
         children: [
             // index = route mặc định khi path = "/"
             { index: true, element: <HomePage /> },
 
-            {path: "/sign-up" , element: <SignUpForm/>},
+            { path: "/sign-up", element: <SignUpForm /> },
 
-            {path: "/manualIdentity" , element: <ManualIdentityPage/>},
+            { path: "/manualIdentity", element: <ManualIdentityPage /> },
 
-            {path: "/kyc-verification" , element: <KycVerificationPage/>}
+            { path: "/kyc-verification", element: <KycVerificationPage /> }
 
 
             // // 404 bắt mọi thứ còn lại
@@ -38,6 +35,7 @@ const router = createBrowserRouter([
 
 export default function AppRouter() {
     return (
+        //cái này hiển thị thông tin khi không có dữ liệu.
         <Suspense fallback={<div className="container py-5">Đang tải...</div>}>
             <RouterProvider router={router} />
         </Suspense>

@@ -17,7 +17,6 @@ export const useModal = (): UseModalReturn => {
    * @param modalId - ID của modal cần đóng
    */
   const closeModalAndReload = useCallback((modalId: string) => {
-    // Đóng modal
     const modal = document.getElementById(modalId);
     if (modal) {
       const bsModal = (window as any).bootstrap?.Modal?.getInstance(modal);
