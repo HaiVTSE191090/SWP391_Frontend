@@ -1,10 +1,12 @@
 import React from "react";
 import AppRouter from "./routes/AppRouter";
+import { UserProvider } from "./context/UserContext";
 const App = () => {
   return (
     <>
-      <AppRouter />
-
+      <UserProvider>
+        <AppRouter />
+      </UserProvider>
     </>
   );
 };

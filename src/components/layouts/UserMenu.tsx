@@ -1,7 +1,12 @@
 // src/components/Navbar/UserMenu.tsx
 import React from "react";
 import defaultAvatar from "../../images/default-avatar.png";// tìm ảnh mạng
-import { UserMenuProps } from "../../models/AuthModel";
+
+interface UserMenuProps {
+  username: string,
+  avatarUrl: string,
+  onLogout: () => void,
+}
 
 
 

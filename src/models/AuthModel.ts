@@ -1,24 +1,44 @@
 export interface SignUpRequest {
-  phone: string;
-  displayName: string;
+  fullName: string;
+  email: string;
   password: string;
-  confirmPassword: string;
+  phoneNumber: string;
 }
 
 export interface LoginRequest {
-  phone: number;
+  email: string;
   password: string;
 }
 
-export interface LoginResponse {
+// Response format từ backend
+export interface ApiResponse<T> {
+  status: "success" | "error";
   code: number;
-  message: string;
-  token?: string;
-  user?: any;
+  data: T;
 }
 
-export interface UserMenuProps {
-  username: string;
-  avatarUrl?: string;
-  onLogout: () => void;
+// Success response
+export interface LoginSuccessData {
+  token: string;
+  email: string;
+  kycStatus: string;
+}
+
+// Error response có thể là string hoặc object
+export type LoginErrorData = string | {
+  email?: string;
+  password?: string;
+  [key: string]: string | undefined;
+};
+
+export type LoginResponse = ApiResponse<LoginSuccessData | LoginErrorData>;
+
+export interface User {
+  renterId?: number;
+  fullName?: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  status?: string;
+  blacklisted?: boolean;
 }

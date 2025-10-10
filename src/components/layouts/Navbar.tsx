@@ -1,29 +1,33 @@
-import React from "react";
+import React, { useContext, useEffect } from "react";
 import logo from "../../images/favicon.png"; // logo trong src/images
 import { useState } from "react";
 import SignUpForm from "../auth/SignUpForm";
 import LoginForm from "../auth/LoginForm";
-import { LoginResponse } from "../../models/AuthModel";
-import { useLoginController } from "../../controller/useLoginController";
+import { FormProvider } from "../../context/FormContext";
+import { UserContext } from "../../context/UserContext";
+import { useUserProfile } from "../../hooks/useUserProfile";
 
 
 
 const Navbar: React.FC = () => {
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
-  const [loading, setLoading] = useState(false);
+  
+  // Sử dụng hook để lấy thông tin user từ API
+  const { user: userProfile, loading: profileLoading } = useUserProfile();
 
+  const userCtx = useContext(UserContext)
+  if (userCtx === null) return null;
+  const { logout } = userCtx
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    alert("Đã đăng xuất!");
-  };
-
-
-  const {res} = useLoginController();
-
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsLoggedIn(true)
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, [userProfile])
 
 
 
@@ -32,7 +36,7 @@ const Navbar: React.FC = () => {
       <nav className="navbar navbar-expand-lg bg-white border-bottom px-4">
         <div className="container-fluid">
           {/* Logo + Brand */}
-          <a className="navbar-brand d-flex align-items-center" href="#">
+          <button className="navbar-brand d-flex align-items-center btn btn-link p-0" type="button">
             <img
               src={logo}
               alt="EV Station"
@@ -40,7 +44,7 @@ const Navbar: React.FC = () => {
               className="me-3"
             />
             <span className="fw-bold text-primary fs-1">EV Station</span>
-          </a>
+          </button>
 
           {/* Toggle button (mobile) */}
           <button
@@ -60,54 +64,63 @@ const Navbar: React.FC = () => {
                 <>
                   <li className="nav-item mx-3">
                     <button
+                      type="button"
                       className="btn btn-outline-primary px-4"
                       data-bs-toggle="modal"
                       data-bs-target="#loginForm"
                     >
                       Đăng nhập
                     </button>
-                    <LoginForm />
                   </li>
                   <li className="nav-item">
                     <button
+                      type="button"
                       className="btn btn-primary rounded-pill shadow w-100 px-4 py-2"
                       data-bs-toggle="modal"
                       data-bs-target="#signUpForm"
                     >
                       Đăng ký miễn phí
                     </button>
-                    <SignUpForm />
                   </li>
                 </>
               ) : (
                 // Nếu đã đăng nhập
                 <>
                   <li className="nav-item dropdown">
-                    <a
-                      className="nav-link dropdown-toggle fw-bold"
-                      href="#"
+                    <button
+                      className="nav-link dropdown-toggle fw-bold btn btn-link"
                       id="userMenu"
-                      role="button"
                       data-bs-toggle="dropdown"
+                      type="button"
                     >
-                      Xin chào, Harry
-                    </a>
+                      Xin chào, {userProfile?.fullName || userProfile?.email || "Guest"}
+                    </button>
                     <ul className="dropdown-menu dropdown-menu-end">
                       <li>
-                        <a className="dropdown-item" href="#">
+                        <button className="dropdown-item" type="button">
                           Lịch sử thuê xe
-                        </a>
+                        </button>
                       </li>
                       <li>
-                        <a className="dropdown-item" href="#">
+                        <button 
+                          className="dropdown-item" 
+                          type="button"
+                          onClick={() => window.location.href = '/kyc-verification'}
+                        >
+                          <i className="fas fa-id-card me-2"></i>
+                          Xác thực danh tính
+                        </button>
+                      </li>
+                      <li>
+                        <button className="dropdown-item" type="button">
                           Tài khoản của tôi
-                        </a>
+                        </button>
                       </li>
                       <li>
                         <hr className="dropdown-divider" />
                       </li>
                       <li>
-                        <button className="dropdown-item text-danger" onClick={handleLogout}>
+                        <button className="dropdown-item text-danger" onClick={logout}>
                           Đăng xuất
                         </button>
                       </li>
@@ -121,7 +134,11 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Modal */}
+      {/* Modals mount ở root để tránh mount/unmount nhiều lần */}
+      <FormProvider>
+        <LoginForm />
+      </FormProvider>
+      <SignUpForm />
 
 
     </>

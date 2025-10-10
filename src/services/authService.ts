@@ -1,38 +1,27 @@
-import  * as models from "../models/AuthModel";
-import axios from "axios";
+import * as models from "../models/AuthModel";
+import { api } from "./apiClient";
 
-// SignUpRequest sign =new SignUpRequest();
-
-const baseURL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
-
+// Đăng ký
 export const signUpApi = async (data: models.SignUpRequest) => {
-  const response = await axios
-    .post(`${baseURL}/register`, data)
-    .then((res) => {
-      return res.data;
-    })
-    .catch((err) => err.response.data);
-  return response.data;
+  return await api.post("/api/auth/register", data);
 };
 
+// Đăng nhập
 export const loginApi = async (data: models.LoginRequest) => {
-  try {
-    const res = await axios.post(`${baseURL}/login`, data);
-    return res.data;
-  } catch (err: any) {
-    return err.response?.data;
-  }
+  return await api.post("/api/auth/login", data);
 };
 
+// Đăng nhập Google
 export const loginWithGoogle = async (token: string) => {
-  try {
-    const res = await axios.post(`${baseURL}/login/google`, { token });
-    return res.data;
-  } catch (err: any) {
-    return err.response?.data;
-  }
+  return await api.post("/api/auth/google/login", { token });
 };
 
-export const getUserByID = (userID: number) => {
+// Verify KYC
+export const verifyKyc = async (payload: any) => {
+  return await api.post("/api/auth/verify", payload);
+};
 
-}
+// Lấy thông tin user
+export const getUserByID = async (userID: number) => {
+  return await api.get(`/api/users/${userID}`);
+};

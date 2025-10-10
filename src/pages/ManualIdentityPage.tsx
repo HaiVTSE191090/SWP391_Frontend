@@ -12,7 +12,7 @@ export default function ManualIdentityPage() {
       {mode === "ocr" ? (
         <OcrIdentityForm onSwitchToManual={() => setMode("manual")} />
       ) : (
-        <ManualIdentityForm />
+        <ManualIdentityForm onSwitchToOcr={() => setMode("ocr")} />
       )}
     </div>
   );

@@ -15,19 +15,19 @@ const SignUp: React.FC = () => {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
 
-        const data: SignUpRequest = {
-            phone, displayName, password, confirmPassword
-        };
+        // const data: SignUpRequest = {
+        //     phone, displayName, password
+        // };
 
-        const obj = await signUpApi(data);
+        // const obj = await signUpApi(data);
 
-        if (obj.error) {
-            setMessage(obj.message || "Đăng ký thành công!");
-            setError("");
-        } else {
-            setError(obj.message || "Đăng ký thất bại!");
-            setMessage("");
-        }
+        // if (obj.error) {
+        //     setMessage(obj.message || "Đăng ký thành công!");
+        //     setError("");
+        // } else {
+        //     setError(obj.message || "Đăng ký thất bại!");
+        //     setMessage("");
+        // }
     };
 
     return (

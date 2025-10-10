@@ -1,15 +1,44 @@
-import React from "react";
+import React, { useContext } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
-import { useLoginController } from "../../controller/useLoginController";
-import { LoginResponse } from "../../models/AuthModel";
-import { useNavigate } from "react-router-dom";
-
+import { LoginRequest } from "../../models/AuthModel";
+import { UserContext } from "../../context/UserContext";
+import { FormContext } from "../../context/FormContext";
+import { useAuth } from "../../hooks/useAuth";
+import { useModal } from "../../hooks/useModal";
 
 const LoginForm: React.FC = () => {
+    // Sử dụng custom hook cho API logic
+    const { loading, error, message, executeLogin, executeGoogleLogin } = useAuth();
+    const { closeModalAndReload } = useModal();
 
-    const navigate = useNavigate();
+    const userCtx = useContext(UserContext);
+    if (!userCtx) return null;
+    const { setUserData } = userCtx;
 
-    const { form, loading, error, message, res, setRes, handleChange, handleSubmit, handleLoginWithGoogle, } = useLoginController();
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const formCtx = useContext(FormContext);
+    if (!formCtx) return null;
+    const { formData, handleChange, resetForm } = formCtx;
+
+    const createLoginRequest = (): LoginRequest => {
+        return {
+            email: formData.email || "",
+            password: formData.password || "",
+        };
+    };
+
+    // Hàm xử lý login bằng tài khoản hệ thống
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const loginData = createLoginRequest();
+        const response = await executeLogin(loginData);
+        if (response) {
+            setUserData(response);
+            resetForm();
+            closeModalAndReload('loginForm');
+        }
+        // Error đã được xử lý trong hook và hiển thị qua state
+    };
 
     return (
         <div
@@ -36,17 +65,17 @@ const LoginForm: React.FC = () => {
                     <div className="modal-body">
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
-                                <label htmlFor="phone" className="form-label">
+                                <label htmlFor="email" className="form-label">
                                     Số điện thoại
                                 </label>
                                 <input
-                                    id="phone"
-                                    name="phone"
+                                    id="email"
+                                    name="email"
                                     type="text"
                                     className="form-control"
-                                    value={form.phone}
+                                    value={formData.email || ""}
                                     onChange={handleChange}
-                                    placeholder="Nhập số điện thoại"
+                                    placeholder="Nhập Email"
                                 />
                             </div>
 
@@ -59,7 +88,7 @@ const LoginForm: React.FC = () => {
                                     name="password"
                                     type="password"
                                     className="form-control"
-                                    value={form.password}
+                                    value={formData.password || ""}
                                     onChange={handleChange}
                                     placeholder="Nhập mật khẩu"
                                 />
@@ -79,16 +108,24 @@ const LoginForm: React.FC = () => {
                             </div>
 
                             <div className="d-grid">
-                                <GoogleOAuthProvider clientId={process.env.REACT_APP_CLIENT_ID!}>
+                                <GoogleOAuthProvider
+                                    clientId={process.env.REACT_APP_CLIENT_ID!}
+                                >
                                     <GoogleLogin
                                         onSuccess={async (credentialRes: any) => {
-                                            const data: LoginResponse = await handleLoginWithGoogle(credentialRes.credential);
-                                            setRes(data);
-                                            navigate(-1);
+                                            const response = await executeGoogleLogin(
+                                                credentialRes.credential
+                                            );
+                                            if (response) {
+                                                setUserData(response);
+                                                resetForm();
+                                                closeModalAndReload('loginForm');
+                                            }
                                         }}
-                                        onError={() => console.log("Login Failed")}
+                                        onError={() => {
+                                            console.log("Google Login Failed");
+                                        }}
                                     />
-
                                 </GoogleOAuthProvider>
                             </div>
                         </form>
