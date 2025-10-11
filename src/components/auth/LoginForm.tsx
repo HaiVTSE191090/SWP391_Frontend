@@ -5,6 +5,7 @@ import { UserContext } from "../../context/UserContext";
 import { FormContext } from "../../context/FormContext";
 import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
+import { jwtDecode } from "jwt-decode";
 
 const LoginForm: React.FC = () => {
     // Sử dụng custom hook cho API logic
@@ -31,6 +32,7 @@ const LoginForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const loginData = createLoginRequest();
+        console.log(loginData);
         const response = await executeLogin(loginData);
         if (response) {
             setUserData(response);
@@ -66,7 +68,7 @@ const LoginForm: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
                                 <label htmlFor="email" className="form-label">
-                                    Số điện thoại
+                                    email:
                                 </label>
                                 <input
                                     id="email"
@@ -123,9 +125,9 @@ const LoginForm: React.FC = () => {
                                 >
                                     <GoogleLogin
                                         onSuccess={async (credentialRes: any) => {
-                                            const response = await executeGoogleLogin(
-                                                credentialRes.credential
-                                            );
+                                            console.log(jwtDecode(credentialRes.credential))
+                                            
+                                            const response = await executeGoogleLogin(credentialRes.credential);
                                             if (response) {
                                                 setUserData(response);
                                                 resetForm();

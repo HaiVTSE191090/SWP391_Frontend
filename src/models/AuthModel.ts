@@ -5,6 +5,13 @@ export interface SignUpRequest {
   phoneNumber: string;
 }
 
+export interface SignUpResponse {
+  renterId: number;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -42,3 +49,7 @@ export interface User {
   status?: string;
   blacklisted?: boolean;
 }
+
+// Register response typing
+export type RegisterErrorData = string | Record<string, string>;
+export type RegisterResponse = ApiResponse<SignUpResponse | RegisterErrorData>;

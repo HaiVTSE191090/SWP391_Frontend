@@ -45,9 +45,6 @@ export const useModal = (): UseModalReturn => {
     }
   }, []);
 
-  /**
-   * Chỉ reload trang
-   */
   const reloadPage = useCallback(() => {
     window.location.reload();
   }, []);

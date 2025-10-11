@@ -140,8 +140,8 @@ const Navbar: React.FC = () => {
       {/* Modals mount ở root để tránh mount/unmount nhiều lần */}
       <FormProvider>
         <LoginForm />
+        <SignUpForm />
       </FormProvider>
-      <SignUpForm />
 
 
     </>
