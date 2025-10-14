@@ -17,7 +17,6 @@ interface UserContextType {
     logout: () => void;
     clearError: () => void;
     clearFieldErrors: () => void;
-    setUserData: (response: model.LoginSuccessData) => void;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);
@@ -59,7 +58,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         try {
             const res = await authService.loginApi(data);
             const successData = res.data;
-            const token = successData.token;
+            const token = successData.data.token;
 
             setToken(token);
             setMessage("Đăng nhập thành công!");
@@ -67,15 +66,15 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
             let decoded: any = {};
             try {
-                decoded = jwtDecode<any>(token);
+                decoded = jwtDecode(token);
             } catch (jwtErr: any) {
                 console.log("JWT Decode error:", jwtErr?.message || jwtErr);
             }
 
             const userObj = {
-                email: decoded?.email || decoded?.sub || successData.email,
-                fullName: decoded?.fullName,
-                kycStatus: successData.kycStatus
+                email: decoded?.email || decoded?.sub || successData.data.email,
+                fullName: successData.data.fullName,
+                kycStatus: successData.data.kycStatus
             };
 
             setUser(userObj);

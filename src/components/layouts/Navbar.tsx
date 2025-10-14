@@ -1,6 +1,5 @@
-import React, { useContext, useEffect } from "react";
+import React, { use, useContext, useEffect } from "react";
 import logo from "../../images/favicon.png"; // logo trong src/images
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SignUpForm from "../auth/SignUpForm";
 import LoginForm from "../auth/LoginForm";
@@ -10,31 +9,37 @@ import { UserContext } from "../../context/UserContext";
 
 
 const Navbar: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
-  
-  const userCtx = useContext(UserContext)
-  if (userCtx === null) return null;
-  const { logout, user } = userCtx
-  
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const userCtx = useContext(UserContext);
+
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setIsLoggedIn(true)
-    } else {
-      setIsLoggedIn(false);
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        console.log(JSON.parse(userData));
+        console.log(user);
+      } catch (error) {
+        console.log("Invalid user data in localStorage, logging out.");
+        if (userCtx) {
+          userCtx.logout();
+        }
+      }
     }
-  }, [user])
+  }, []);
 
 
+  if (userCtx === null) {
+    return null;
+  }
+
+  const { logout, user } = userCtx;
 
 
   return (
     <>
       <nav className="navbar navbar-expand-lg bg-white border-bottom px-4">
         <div className="container-fluid">
-          {/* Logo + Brand */}
+          {/* Logo và tên trang */}
           <button className="navbar-brand d-flex align-items-center btn btn-link p-0" type="button" onClick={() => navigate("/")} >
             <img
               src={logo}
@@ -59,7 +64,7 @@ const Navbar: React.FC = () => {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
               {/* Nếu chưa đăng nhập */}
-              {!isLoggedIn ? (
+              {!user ? (
                 <>
                   <li className="nav-item mx-3">
                     <button
@@ -115,8 +120,8 @@ const Navbar: React.FC = () => {
                     </li>
 
                     <li className="nav-item">
-                      <button 
-                        className="btn btn-link text-danger text-decoration-none" 
+                      <button
+                        className="btn btn-link text-danger text-decoration-none"
                         onClick={() => {
                           logout();
                           navigate("/");

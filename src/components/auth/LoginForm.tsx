@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { LoginRequest } from "../../models/AuthModel";
 import { UserContext } from "../../context/UserContext";
@@ -8,11 +8,12 @@ import FieldError from "../common/FieldError";
 
 const LoginForm: React.FC = () => {
     const { closeModalAndReload } = useModal();
+    const [showPassword, setShowPassword] = useState(false);
 
     const userCtx = useContext(UserContext);
     const formCtx = useContext(FormContext);
     const { closeModal } = useModal();
-    
+
 
     if (!userCtx) return null;
     const { login, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
@@ -41,7 +42,7 @@ const LoginForm: React.FC = () => {
             closeModal('loginForm');
         } catch {
             console.error("Login failed due to an unexpected error");
-         }
+        }
     };
 
     return (
@@ -91,13 +92,20 @@ const LoginForm: React.FC = () => {
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? 'text' : 'password'}
                                     className={`form-control ${userFieldErrors.password ? 'is-invalid' : ''}`}
                                     value={formData.password || ""}
                                     onChange={handleChange}
                                     placeholder="Nhập mật khẩu"
                                 />
                                 <FieldError fieldName="password" />
+                                <button
+                                    className="btn btn-outline-secondary mt-4"
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? "Ẩn": "Hiện"}
+                                </button>
                             </div>
 
 
