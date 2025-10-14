@@ -6,7 +6,6 @@ import SignUpForm from "../auth/SignUpForm";
 import LoginForm from "../auth/LoginForm";
 import { FormProvider } from "../../context/FormContext";
 import { UserContext } from "../../context/UserContext";
-import { useUserProfile } from "../../hooks/useUserProfile";
 
 
 
@@ -14,11 +13,9 @@ const Navbar: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  // Sử dụng hook để lấy thông tin user từ API
-  const { user: userProfile, loading: profileLoading } = useUserProfile();
   const userCtx = useContext(UserContext)
   if (userCtx === null) return null;
-  const { logout } = userCtx
+  const { logout, user } = userCtx
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -28,7 +25,7 @@ const Navbar: React.FC = () => {
     } else {
       setIsLoggedIn(false);
     }
-  }, [userProfile])
+  }, [user])
 
 
 
@@ -90,7 +87,7 @@ const Navbar: React.FC = () => {
                   <ul className="navbar-nav ms-auto d-flex align-items-center gap-3">
                     <li className="nav-item">
                       <span className="fw-bold">
-                        Xin chào, {userProfile?.fullName || userProfile?.email || "Guest"}
+                        Xin chào, {user?.fullName || user?.email || "Guest"}
                       </span>
                     </li>
 

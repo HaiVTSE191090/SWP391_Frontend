@@ -3,6 +3,7 @@ export interface SignUpRequest {
   email: string;
   password: string;
   phoneNumber: string;
+  confirmPassword: string;
 }
 
 export interface SignUpResponse {
@@ -17,21 +18,25 @@ export interface LoginRequest {
   password: string;
 }
 
-// Response format từ backend
+export interface GoogleLoginRequest {
+  token: string;
+  email?: string;
+  fullName?: string;
+  phoneNumber?: string;
+}
+
 export interface ApiResponse<T> {
   status: "success" | "error";
   code: number;
   data: T;
 }
 
-// Success response
 export interface LoginSuccessData {
   token: string;
   email: string;
   kycStatus: string;
 }
 
-// Error response có thể là string hoặc object
 export type LoginErrorData = string | {
   email?: string;
   password?: string;
@@ -50,6 +55,5 @@ export interface User {
   blacklisted?: boolean;
 }
 
-// Register response typing
 export type RegisterErrorData = string | Record<string, string>;
 export type RegisterResponse = ApiResponse<SignUpResponse | RegisterErrorData>;

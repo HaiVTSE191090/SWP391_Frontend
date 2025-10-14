@@ -1,15 +1,20 @@
-import React, { useState } from "react";
-import { useUserProfile } from "../../hooks/useUserProfile";
+import React, { useContext, useState } from "react";
 import OcrIdentityForm from "../indentity/OcrForm";
 import ManualIdentityForm from "../indentity/ManualIdentityForm";
+import { UserContext } from "../../context/UserContext";
 
 type KycStatus = 'VERIFIED' | 'PENDING_VERIFICATION' | 'NEED_UPLOAD';
 
 const KycVerification: React.FC = () => {
-  const { user, loading, refetch } = useUserProfile();
+
+  const userCtx = useContext(UserContext);
   const [showManualForm, setShowManualForm] = useState(false);
 
-  // Nếu đang loading hoặc chưa có user data
+  if (!userCtx) {
+    console.error("UserContext is not available");
+    return null; 
+  }
+  const {user, loading} = userCtx ;
   if (loading) {
     return (
       <div className="container my-4">
@@ -87,7 +92,7 @@ const KycVerification: React.FC = () => {
             <div className="mt-3">
               <button 
                 className="btn btn-outline-primary"
-                onClick={() => refetch()}
+                onClick={() => window.location.reload}
               >
                 <i className="fas fa-sync-alt me-1"></i>
                 Kiểm tra lại trạng thái

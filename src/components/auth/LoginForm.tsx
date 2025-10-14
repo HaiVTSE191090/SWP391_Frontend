@@ -3,18 +3,14 @@ import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { LoginRequest } from "../../models/AuthModel";
 import { UserContext } from "../../context/UserContext";
 import { FormContext } from "../../context/FormContext";
-import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
-import { jwtDecode } from "jwt-decode";
 
 const LoginForm: React.FC = () => {
-    // Sử dụng custom hook cho API logic
-    const { loading, error, message, executeLogin, executeGoogleLogin } = useAuth();
     const { closeModalAndReload } = useModal();
 
     const userCtx = useContext(UserContext);
     if (!userCtx) return null;
-    const { setUserData } = userCtx;
+    const { login, loginWithGoogle, loading, error, message, clearError } = userCtx;
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const formCtx = useContext(FormContext);
@@ -28,18 +24,21 @@ const LoginForm: React.FC = () => {
         };
     };
 
-    // Hàm xử lý login bằng tài khoản hệ thống
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        clearError();
         const loginData = createLoginRequest();
-        console.log(loginData);
-        const response = await executeLogin(loginData);
-        if (response) {
-            setUserData(response);
+        try {
+            const ok = await login(loginData);
+            if (!ok) {
+                console.error("Login failed");
+                return
+            };
             resetForm();
             closeModalAndReload('loginForm');
-        }
-        // Error đã được xử lý trong hook và hiển thị qua state
+        } catch {
+            console.error("Login failed due to an unexpected error");
+         }
     };
 
     return (
@@ -125,17 +124,20 @@ const LoginForm: React.FC = () => {
                                 >
                                     <GoogleLogin
                                         onSuccess={async (credentialRes: any) => {
-                                            console.log(jwtDecode(credentialRes.credential))
-                                            
-                                            const response = await executeGoogleLogin(credentialRes.credential);
-                                            if (response) {
-                                                setUserData(response);
+                                            clearError();
+                                            try {
+                                                const ok = await loginWithGoogle(credentialRes.credential);
+                                                if (!ok) {
+                                                    console.error("Login with Google failed");
+                                                    return;
+                                                }
                                                 resetForm();
                                                 closeModalAndReload('loginForm');
-                                            }
+                                            } catch { }
                                         }}
                                         onError={() => {
-                                            console.log("Google Login Failed");
+                                            // surface via context if needed
+                                            // no-op to avoid overriding existing errors
                                         }}
                                     />
                                 </GoogleOAuthProvider>
