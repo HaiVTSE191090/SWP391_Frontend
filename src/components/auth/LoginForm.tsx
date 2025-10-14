@@ -4,16 +4,19 @@ import { LoginRequest } from "../../models/AuthModel";
 import { UserContext } from "../../context/UserContext";
 import { FormContext } from "../../context/FormContext";
 import { useModal } from "../../hooks/useModal";
+import FieldError from "../common/FieldError";
 
 const LoginForm: React.FC = () => {
     const { closeModalAndReload } = useModal();
 
     const userCtx = useContext(UserContext);
-    if (!userCtx) return null;
-    const { login, loginWithGoogle, loading, error, message, clearError } = userCtx;
-
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const formCtx = useContext(FormContext);
+    const { closeModal } = useModal();
+    
+
+    if (!userCtx) return null;
+    const { login, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
+
     if (!formCtx) return null;
     const { formData, handleChange, resetForm } = formCtx;
 
@@ -35,7 +38,7 @@ const LoginForm: React.FC = () => {
                 return
             };
             resetForm();
-            closeModalAndReload('loginForm');
+            closeModal('loginForm');
         } catch {
             console.error("Login failed due to an unexpected error");
          }
@@ -73,11 +76,12 @@ const LoginForm: React.FC = () => {
                                     id="email"
                                     name="email"
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${userFieldErrors.email ? 'is-invalid' : ''}`}
                                     value={formData.email || ""}
                                     onChange={handleChange}
                                     placeholder="Nhập Email"
                                 />
+                                <FieldError fieldName="email" />
                             </div>
 
                             <div className="mb-3">
@@ -88,11 +92,12 @@ const LoginForm: React.FC = () => {
                                     id="password"
                                     name="password"
                                     type="password"
-                                    className="form-control"
+                                    className={`form-control ${userFieldErrors.password ? 'is-invalid' : ''}`}
                                     value={formData.password || ""}
                                     onChange={handleChange}
                                     placeholder="Nhập mật khẩu"
                                 />
+                                <FieldError fieldName="password" />
                             </div>
 
 
@@ -136,8 +141,7 @@ const LoginForm: React.FC = () => {
                                             } catch { }
                                         }}
                                         onError={() => {
-                                            // surface via context if needed
-                                            // no-op to avoid overriding existing errors
+                                            console.error("Login Failed");
                                         }}
                                     />
                                 </GoogleOAuthProvider>

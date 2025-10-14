@@ -47,7 +47,7 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
             
             const result = await verifyKyc(payload);
             
-            if (result.status === "success") {
+            if (result.status === 200 ) {
                 setMessage("Xác thực thành công! Trạng thái tài khoản đã được cập nhật.");
                 
                 // Trigger event để refresh user profile

@@ -10,11 +10,13 @@ interface UserContextType {
     loading: boolean;
     error: string | null;
     message: string | null;
+    fieldErrors: Record<string, string>;
     login: (data: model.LoginRequest) => Promise<boolean>;
     loginWithGoogle: (credential: string) => Promise<boolean>;
     signUp: (data: model.SignUpRequest) => Promise<boolean>;
     logout: () => void;
     clearError: () => void;
+    clearFieldErrors: () => void;
     setUserData: (response: model.LoginSuccessData) => void;
 }
 
@@ -26,12 +28,13 @@ interface UserProviderProps {
     children: ReactNode
 };
 
-export const UserProvider = ({ children } : UserProviderProps) => {
+export const UserProvider = ({ children }: UserProviderProps) => {
     const [user, setUser] = useState<any | null>(null);
     const [token, setToken] = useState<any | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const getToken = localStorage.getItem("token");
@@ -51,44 +54,54 @@ export const UserProvider = ({ children } : UserProviderProps) => {
         setLoading(true);
         setError(null);
         setMessage(null);
+        setFieldErrors({});
+
         try {
-            const res: model.LoginResponse = await authService.loginApi(data);
-            if (res.status === "success") {
-                const successData = res.data as model.LoginSuccessData;
-                setToken(successData.token);
+            const res = await authService.loginApi(data);
+            const successData = res.data;
+            const token = successData.token;
 
-                let decoded: any = {};
-                try {
-                    decoded = jwtDecode<any>(successData.token);
-                } catch {}
+            setToken(token);
+            setMessage("Đăng nhập thành công!");
+            localStorage.setItem("token", token);
 
-                const userObj = {
-                    email: decoded?.email || decoded?.sub || successData.email,
-                    fullName: decoded?.fullName || decoded?.name,
-                    kycStatus: successData.kycStatus
-                };
-
-                setUser(userObj);
-                localStorage.setItem("token", successData.token);
-                localStorage.setItem("user", JSON.stringify(userObj));
-                setMessage("Đăng nhập thành công!");
-                return true;
-            } else {
-                const msg = (res as any)?.data?.password ||(res as any)?.data?.email|| (res as any)?.data|| "Đăng nhập thất bại";
-                setError(msg);
-                return false;
+            let decoded: any = {};
+            try {
+                decoded = jwtDecode<any>(token);
+            } catch (jwtErr: any) {
+                console.log("JWT Decode error:", jwtErr?.message || jwtErr);
             }
+
+            const userObj = {
+                email: decoded?.email || decoded?.sub || successData.email,
+                fullName: decoded?.fullName,
+                kycStatus: successData.kycStatus
+            };
+
+            setUser(userObj);
+            localStorage.setItem("user", JSON.stringify(userObj));
+            window.dispatchEvent(new Event('userLogin'));
+
+            return true; 
+
         } catch (err: any) {
-            console.log(err);
-            const msg = err?.response?.data?.message || err?.message || "Đăng nhập thất bại";
-            setError(msg);
+            const errorData = err?.response?.data;
+            if (errorData?.data && typeof errorData.data === 'object') {
+                setFieldErrors(errorData.data);
+                setError(null);
+            } else {
+                const errorMessage = errorData?.data || "Đăng nhập thất bại, vui lòng thử lại.";
+                setError(errorMessage);
+                setFieldErrors({});
+            }
             return false;
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     const logout = () => {
+
         setToken(null);
         setUser(null);
         localStorage.removeItem("token");
@@ -103,7 +116,7 @@ export const UserProvider = ({ children } : UserProviderProps) => {
         let decoded: any = {};
         try {
             decoded = jwtDecode<any>(response.token);
-        } catch(err: any) {
+        } catch (err: any) {
             console.log("JWT Decode error:", err?.message || err);
         }
 
@@ -126,19 +139,21 @@ export const UserProvider = ({ children } : UserProviderProps) => {
             let decodedGoogle: any = {};
             try {
                 decodedGoogle = jwtDecode<any>(credential);
-            } catch {}
+            } catch { }
 
             const email = decodedGoogle?.email || decodedGoogle?.sub || undefined;
             const fullName = decodedGoogle?.name || decodedGoogle?.fullName || undefined;
-            const phoneNumber = "";
 
-            const res: model.LoginResponse = await authService.loginWithGoogle({
+            // Gửi lên backend giống như login thường
+            const res = await authService.loginWithGoogle({
                 token: credential,
                 email,
                 fullName,
-                phoneNumber
+                phoneNumber: "" // truyền phone từ form
             });
-            if (res.status === "success") {
+
+
+            if (res.status === 200) {
                 const successData = res.data as model.LoginSuccessData;
                 const newToken = successData.token;
                 setToken(newToken);
@@ -146,7 +161,7 @@ export const UserProvider = ({ children } : UserProviderProps) => {
                 let decoded: any = {};
                 try {
                     decoded = jwtDecode<any>(newToken);
-                } catch {}
+                } catch { }
 
                 const userObj = {
                     email: decoded?.email || decoded?.sub || successData.email,
@@ -157,6 +172,7 @@ export const UserProvider = ({ children } : UserProviderProps) => {
                 setUser(userObj);
                 localStorage.setItem("token", newToken);
                 localStorage.setItem("user", JSON.stringify(userObj));
+                window.dispatchEvent(new Event('userLogin'));
                 setMessage("Đăng nhập Google thành công!");
                 return true;
             } else {
@@ -173,22 +189,38 @@ export const UserProvider = ({ children } : UserProviderProps) => {
         }
     }
 
-    const signUp = async (data: model.SignUpRequest): Promise<any> => {
+    const signUp = async (data: model.SignUpRequest): Promise<boolean> => {
         setLoading(true);
         setError(null);
         setMessage(null);
+        setFieldErrors({});
         try {
             const res: any = await authService.signUpApi(data);
             if (res?.status === "success") {
                 setMessage("Đăng ký thành công! Vui lòng đăng nhập.");
                 return true;
+            } else {
+                const errorData = res?.data;
+                if (typeof errorData === 'object' && errorData !== null) {
+                    setFieldErrors(errorData);
+                    setError(null);
+                } else {
+                    setError(errorData || "Đăng ký thất bại");
+                    setFieldErrors({});
+                }
+                return false;
             }
-            const msg = res.data ||res?.data?.email ||res?.data?.password ||res?.data?.confirmPassword|| "Đăng ký thất bại";
-            setError(msg);
-            return false;
         } catch (err: any) {
-            const msg = err?.response?.data?.message || err?.message || "Đăng ký thất bại";
-            setError(msg);
+            const errorData = err?.response?.data;
+            if (errorData?.data && typeof errorData.data === 'object') {
+                // Field-specific errors from catch block
+                setFieldErrors(errorData.data);
+                setError(null);
+            } else {
+                const msg = errorData?.message || err?.message || "Đăng ký thất bại";
+                setError(msg);
+                setFieldErrors({});
+            }
             return false;
         } finally {
             setLoading(false);
@@ -198,22 +230,29 @@ export const UserProvider = ({ children } : UserProviderProps) => {
     const clearError = () => {
         setError(null);
         setMessage(null);
+        setFieldErrors({});
     }
-    
 
-    const value = useMemo(() => ({ 
-        user, 
-        token, 
-        loading, 
-        error, 
-        message, 
-        login, 
-        loginWithGoogle, 
+    const clearFieldErrors = () => {
+        setFieldErrors({});
+    }
+
+
+    const value = useMemo(() => ({
+        user,
+        token,
+        loading,
+        error,
+        message,
+        fieldErrors,
+        login,
+        loginWithGoogle,
         signUp,
-        logout, 
+        logout,
         clearError,
-        setUserData 
-    }), [user, token, loading, error, message])
+        clearFieldErrors,
+        setUserData,
+    }), [user, token, loading, error, message, fieldErrors])
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 
 

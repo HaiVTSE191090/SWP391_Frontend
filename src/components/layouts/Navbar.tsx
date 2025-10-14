@@ -12,11 +12,11 @@ import { UserContext } from "../../context/UserContext";
 const Navbar: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
-
+  
   const userCtx = useContext(UserContext)
   if (userCtx === null) return null;
   const { logout, user } = userCtx
-
+  
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,6 +26,7 @@ const Navbar: React.FC = () => {
       setIsLoggedIn(false);
     }
   }, [user])
+
 
 
 

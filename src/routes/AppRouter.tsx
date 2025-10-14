@@ -21,9 +21,7 @@ const router = createBrowserRouter([
             { index: true, element: <HomePage /> },
 
             { path: "/sign-up", element: <SignUpForm /> },
-
             { path: "/manualIdentity", element: <ManualIdentityPage /> },
-
             { path: "/kyc-verification", element: <KycVerificationPage /> }
 
 

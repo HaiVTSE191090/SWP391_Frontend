@@ -5,14 +5,17 @@ import { FormContext } from "../../context/FormContext";
 import { validateSignUp } from "../../utils/validators";
 import { SignUpRequest } from "../../models/AuthModel";
 import { UserContext } from "../../context/UserContext";
+import FieldError from "../common/FieldError";
 
 const SignUpForm: React.FC = () => {
     const [clientError, setClientError] = useState<string | null>(null);
     const { closeModalAndReload } = useModal();
     const formCtx = useContext(FormContext);
     const userCtx = useContext(UserContext);
+
+
     if (!userCtx) return null;
-    const { signUp, loading, error, message, clearError } = userCtx;
+    const { signUp, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
 
     if (!formCtx) return null;
     const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors } = formCtx;
@@ -39,16 +42,10 @@ const SignUpForm: React.FC = () => {
 
         try {
             const ok = await signUp(payload);
-            if (!ok) {
-                console.log(ok);
-                console.log("Sign up failed");
-                return;
-            };
+            if (!ok) return;
             resetForm();
             closeModalAndReload("signUpForm");
-        } catch {
-            console.log("Sign up error");
-        }
+        } catch { }
     };
 
     return (
@@ -67,6 +64,7 @@ const SignUpForm: React.FC = () => {
                         ></button>
                     </div>
 
+                    {/* Body */}
                     <div className="modal-body">
                         <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
                             <InputField
@@ -74,9 +72,10 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Họ và tên *"
                                 value={formData.fullName || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.fullName}
+                                error={fieldErrors.fullName || userFieldErrors.fullName}
                                 required
                             />
+                            <FieldError fieldName="fullName" />
 
                             <InputField
                                 name="email"
@@ -84,18 +83,20 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Email *"
                                 value={formData.email || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.email}
+                                error={fieldErrors.email || userFieldErrors.email}
                                 required
                             />
+                            <FieldError fieldName="email" />
 
                             <InputField
                                 name="phoneNumber"
                                 placeholder="Số điện thoại *"
                                 value={formData.phoneNumber || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.phoneNumber}
+                                error={fieldErrors.phoneNumber || userFieldErrors.phoneNumber}
                                 required
                             />
+                            <FieldError fieldName="phoneNumber" />
 
                             <InputField
                                 name="password"
@@ -103,9 +104,10 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Mật khẩu *"
                                 value={formData.password || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.password}
+                                error={fieldErrors.password || userFieldErrors.password}
                                 required
                             />
+                            <FieldError fieldName="password" />
 
                             <InputField
                                 name="confirmPassword"
@@ -113,10 +115,11 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Xác nhận mật khẩu *"
                                 value={formData.confirmPassword || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.confirmPassword}
+                                error={fieldErrors.confirmPassword || userFieldErrors.confirmPassword}
                                 required
                             />
-                            
+                            <FieldError fieldName="confirmPassword" />
+
                             <button type="submit" className="btn btn-primary w-100 mt-2" disabled={loading}>
                                 {loading ? (
                                     <div className="spinner-border text-light" role="status">
@@ -132,8 +135,8 @@ const SignUpForm: React.FC = () => {
                     {/* Footer */}
                     <div className="modal-footer border-0 flex-column gap-2">
                         {message && <div className="alert alert-success w-100">{message}</div>}
-                        {(error) && (
-                            <div className="alert alert-danger w-100">{error}</div>
+                        {(clientError || error) && (
+                            <div className="alert alert-danger w-100">{clientError || error}</div>
                         )}
                     </div>
                 </div>

@@ -21,28 +21,28 @@ export const api = {
       params, 
       headers: getAuthHeaders() 
     });
-    return response.data;
+    return response;
   },
 
   post: async (url: string, data?: any) => {
     const response = await apiClient.post(url, data, {
       headers: getAuthHeaders()
     });
-    return response.data;
+    return response;
   },
 
   put: async (url: string, data?: any) => {
     const response = await apiClient.put(url, data, {
       headers: getAuthHeaders()
     });
-    return response.data;
+    return response;
   },
 
   delete: async (url: string) => {
     const response = await apiClient.delete(url, {
       headers: getAuthHeaders()
     });
-    return response.data;
+    return response;
   }
 };
 
