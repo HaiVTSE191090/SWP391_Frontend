@@ -72,7 +72,7 @@ const processSearch = async (
   return location;
 };
 
-// ============= MODAL CONTROLLER =============
+//  MODAL CONTROLLER 
 
 const closeModal = (modalId: string): void => {
   const closeButton = document.getElementById(

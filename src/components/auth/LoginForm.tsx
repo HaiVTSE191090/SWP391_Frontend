@@ -1,22 +1,23 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { LoginRequest } from "../../models/AuthModel";
 import { UserContext } from "../../context/UserContext";
 import { FormContext } from "../../context/FormContext";
-import { useAuth } from "../../hooks/useAuth";
 import { useModal } from "../../hooks/useModal";
+import FieldError from "../common/FieldError";
 
 const LoginForm: React.FC = () => {
-    // Sử dụng custom hook cho API logic
-    const { loading, error, message, executeLogin, executeGoogleLogin } = useAuth();
     const { closeModalAndReload } = useModal();
+    const [showPassword, setShowPassword] = useState(false);
 
     const userCtx = useContext(UserContext);
-    if (!userCtx) return null;
-    const { setUserData } = userCtx;
-
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const formCtx = useContext(FormContext);
+    const { closeModal } = useModal();
+
+
+    if (!userCtx) return null;
+    const { login, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
+
     if (!formCtx) return null;
     const { formData, handleChange, resetForm } = formCtx;
 
@@ -27,17 +28,24 @@ const LoginForm: React.FC = () => {
         };
     };
 
-    // Hàm xử lý login bằng tài khoản hệ thống
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        clearError();
         const loginData = createLoginRequest();
-        const response = await executeLogin(loginData);
-        if (response) {
-            setUserData(response);
+        try {
+            const ok = await login(loginData);
+            if (!ok) {
+                console.error("Login failed");
+                return
+            };
+            setTimeout(() => {
+                closeModal('loginForm');
+
+            }, 2000)
             resetForm();
-            closeModalAndReload('loginForm');
+        } catch {
+            console.error("Login failed due to an unexpected error");
         }
-        // Error đã được xử lý trong hook và hiển thị qua state
     };
 
     return (
@@ -66,17 +74,18 @@ const LoginForm: React.FC = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="mb-3">
                                 <label htmlFor="email" className="form-label">
-                                    Số điện thoại
+                                    email:
                                 </label>
                                 <input
                                     id="email"
                                     name="email"
                                     type="text"
-                                    className="form-control"
+                                    className={`form-control ${userFieldErrors.email ? 'is-invalid' : ''}`}
                                     value={formData.email || ""}
                                     onChange={handleChange}
                                     placeholder="Nhập Email"
                                 />
+                                <FieldError fieldName="email" />
                             </div>
 
                             <div className="mb-3">
@@ -86,12 +95,20 @@ const LoginForm: React.FC = () => {
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
-                                    className="form-control"
+                                    type={showPassword ? 'text' : 'password'}
+                                    className={`form-control ${userFieldErrors.password ? 'is-invalid' : ''}`}
                                     value={formData.password || ""}
                                     onChange={handleChange}
                                     placeholder="Nhập mật khẩu"
                                 />
+                                <FieldError fieldName="password" />
+                                <button
+                                    className="btn btn-outline-secondary mt-4"
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? "Ẩn" : "Hiện"}
+                                </button>
                             </div>
 
 
@@ -123,17 +140,19 @@ const LoginForm: React.FC = () => {
                                 >
                                     <GoogleLogin
                                         onSuccess={async (credentialRes: any) => {
-                                            const response = await executeGoogleLogin(
-                                                credentialRes.credential
-                                            );
-                                            if (response) {
-                                                setUserData(response);
+                                            clearError();
+                                            try {
+                                                const ok = await loginWithGoogle(credentialRes.credential);
+                                                if (!ok) {
+                                                    console.error("Login with Google failed");
+                                                    return;
+                                                }
                                                 resetForm();
                                                 closeModalAndReload('loginForm');
-                                            }
+                                            } catch { }
                                         }}
                                         onError={() => {
-                                            console.log("Google Login Failed");
+                                            console.error("Login Failed");
                                         }}
                                     />
                                 </GoogleOAuthProvider>

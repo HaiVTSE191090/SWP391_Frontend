@@ -7,11 +7,16 @@ import { jwtDecode } from "jwt-decode";
 interface UserContextType {
     user: any | null;
     token: string | null;
-    login: (data: model.LoginRequest) => Promise<void>
-    logout: () => void,
-    loginWithGoogle: (credential: string) => Promise<{success: boolean, message: string}>;
-    setUserData: (response: model.LoginSuccessData) => void;
-
+    loading: boolean;
+    error: string | null;
+    message: string | null;
+    fieldErrors: Record<string, string>;
+    login: (data: model.LoginRequest) => Promise<boolean>;
+    loginWithGoogle: (credential: string) => Promise<boolean>;
+    signUp: (data: model.SignUpRequest) => Promise<boolean>;
+    logout: () => void;
+    clearError: () => void;
+    clearFieldErrors: () => void;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);
@@ -22,12 +27,14 @@ interface UserProviderProps {
     children: ReactNode
 };
 
-export const UserProvider = ({ children } : UserProviderProps) => {
+export const UserProvider = ({ children }: UserProviderProps) => {
     const [user, setUser] = useState<any | null>(null);
     const [token, setToken] = useState<any | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [message, setMessage] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-
-    // Lấy token từ localStorage khi load lại trang
     useEffect(() => {
         const getToken = localStorage.getItem("token");
         const getUser = localStorage.getItem("user");
@@ -42,50 +49,58 @@ export const UserProvider = ({ children } : UserProviderProps) => {
         }
     }, []);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const login = async (data: model.LoginRequest) => {
+    const login = async (data: model.LoginRequest): Promise<boolean> => {
+        setLoading(true);
+        setError(null);
+        setMessage(null);
+        setFieldErrors({});
+
         try {
-            const res: model.LoginResponse = await authService.loginApi(data);
-            if (res.status === "success") {
-                const successData = res.data as model.LoginSuccessData;
-                const newToken = successData.token;
-                setToken(newToken);
+            const res = await authService.loginApi(data);
+            const successData = res.data;
+            const token = successData.data.token;
 
-                let decoded: any = {};
-                try {
-                    decoded = jwtDecode<any>(newToken);
-                } catch {}
+            setToken(token);
+            setMessage("Đăng nhập thành công!");
+            localStorage.setItem("token", token);
+            const userRes = await authService.getProfile(successData.data.token);
 
-                const userObj = {
-                    email: decoded?.email || decoded?.sub || successData.email,
-                    fullName: decoded?.fullName || decoded?.name,
-                    kycStatus: successData.kycStatus
-                };
+            const userObj = {
+                email: successData.data.email,
+                fullName: userRes.data.data.fullName,
+                kycStatus: successData.data.kycStatus
+            };
 
-                setUser(userObj);
-                localStorage.setItem("token", newToken);
-                localStorage.setItem("user", JSON.stringify(userObj));
-                
-                // Trigger event để các hook khác biết user đã login
-                window.dispatchEvent(new Event('userLogin'));
+            setUser(userObj);
+            localStorage.setItem("user", JSON.stringify(userObj));
+            window.dispatchEvent(new Event('userLogin'));
+
+            return true;
+
+        } catch (err: any) {
+            const errorData = err?.response?.data;
+            if (errorData?.data && typeof errorData.data === 'object') {
+                setFieldErrors(errorData.data);
+                setError(null);
             } else {
-                throw new Error("Đăng nhập thất bại");
+                const errorMessage = errorData?.data || "Đăng nhập thất bại, vui lòng thử lại.";
+                setError(errorMessage);
+                setFieldErrors({});
             }
-
-        } catch (error) {
-            console.error(error);
-            throw error; // Re-throw để LoginForm có thể xử lý
+            return false;
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
     const logout = () => {
+
         setToken(null);
         setUser(null);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        
-        // Trigger event để các hook khác biết user đã logout
-        window.dispatchEvent(new Event('userLogout'));
+        setMessage(null);
+        setError(null);
     }
 
     const setUserData = (response: model.LoginSuccessData) => {
@@ -94,7 +109,9 @@ export const UserProvider = ({ children } : UserProviderProps) => {
         let decoded: any = {};
         try {
             decoded = jwtDecode<any>(response.token);
-        } catch {}
+        } catch (err: any) {
+            console.log("JWT Decode error:", err?.message || err);
+        }
 
         const userObj = {
             email: decoded?.email || decoded?.sub || response.email,
@@ -107,10 +124,29 @@ export const UserProvider = ({ children } : UserProviderProps) => {
         localStorage.setItem("user", JSON.stringify(userObj));
     }
 
-    const loginWithGoogle = async (credential: string) => {
+    const loginWithGoogle = async (credential: string): Promise<boolean> => {
+        setLoading(true);
+        setError(null);
+        setMessage(null);
         try {
-            const res: model.LoginResponse = await authService.loginWithGoogle(credential);
-            if (res.status === "success") {
+            let decodedGoogle: any = {};
+            try {
+                decodedGoogle = jwtDecode<any>(credential);
+            } catch { }
+
+            const email = decodedGoogle?.email || decodedGoogle?.sub || undefined;
+            const fullName = decodedGoogle?.name || decodedGoogle?.fullName || undefined;
+
+            // Gửi lên backend giống như login thường
+            const res = await authService.loginWithGoogle({
+                token: credential,
+                email,
+                fullName,
+                phoneNumber: "" // truyền phone từ form
+            });
+
+
+            if (res.status === 200) {
                 const successData = res.data as model.LoginSuccessData;
                 const newToken = successData.token;
                 setToken(newToken);
@@ -118,7 +154,7 @@ export const UserProvider = ({ children } : UserProviderProps) => {
                 let decoded: any = {};
                 try {
                     decoded = jwtDecode<any>(newToken);
-                } catch {}
+                } catch { }
 
                 const userObj = {
                     email: decoded?.email || decoded?.sub || successData.email,
@@ -129,25 +165,88 @@ export const UserProvider = ({ children } : UserProviderProps) => {
                 setUser(userObj);
                 localStorage.setItem("token", newToken);
                 localStorage.setItem("user", JSON.stringify(userObj));
-                
-                // Trigger event để các hook khác biết user đã login
                 window.dispatchEvent(new Event('userLogin'));
-                
-                return { success: true, message: "Đăng nhập Google thành công!" };
+                setMessage("Đăng nhập Google thành công!");
+                return true;
             } else {
-                throw new Error("Đăng nhập Google thất bại");
+                const msg = (res as any)?.data?.message || "Đăng nhập Google thất bại";
+                setError(msg);
+                return false;
             }
-        } catch (error: any) {
-            console.error("Google login error:", error);
-            return { 
-                success: false, 
-                message: error.message || "Đăng nhập Google thất bại!" 
-            };
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || err?.message || "Đăng nhập Google thất bại";
+            setError(msg);
+            return false;
+        } finally {
+            setLoading(false);
         }
     }
-    
 
-    const value = useMemo(() => ({ user, token, login, logout, loginWithGoogle, setUserData }), [login, token, user])
+    const signUp = async (data: model.SignUpRequest): Promise<boolean> => {
+        setLoading(true);
+        setError(null);
+        setMessage(null);
+        setFieldErrors({});
+        try {
+            const res = await authService.signUpApi(data);
+            if (res.status === 201) {
+                setMessage("Đăng ký thành công! Vui lòng đăng nhập.");
+
+                return true;
+            } else {
+                const errorData = res?.data;
+                if (errorData?.data && typeof errorData.data === 'object') {
+                    setFieldErrors(errorData.data);
+                    setError(null);
+                } else {
+                    const errorMessage = errorData?.message || "Đăng ký thất bại";
+                    setError(errorMessage);
+                    setFieldErrors({});
+                }
+                return false;
+            }
+        } catch (err: any) {
+            const errorData = err?.response?.data || err?.data;
+            if (errorData?.data && typeof errorData.data === 'object') {
+                setFieldErrors(errorData.data);
+                setError(null);
+            } else {
+                const errorMessage = errorData?.data || err?.message || "Đăng ký thất bại";
+                setError(errorMessage);
+                setFieldErrors({});
+            }
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const clearError = () => {
+        setError(null);
+        setMessage(null);
+        setFieldErrors({});
+    }
+
+    const clearFieldErrors = () => {
+        setFieldErrors({});
+    }
+
+
+    const value = useMemo(() => ({
+        user,
+        token,
+        loading,
+        error,
+        message,
+        fieldErrors,
+        login,
+        loginWithGoogle,
+        signUp,
+        logout,
+        clearError,
+        clearFieldErrors,
+        setUserData,
+    }), [user, token, loading, error, message, fieldErrors])
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 
 

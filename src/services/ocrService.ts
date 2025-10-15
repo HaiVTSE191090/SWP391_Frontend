@@ -1,4 +1,4 @@
-import { api } from "./apiClient";
+import  api  from "./apiClient";
 
 export async function ocrAPI(file: File) {
   const formData = new FormData();
