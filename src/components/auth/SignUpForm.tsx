@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import InputField from "../common/InputField";
 import { useModal } from "../../hooks/useModal";
 import { FormContext } from "../../context/FormContext";
@@ -9,16 +10,15 @@ import FieldError from "../common/FieldError";
 
 const SignUpForm: React.FC = () => {
     const [clientError, setClientError] = useState<string | null>(null);
-    const { closeModalAndReload } = useModal();
+    const { switchModal, closeModal } = useModal();
     const formCtx = useContext(FormContext);
     const userCtx = useContext(UserContext);
 
-
     if (!userCtx) return null;
-    const { signUp, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
+    const { signUp, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors} = userCtx;
 
     if (!formCtx) return null;
-    const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors } = formCtx;
+    const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors, } = formCtx;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -42,20 +42,26 @@ const SignUpForm: React.FC = () => {
 
         try {
             const ok = await signUp(payload);
-            if (!ok) return;
+            if (!ok) {
+                console.log("Sign up failed");
+                return;
+            }
+            setTimeout(() => {
+                switchModal("signUpForm", "loginForm");
+            }, 2000);
+
             resetForm();
-            closeModalAndReload("signUpForm");
         } catch { }
     };
 
     return (
-        <div id="signUpForm" className="modal fade">
+        <div id="signUpForm" className="modal fade" aria-hidden="true">
             <div className="modal-dialog modal-dialog-centered">
-                <div className="modal-content p-4 shadow-lg">
-
-                    {/* Header */}
+                <div className="modal-content border-0 shadow rounded-4 p-4">
                     <div className="modal-header border-0">
-                        <h5 className="modal-title fw-bold text-primary">Đăng ký tài khoản</h5>
+                        <h4 className="modal-title fw-bold" id="signUpFormLabel">
+                            Đăng ký
+                        </h4>
                         <button
                             type="button"
                             className="btn-close"
@@ -64,7 +70,6 @@ const SignUpForm: React.FC = () => {
                         ></button>
                     </div>
 
-                    {/* Body */}
                     <div className="modal-body">
                         <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
                             <InputField
@@ -115,12 +120,18 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Xác nhận mật khẩu *"
                                 value={formData.confirmPassword || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.confirmPassword || userFieldErrors.confirmPassword}
+                                error={
+                                    fieldErrors.confirmPassword || userFieldErrors.confirmPassword
+                                }
                                 required
                             />
                             <FieldError fieldName="confirmPassword" />
 
-                            <button type="submit" className="btn btn-primary w-100 mt-2" disabled={loading}>
+                            <button
+                                type="submit"
+                                className="btn btn-primary btn-lg rounded-3 w-100 mt-2 fw-semibold"
+                                disabled={loading}
+                            >
                                 {loading ? (
                                     <div className="spinner-border text-light" role="status">
                                         <span className="visually-hidden">Loading...</span>
@@ -129,16 +140,44 @@ const SignUpForm: React.FC = () => {
                                     "Đăng ký"
                                 )}
                             </button>
+
+                            <div className="d-flex align-items-center my-2">
+                                <hr className="flex-grow-1" />
+                                <span className="px-2 text-muted">hoặc</span>
+                                <hr className="flex-grow-1" />
+                            </div>
+
+                            <div className="d-grid">
+                                <GoogleOAuthProvider
+                                    clientId={process.env.REACT_APP_CLIENT_ID!}
+                                >
+                                    <GoogleLogin
+                                        onSuccess={async (credentialRes: any) => {
+                                            clearError();
+                                            try {
+                                                const ok = await loginWithGoogle(
+                                                    credentialRes.credential
+                                                );
+                                                if (!ok) {
+                                                    return;
+                                                }
+                                                resetForm();
+                                                closeModal("signUpForm");
+                                            } catch { }
+                                        }}
+                                        onError={() => {
+                                            console.log("Login Failed");
+                                        }}
+                                    />
+                                </GoogleOAuthProvider>
+                            </div>
                         </form>
                     </div>
 
-                    {/* Footer */}
-                    <div className="modal-footer border-0 flex-column gap-2">
-                        {message && <div className="alert alert-success w-100">{message}</div>}
-                        {(clientError || error) && (
-                            <div className="alert alert-danger w-100">{clientError || error}</div>
-                        )}
-                    </div>
+                    {message && <div className="alert alert-success">{message}</div>}
+                    {(clientError || error) && (
+                        <div className="alert alert-danger">{clientError || error}</div>
+                    )}
                 </div>
             </div>
         </div>

@@ -5,6 +5,7 @@ import Layout from "../components/layouts/Layout";
 import SignUpForm from "../components/auth/SignUpForm";
 import ManualIdentityPage from "../pages/ManualIdentityPage";
 import KycVerificationPage from "../pages/KycVerificationPage";
+import Staff from "../components/StaffInterface/Staff";
 
 // Lazy load các trang (tối ưu bundle)
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -17,12 +18,12 @@ const router = createBrowserRouter([
         path: "/",
         element: (<Layout />),
         children: [
-            // index = route mặc định khi path = "/"
             { index: true, element: <HomePage /> },
 
             { path: "/sign-up", element: <SignUpForm /> },
             { path: "/manualIdentity", element: <ManualIdentityPage /> },
-            { path: "/kyc-verification", element: <KycVerificationPage /> }
+            { path: "/kyc-verification", element: <KycVerificationPage /> },
+            {path: "/staff", element: <Staff /> },
 
 
             // // 404 bắt mọi thứ còn lại

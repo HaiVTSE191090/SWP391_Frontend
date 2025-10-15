@@ -50,7 +50,6 @@ return (
           <span className="fw-bold text-primary fs-1">EV Station</span>
         </button>
 
-        {/* Toggle button (mobile) */}
         <button
           className="navbar-toggler"
           type="button"
@@ -63,7 +62,6 @@ return (
         {/* Menu */}
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
-            {/* Nếu chưa đăng nhập */}
             {!user ? (
               <>
                 <li className="nav-item mx-3">
@@ -88,7 +86,6 @@ return (
                 </li>
               </>
             ) : (
-              // Nếu đã đăng nhập
               <>
                 <ul className="navbar-nav ms-auto d-flex align-items-center gap-3">
                   <li className="nav-item">
@@ -124,6 +121,7 @@ return (
                       className="btn btn-link text-danger text-decoration-none"
                       onClick={() => {
                         logout();
+                        alert("Đăng xuất thành công!");
                         navigate("/");
                       }}
                     >
@@ -140,7 +138,7 @@ return (
       </div>
     </nav>
 
-    {/* Modals mount ở root để tránh mount/unmount nhiều lần */}
+    
     <FormProvider>
       <LoginForm />
       <SignUpForm />
