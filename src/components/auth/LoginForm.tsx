@@ -38,8 +38,11 @@ const LoginForm: React.FC = () => {
                 console.error("Login failed");
                 return
             };
+            setTimeout(() => {
+                closeModal('loginForm');
+
+            }, 2000)
             resetForm();
-            closeModal('loginForm');
         } catch {
             console.error("Login failed due to an unexpected error");
         }
@@ -104,7 +107,7 @@ const LoginForm: React.FC = () => {
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
-                                    {showPassword ? "Ẩn": "Hiện"}
+                                    {showPassword ? "Ẩn" : "Hiện"}
                                 </button>
                             </div>
 

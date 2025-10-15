@@ -1,49 +1,22 @@
+// src/services/api.js
 import axios from "axios";
 
-// Cấu hình base URL từ env
-const baseURL = process.env.REACT_APP_API_URL || "http://localhost:8080";
-
-const apiClient = axios.create({
-  baseURL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL, 
 });
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
-export const api = {
-  get: async (url: string, params?: any) => {
-    const response = await apiClient.get(url, { 
-      params, 
-      headers: getAuthHeaders() 
-    });
-    return response;
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
-
-  post: async (url: string, data?: any) => {
-    const response = await apiClient.post(url, data, {
-      headers: getAuthHeaders()
-    });
-    return response;
-  },
-
-  put: async (url: string, data?: any) => {
-    const response = await apiClient.put(url, data, {
-      headers: getAuthHeaders()
-    });
-    return response;
-  },
-
-  delete: async (url: string) => {
-    const response = await apiClient.delete(url, {
-      headers: getAuthHeaders()
-    });
-    return response;
+  (error) => {
+    console.error("Request error:", error);
+    return Promise.reject(error);
   }
-};
+);
 
-export default apiClient;
+export default api;

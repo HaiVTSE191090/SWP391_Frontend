@@ -63,17 +63,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             setToken(token);
             setMessage("Đăng nhập thành công!");
             localStorage.setItem("token", token);
-
-            let decoded: any = {};
-            try {
-                decoded = jwtDecode(token);
-            } catch (jwtErr: any) {
-                console.log("JWT Decode error:", jwtErr?.message || jwtErr);
-            }
+            const userRes = await authService.getProfile(successData.data.token);
 
             const userObj = {
-                email: decoded?.email || decoded?.sub || successData.data.email,
-                fullName: successData.data.fullName,
+                email: successData.data.email,
+                fullName: userRes.data.data.fullName,
                 kycStatus: successData.data.kycStatus
             };
 

@@ -1,4 +1,4 @@
-import { api } from "./apiClient";
+import  api  from "./apiClient";
 
 export interface StationResponseDTO {
   stationId: number;
@@ -15,7 +15,7 @@ export interface StationResponseDTO {
 
 export const getStations = async (lat: number, lng: number) => {
   // GET /api/stations?lat=..&lng=..
-  return await api.get("/api/stations", { lat, lng });
+  return await api.get(`/api/stations/${lat}/${lng}`);
 };
 
 export const getAllStations = async () => {
