@@ -75,7 +75,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             localStorage.setItem("user", JSON.stringify(userObj));
             window.dispatchEvent(new Event('userLogin'));
 
-            return true; 
+            return true;
 
         } catch (err: any) {
             const errorData = err?.response?.data;
@@ -188,37 +188,38 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setMessage(null);
         setFieldErrors({});
         try {
-            const res: any = await authService.signUpApi(data);
-            if (res?.status === "success") {
+            const res = await authService.signUpApi(data);
+            if (res.status === 201) {
                 setMessage("Đăng ký thành công! Vui lòng đăng nhập.");
+
                 return true;
             } else {
                 const errorData = res?.data;
-                if (typeof errorData === 'object' && errorData !== null) {
-                    setFieldErrors(errorData);
+                if (errorData?.data && typeof errorData.data === 'object') {
+                    setFieldErrors(errorData.data);
                     setError(null);
                 } else {
-                    setError(errorData || "Đăng ký thất bại");
+                    const errorMessage = errorData?.message || "Đăng ký thất bại";
+                    setError(errorMessage);
                     setFieldErrors({});
                 }
                 return false;
             }
         } catch (err: any) {
-            const errorData = err?.response?.data;
+            const errorData = err?.response?.data || err?.data;
             if (errorData?.data && typeof errorData.data === 'object') {
-                // Field-specific errors from catch block
                 setFieldErrors(errorData.data);
                 setError(null);
             } else {
-                const msg = errorData?.message || err?.message || "Đăng ký thất bại";
-                setError(msg);
+                const errorMessage = errorData?.data || err?.message || "Đăng ký thất bại";
+                setError(errorMessage);
                 setFieldErrors({});
             }
             return false;
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     const clearError = () => {
         setError(null);
