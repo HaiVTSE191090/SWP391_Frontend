@@ -30,7 +30,7 @@ export default function SearchBar({ onSearch }: Props) {
   //Khi nhấn tìm trạm"
   const handleSearchClick = () => {
     if (!navigator.geolocation) {
-      alert("Trình duyệt không hỗ trợ định vị. Hãy nhập địa điểm ở bên dưới danh sách.");
+      alert("Trình duyệt không hỗ trợ định vị. Hãy nhập địa điểm ở bên dưới danh sách trạm.");
       onLocationDenied?.();
       return;
     }

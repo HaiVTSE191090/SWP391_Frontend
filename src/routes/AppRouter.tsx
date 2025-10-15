@@ -6,6 +6,7 @@ import SignUpForm from "../components/auth/SignUpForm";
 import ManualIdentityPage from "../pages/ManualIdentityPage";
 import KycVerificationPage from "../pages/KycVerificationPage";
 import Staff from "../components/StaffInterface/Staff";
+import DepositPage from "../components/XacNhanTraXe/components/DepositPage";
 
 
 // Lazy load các trang (tối ưu bundle)
