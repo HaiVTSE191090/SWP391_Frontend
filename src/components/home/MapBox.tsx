@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { LocationSelection } from "../search/SearchBar";
+import { LocationSelection } from "../../models/SearchModel";
+import LocationModal from "../search/LocationModal"; // 👈 Thêm dòng này
 
 const markers = [
   { name: "Quận 1 - TP.HCM", lat: 10.762622, lng: 106.660172, distance: 0 },
@@ -37,6 +38,10 @@ function Mapbox({ selectedLocation }: Props) {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [sortedMarkers, setSortedMarkers] = useState(markers);
 
+  // 🟢 State để quản lý popup nhập tay
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [manualLocation, setManualLocation] = useState<LocationSelection | null>(null);
+
   // Khi chọn địa điểm mới từ SearchBar
   useEffect(() => {
     if (selectedLocation?.coords) {
@@ -62,6 +67,22 @@ function Mapbox({ selectedLocation }: Props) {
     }
   }, [selectedLocation]);
 
+  // 🟢 Khi user lưu địa điểm thủ công từ popup
+  const handleManualSave = (loc: LocationSelection) => {
+    console.log("Địa điểm nhập tay:", loc);
+    setManualLocation(loc);
+    setShowLocationModal(false);
+
+    // Nếu có toạ độ, zoom map đến đó
+    if (loc.coords) {
+      setViewState({
+        latitude: loc.coords.lat,
+        longitude: loc.coords.lng,
+        zoom: 12,
+      });
+    }
+  };
+
   return (
     <div className="row h-100 shadow rounded overflow-hidden">
       {/* Map bên trái */}
@@ -70,7 +91,7 @@ function Mapbox({ selectedLocation }: Props) {
           {...viewState}
           onMove={(evt) => setViewState(evt.viewState)}
           style={{ width: "100%", height: "100%" }}
-          mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+          mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
         >
           <NavigationControl position="top-left" />
 
@@ -84,16 +105,27 @@ function Mapbox({ selectedLocation }: Props) {
           {/* Marker cố định */}
           {markers.map((m, i) => (
             <Marker key={i} longitude={m.lng} latitude={m.lat} anchor="bottom">
-<div className="fs-2 text-danger">📍</div>
+              <div className="fs-2 text-danger">📍</div>
             </Marker>
           ))}
+
+          {/* Marker nhập tay (nếu có) */}
+          {manualLocation?.coords && (
+            <Marker
+              longitude={manualLocation.coords.lng}
+              latitude={manualLocation.coords.lat}
+              anchor="bottom"
+            >
+              <div className="fs-2 text-warning">⭐</div>
+            </Marker>
+          )}
         </Map>
       </div>
 
       {/* Danh sách bên phải */}
       <div className="col-lg-4 col-md-5 bg-light p-3 overflow-auto h-100 border-start">
         <h5 className="fw-bold mb-3">📌 Danh sách địa điểm</h5>
-        <div className="list-group">
+        <div className="list-group mb-3">
           {sortedMarkers.map((m, i) => (
             <button
               key={i}
@@ -108,12 +140,31 @@ function Mapbox({ selectedLocation }: Props) {
             >
               <span>{m.name}</span>
               {m.distance && (
-                <span className="badge bg-primary rounded-pill">{m.distance.toFixed(1)} km</span>
+                <span className="badge bg-primary rounded-pill">
+                  {m.distance.toFixed(1)} km
+                </span>
               )}
             </button>
           ))}
+
+          {/* 🟢 Field “Nhập địa điểm khác” */}
+          <button
+            className="list-group-item list-group-item-action text-center text-success fw-semibold"
+            onClick={() => setShowLocationModal(true)}
+          >
+            ➕ Nhập địa điểm của bạn
+          </button>
         </div>
       </div>
+
+      {/* 🟢 Popup LocationModal (giống popup đầu tiên của bạn) */}
+      {showLocationModal && (
+        <LocationModal
+          current={manualLocation || { label: "", coords: null }}
+          onSave={handleManualSave}
+          onClose={() => setShowLocationModal(false)}
+        />
+      )}
     </div>
   );
 }

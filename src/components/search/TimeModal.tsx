@@ -61,15 +61,7 @@ export default function TimeModal({ current, onSave }: Props) {
                 >
                   Thuê theo ngày
                 </button>
-              </li>
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${mode === "hour" ? "active" : ""}`}
-                  onClick={() => setMode("hour")}
-                >
-                  Thuê theo giờ
-                </button>
-              </li>
+              </li>             
             </ul>
 
             {/* Bộ chọn ngày/giờ */}

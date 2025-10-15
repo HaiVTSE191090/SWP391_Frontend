@@ -92,3 +92,31 @@ body {
     border-top: 1px solid #3498db;
   }
 }
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-weight: 500;
+  background-color: #fff;
+  transition: all 0.2s ease;
+  user-select: none;
+  min-width: 220px;
+  justify-content: center;
+}
+
+.payment-option:hover {
+  border-color: #007bff;
+  background-color: #f8f9fa;
+}
+
+.payment-option.active {
+  border-color: #e83e8c; /* màu hồng Momo */
+  background-color: #ffe6f1;
+  box-shadow: 0 0 8px rgba(232, 62, 140, 0.3);
+}
+

@@ -4,8 +4,13 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "../components/layouts/Layout";
 import SignUpForm from "../components/auth/SignUpForm";
 import ManualIdentityPage from "../pages/ManualIdentityPage";
+<<<<<<< Updated upstream
 import KycVerificationPage from "../pages/KycVerificationPage";
 import Staff from "../components/StaffInterface/Staff";
+=======
+import DepositPage from "../components/XacNhanTraXe/components/DepositPage";
+
+>>>>>>> Stashed changes
 
 // Lazy load các trang (tối ưu bundle)
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -20,10 +25,19 @@ const router = createBrowserRouter([
         children: [
             { index: true, element: <HomePage /> },
 
+<<<<<<< Updated upstream
             { path: "/sign-up", element: <SignUpForm /> },
             { path: "/manualIdentity", element: <ManualIdentityPage /> },
             { path: "/kyc-verification", element: <KycVerificationPage /> },
             {path: "/staff", element: <Staff /> },
+=======
+            {path: "/sign-up" , element: <SignUpForm/>},
+
+            {path: "/manualIdentity" , element: <ManualIdentityPage/>},
+
+             // 🟢 Route mới cho trang xác nhận & thanh toán
+            { path: "/xac-nhan-dat-xe", element: <DepositPage /> }
+>>>>>>> Stashed changes
 
 
             // // 404 bắt mọi thứ còn lại
