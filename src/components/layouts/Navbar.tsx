@@ -1,4 +1,4 @@
-import React, { use, useContext, useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import logo from "../../images/favicon.png"; // logo trong src/images
 import { useNavigate } from "react-router-dom";
 import SignUpForm from "../auth/SignUpForm";

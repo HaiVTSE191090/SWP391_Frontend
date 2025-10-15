@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { LocationSelection } from "../../models/SearchModel";
-import LocationModal from "../search/LocationModal"; // 👈 Thêm dòng này
+import { LocationSelection } from "../search/SearchBar";
 
 const markers = [
   { name: "Quận 1 - TP.HCM", lat: 10.762622, lng: 106.660172, distance: 0 },

@@ -1,18 +1,12 @@
 // src/components/search/SearchBar.tsx
 import React, { useMemo, useState } from "react";
-import {
-  LocationSelection,
-  TimeSelection,
-  DEFAULT_LOCATION,
-  getDefaultTimeSelection,
-  formatTimeDisplay,
-  getTodayDate,
-} from "../../models/SearchModel";
+import * as searchModel from "../../models/SearchModel";
 import { processSearch } from "../../controller/SearchController";
 import LocationModal from "./LocationModal";
 import TimeModal from "./TimeModal";
 
 type Props = {
+<<<<<<< Updated upstream
   onSearch?: (loc: LocationSelection, time: TimeSelection) => void;
   onLocationDenied?: () => void;
 };
@@ -21,8 +15,16 @@ export default function SearchBar({ onSearch, onLocationDenied }: Props) {
   const [location, setLocation] = useState<LocationSelection>(DEFAULT_LOCATION);
   const [timeSel, setTimeSel] = useState<TimeSelection>(getDefaultTimeSelection());
   const [showLocationModal, setShowLocationModal] = useState(false); // popup nhập tay
+=======
+  onSearch?: (loc: searchModel.LocationSelection, time: searchModel.TimeSelection) => void;
+};
 
-  const displayTime = useMemo(() => formatTimeDisplay(timeSel), [timeSel]);
+export default function SearchBar({ onSearch }: Props) {
+  const [location, setLocation] = useState<searchModel.LocationSelection>(searchModel.DEFAULT_LOCATION);
+  const [timeSel, setTimeSel] = useState<searchModel.TimeSelection>(searchModel.getDefaultTimeSelection());
+>>>>>>> Stashed changes
+
+  const displayTime = useMemo(() => searchModel.formatTimeDisplay(timeSel), [timeSel]);
 
 
   //Khi nhấn tìm trạm"
@@ -84,10 +86,18 @@ export default function SearchBar({ onSearch, onLocationDenied }: Props) {
         </div>
       </div>
 
+<<<<<<< Updated upstream
       {/* POPUPS */}
+=======
+      <LocationModal current={location} onSave={setLocation} />
+>>>>>>> Stashed changes
       <TimeModal current={timeSel} onSave={setTimeSel} />
 
     </section>
   );
 }
+<<<<<<< Updated upstream
 export type { LocationSelection, TimeSelection } from "../../models/SearchModel";
+=======
+
+>>>>>>> Stashed changes

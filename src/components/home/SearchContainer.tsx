@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import SearchBar, { LocationSelection, TimeSelection } from "../search/SearchBar";
+import SearchBar from "../search/SearchBar";
 import Mapbox from "./MapBox";
+import { LocationSelection, TimeSelection } from "../../models/SearchModel";
 
 export default function SearchPage() {
   const [loc, setLoc] = useState<LocationSelection | null>(null);
@@ -14,10 +15,8 @@ export default function SearchPage() {
 
   return (
     <div className="container">
-      {/* Thanh tìm kiếm */}
       <SearchBar onSearch={handleSearch} />
 
-      {/* Bản đồ */}
       <div className="m-4" style={{ height: "50vh", width: "100%" }}>
         <Mapbox selectedLocation={loc} />
       </div>
