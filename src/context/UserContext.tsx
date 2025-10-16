@@ -17,6 +17,8 @@ interface UserContextType {
     logout: () => void;
     clearError: () => void;
     clearFieldErrors: () => void;
+    verifyOTP: (email: string, otpCode: string) => Promise<boolean>;
+    sendOTP: (email: string) => Promise<boolean>;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);
@@ -233,6 +235,48 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setFieldErrors({});
     }
 
+    const verifyOTP = async (email: string, otpCode: string): Promise<boolean> => {
+        setLoading(true);
+        setError(null);
+        try {
+            console.log("Verifying OTP for email:", email, "with code:", otpCode);
+            const response = await authService.verifyOTP(email, otpCode);
+
+            if (response.status === 200) {
+                setMessage("Xác thực OTP thành công!");
+                return true;
+            } 
+            return true;
+        } catch (err: any) {
+            setError(err.response?.data?.message || "Có lỗi xảy ra khi xác thực OTP");
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const sendOTP = async (email: string): Promise<boolean> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await authService.sendOTP(email);
+
+            if (response.status === 200) {
+                setMessage("Đã gửi lại mã OTP!");
+                return true;
+            } else {
+                setError(response.data);
+                return false;
+            }
+        } catch (err: any) {
+            setError(err.response?.data?.message || "Có lỗi xảy ra");
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const value = useMemo(() => ({
         user,
@@ -248,6 +292,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         clearError,
         clearFieldErrors,
         setUserData,
+        verifyOTP,
+        sendOTP,
     }), [user, token, loading, error, message, fieldErrors])
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 

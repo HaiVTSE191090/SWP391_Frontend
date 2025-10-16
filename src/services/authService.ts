@@ -22,8 +22,28 @@ export const verifyKyc = async (payload: any) => {
 
 export const getProfile = async (token: string) => {
   return await axios.get(`${baseURL}/api/renter/profile`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const verifyOTP = async (email: string, otpCode: string) => {
+  return await api.post(`${baseURL}/api/auth/otp-email/verify`, {} ,
+    {
+        params: {
+          email: email,
+          otpCode: otpCode
         },
-    })
+        headers: {
+          "Accept": "*/*"
+        }
+      }
+  );
+};
+
+export const sendOTP = async (email: string) => {
+  return await api.post(`${baseURL}/api/auth/otp-email/send`, {
+    email: email
+  });
 };

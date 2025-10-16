@@ -7,6 +7,7 @@ import { validateSignUp } from "../../utils/validators";
 import { SignUpRequest } from "../../models/AuthModel";
 import { UserContext } from "../../context/UserContext";
 import FieldError from "../common/FieldError";
+import { sendOTP } from "../../services/authService";
 
 const SignUpForm: React.FC = () => {
     const [clientError, setClientError] = useState<string | null>(null);
@@ -15,7 +16,7 @@ const SignUpForm: React.FC = () => {
     const userCtx = useContext(UserContext);
 
     if (!userCtx) return null;
-    const { signUp, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors} = userCtx;
+    const { signUp, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
 
     if (!formCtx) return null;
     const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors, } = formCtx;
@@ -46,12 +47,14 @@ const SignUpForm: React.FC = () => {
                 console.log("Sign up failed");
                 return;
             }
+            sendOTP(formData.email);
             setTimeout(() => {
-                switchModal("signUpForm", "loginForm");
-            }, 2000);
+                switchModal("signUpForm", "otpVerificationModal");
+            }, 1000);
 
-            resetForm();
-        } catch { }
+        } catch {
+            console.log("Sign up error");
+        }
     };
 
     return (
