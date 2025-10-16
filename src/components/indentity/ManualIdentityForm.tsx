@@ -4,16 +4,11 @@ type Props = {
     onSwitchToOcr: () => void;
 };
 
-/**
- * UI-only: Form nhập tay CCCD & GPLX
- * Thuần Bootstrap 5 – chưa có xử lý nghiệp vụ hay gọi API.
- * Bạn có thể gắn handler onSubmit ở bên ngoài nếu cần sau này.
- */
 export default function ManualIdentityForm({ onSwitchToOcr }: Props) {
   return (
     <div className="container my-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="fw-bold mb-0">Nhập tay thông tin CCCD &amp; GPLX</h4>
+        <h4 className="fw-bold mb-0">Nhập tay thông tin CCCD & GPLX</h4>
         <button 
           className="btn btn-outline-primary"
           onClick={onSwitchToOcr}
@@ -23,7 +18,6 @@ export default function ManualIdentityForm({ onSwitchToOcr }: Props) {
         </button>
       </div>
 
-      {/* Khối CCCD */}
       <div className="card mb-4">
         <div className="card-body">
           <h5 className="card-title">Thông tin CCCD</h5>
@@ -34,7 +28,7 @@ export default function ManualIdentityForm({ onSwitchToOcr }: Props) {
               id="soCCCD"
               type="text"
               className="form-control"
-              placeholder="Nhập số CCCD (12 số)"
+              placeholder="Nhập số CCCD"
             />
           </div>
 

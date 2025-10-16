@@ -35,22 +35,20 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
 
     const handleVerifyKyc = async () => {
         if (!ocrData) return alert("Chưa có dữ liệu OCR!");
-        
+
         setVerifying(true);
         setMessage(null);
         try {
-            // Gửi dữ liệu OCR để verify KYC
             const payload = {
                 ocrData: ocrData,
-                documentType: 'CCCD' // hoặc 'GPLX' tùy vào loại giấy tờ
+                documentType: 'CCCD'
             };
-            
+
             const result = await verifyKyc(payload);
-            
-            if (result.status === 200 ) {
+
+            if (result.status === 200) {
                 setMessage("Xác thực thành công! Trạng thái tài khoản đã được cập nhật.");
-                
-                // Trigger event để refresh user profile
+
                 setTimeout(() => {
                     window.dispatchEvent(new Event('userLogin'));
                     window.location.reload();
@@ -90,20 +88,34 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                         )}
                     </div>
 
-                    <button
-                        className="btn btn-primary me-2"
-                        onClick={handleUpload}
-                        disabled={loading}
-                    >
-                        {loading ? "Đang quét..." : "Bắt đầu nhận diện"}
-                    </button>
 
-                    <button
-                        className="btn btn-outline-secondary"
-                        onClick={onSwitchToManual}
-                    >
-                        Nhập tay thay thế
-                    </button>
+                    {loading ?
+                        <>
+                            <div className="">
+                                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                đang tải...
+                            </div>
+                        </>
+                        :
+                        <>
+                            <button
+                                className="btn btn-primary me-2"
+                                onClick={handleUpload}
+                                disabled={loading}>
+                                Bắt đầu nhận diện
+                            </button>
+
+                            <button
+                                className="btn btn-outline-secondary"
+                                onClick={onSwitchToManual}
+                            >
+                                Nhập tay thay thế
+                            </button>
+                        </>
+                    }
+
+
+
                 </div>
             </div>
 
@@ -113,17 +125,96 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                 </div>
             )}
 
-            {ocrData && (
+            {ocrData && ocrData.data && (
                 <div className="card">
                     <div className="card-body">
-                        <h6 className="fw-bold">Kết quả OCR:</h6>
-                        <pre className="bg-light p-2 rounded">
-                            {JSON.stringify(ocrData, null, 2)}
-                        </pre>
-                        
+                        <h5 className="card-title fw-bold mb-4">
+                            <i className="fas fa-id-card me-2 text-primary"></i>
+                            Thông tin định danh
+                        </h5>
+
+                        <div className="row g-3">
+                            {/* Số CCCD */}
+                            <div className="col-md-6">
+                                <div className="border rounded p-3 h-100">
+                                    <label className="text-muted small mb-1">
+                                        <i className="fas fa-fingerprint me-1"></i>
+                                        Số CCCD
+                                    </label>
+                                    <div className="fw-bold fs-5">{ocrData.data[0].id}</div>
+                                    <small className="text-success">
+                                        Độ chính xác: {ocrData.data[0].id_prob}%
+                                    </small>
+                                </div>
+                            </div>
+
+                            {/* Họ và tên */}
+                            <div className="col-md-6">
+                                <div className="border rounded p-3 h-100">
+                                    <label className="text-muted small mb-1">
+                                        <i className="fas fa-user me-1"></i>
+                                        Họ và tên
+                                    </label>
+                                    <div className="fw-bold fs-5">{ocrData.data[0].name}</div>
+                                    <small className="text-success">
+                                        Độ chính xác: {ocrData.data[0].name_prob}%
+                                    </small>
+                                </div>
+                            </div>
+
+                            {/* Ngày sinh */}
+                            <div className="col-md-4">
+                                <div className="border rounded p-3 h-100">
+                                    <label className="text-muted small mb-1">
+                                        <i className="fas fa-birthday-cake me-1"></i>
+                                        Ngày sinh
+                                    </label>
+                                    <div className="fw-bold">{ocrData.data[0].dob}</div>
+                                    <small className="text-success">
+                                        Độ chính xác: {ocrData.data[0].dob_prob}%
+                                    </small>
+                                </div>
+                            </div>
+
+                            {/* Giới tính */}
+                            <div className="col-md-4">
+                                <div className="border rounded p-3 h-100">
+                                    <label className="text-muted small mb-1">
+                                        <i className="fas fa-venus-mars me-1"></i>
+                                        Giới tính
+                                    </label>
+                                    <div className="fw-bold">{ocrData.data[0].sex}</div>
+                                    <small className="text-success">
+                                        Độ chính xác: {ocrData.data[0].sex_prob}%
+                                    </small>
+                                </div>
+                            </div>
+
+                            {/* Quốc tịch */}
+                            <div className="col-md-4">
+                                <div className="border rounded p-3 h-100">
+                                    <label className="text-muted small mb-1">
+                                        <i className="fas fa-flag me-1"></i>
+                                        Quốc tịch
+                                    </label>
+                                    <div className="fw-bold">{ocrData.data[0].nationality}</div>
+                                    <small className="text-success">
+                                        Độ chính xác: {ocrData.data[0].nationality_prob}%
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Overall Score */}
+                        <div className="alert alert-info mt-3 mb-3">
+                            <i className="fas fa-chart-line me-2"></i>
+                            <strong>Điểm tổng thể:</strong> {ocrData.data[0].overall_score}%
+                        </div>
+
+                        {/* Button xác thực */}
                         <div className="mt-3">
                             <button
-                                className="btn btn-success"
+                                className="btn btn-success btn-lg w-100"
                                 onClick={handleVerifyKyc}
                                 disabled={verifying}
                             >
@@ -134,7 +225,7 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                                     </>
                                 ) : (
                                     <>
-                                        <i className="fas fa-check me-2"></i>
+                                        <i className="fas fa-check-circle me-2"></i>
                                         Xác thực danh tính
                                     </>
                                 )}

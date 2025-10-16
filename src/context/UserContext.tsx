@@ -68,7 +68,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
             const userObj = {
                 email: successData.data.email,
                 fullName: userRes.data.data.fullName,
-                kycStatus: successData.data.kycStatus
+                kycStatus: successData.data.kycStatus,
+                renterId: userRes.data.data.renterId,
+                status: userRes.data.data.status
             };
 
             setUser(userObj);

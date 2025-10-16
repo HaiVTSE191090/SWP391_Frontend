@@ -12,9 +12,9 @@ const KycVerification: React.FC = () => {
 
   if (!userCtx) {
     console.error("UserContext is not available");
-    return null; 
+    return null;
   }
-  const {user, loading} = userCtx ;
+  const { user, loading } = userCtx;
   if (loading) {
     return (
       <div className="container my-4">
@@ -30,7 +30,6 @@ const KycVerification: React.FC = () => {
     );
   }
 
-  // Nếu chưa đăng nhập
   if (!user) {
     return (
       <div className="container my-4">
@@ -45,8 +44,7 @@ const KycVerification: React.FC = () => {
 
   const kycStatus: KycStatus = user.kycStatus || 'NEED_UPLOAD';
 
-  // Nếu đã verified
-  if (kycStatus === 'VERIFIED') {
+  if (user.status === 'VERIFIED') {
     return (
       <div className="container my-4">
         <div className="card border-success">
@@ -70,8 +68,7 @@ const KycVerification: React.FC = () => {
     );
   }
 
-  // Nếu đang pending verification
-  if (kycStatus === 'PENDING_VERIFICATION') {
+  if (user.status === 'PENDING_VERIFICATION ') {
     return (
       <div className="container my-4">
         <div className="card border-warning">
@@ -90,7 +87,7 @@ const KycVerification: React.FC = () => {
               </span>
             </div>
             <div className="mt-3">
-              <button 
+              <button
                 className="btn btn-outline-primary"
                 onClick={() => window.location.reload}
               >
@@ -103,8 +100,6 @@ const KycVerification: React.FC = () => {
       </div>
     );
   }
-
-  // Nếu cần verification - hiển thị form OCR
   return (
     <div className="container my-4">
       <div className="card border-info">
@@ -121,7 +116,7 @@ const KycVerification: React.FC = () => {
               Tại sao cần xác thực?
             </h6>
             <p className="mb-0">
-              Để đảm bảo an toàn và tuân thủ quy định, chúng tôi cần xác thực danh tính của bạn 
+              Để đảm bảo an toàn và tuân thủ quy định, chúng tôi cần xác thực danh tính của bạn
               trước khi bạn có thể sử dụng đầy đủ các tính năng thuê xe.
             </p>
           </div>
@@ -133,7 +128,6 @@ const KycVerification: React.FC = () => {
             </span>
           </div>
 
-          {/* Hiển thị form OCR hoặc Manual form */}
           {showManualForm ? (
             <ManualIdentityForm onSwitchToOcr={() => setShowManualForm(false)} />
           ) : (
@@ -143,6 +137,7 @@ const KycVerification: React.FC = () => {
       </div>
     </div>
   );
+
 };
 
 export default KycVerification;
