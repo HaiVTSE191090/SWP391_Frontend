@@ -1,11 +1,14 @@
 import React from "react";
 import AppRouter from "./routes/AppRouter";
 import Mapbox from "./components/mapbox";
+import ListRenter from "./components/StaffInterface/ListRenter";
+
 const App = () => {
   return (
     <>
       {/* <AppRouter /> */}
-      <Mapbox />
+     <Mapbox /> 
+      {/* <ListRenter /> */}
     </>
   );
 };

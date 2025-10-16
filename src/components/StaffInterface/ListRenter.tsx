@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import axios from 'axios';
+import UserDetail from './UserDetail';
 
 // Interface cho dữ liệu Renter
 interface Renter {
@@ -15,6 +16,7 @@ const ListRenter: React.FC = () => {
   const [renters, setRenters] = useState<Renter[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [selectedRenterId, setSelectedRenterId] = useState<string | number | null>(null);
 
   // Mock data để test giao diện - Xóa khi có API thật
   const mockData: Renter[] = [
@@ -76,17 +78,20 @@ const ListRenter: React.FC = () => {
   };
 
   // Handler cho nút Details
-  const handleViewDetails = async (renterId: string | number) => {
-    try {
-      // TODO: Gọi API lấy chi tiết
-      // const response = await axios.get(`YOUR_API_ENDPOINT/renters/${renterId}`);
-      console.log('View details for renter:', renterId);
-      alert(`Xem chi tiết Renter ID: ${renterId}`);
-    } catch (err: any) {
-      console.error('Error fetching details:', err);
-      alert('Có lỗi xảy ra khi lấy chi tiết');
-    }
+  const handleViewDetails = (renterId: string | number) => {
+    setSelectedRenterId(renterId);
   };
+
+  // Handler để quay lại danh sách
+  const handleBack = () => {
+    setSelectedRenterId(null);
+    fetchRenters(); // Refresh lại danh sách
+  };
+
+  // Nếu đang xem chi tiết, hiển thị UserDetail
+  if (selectedRenterId !== null) {
+    return <UserDetail renterId={selectedRenterId} onBack={handleBack} />;
+  }
 
   // Render badge theo trạng thái
   const renderStatusBadge = (status?: string) => {
