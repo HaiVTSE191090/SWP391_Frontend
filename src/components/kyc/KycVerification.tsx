@@ -31,15 +31,55 @@ const KycVerification: React.FC = () => {
   }
 
   if (!user) {
+
     return (
       <div className="container my-4">
-        <div className="card">
-          <div className="card-body text-center">
-            <h5 className="text-muted">Vui lòng đăng nhập để tiếp tục</h5>
+        <div className="card border-info">
+          <div className="card-header bg-info text-white">
+            <h5 className="mb-0 fw-bold">
+              <i className="fas fa-id-card me-2"></i>
+              Xác thực danh tính
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="alert alert-info">
+              <h6 className="alert-heading">
+                <i className="fas fa-info-circle me-1"></i>
+                Tại sao cần xác thực?
+              </h6>
+              <p className="mb-0">
+                Để đảm bảo an toàn và tuân thủ quy định, chúng tôi cần xác thực danh tính của bạn
+                trước khi bạn có thể sử dụng đầy đủ các tính năng thuê xe.
+              </p>
+            </div>
+
+            <div className="text-center mb-4">
+              <span className="badge bg-info fs-6">
+                <i className="fas fa-exclamation-triangle me-1"></i>
+                NEED UPLOAD
+              </span>
+            </div>
+
+            {showManualForm ? (
+              <ManualIdentityForm onSwitchToOcr={() => setShowManualForm(false)} />
+            ) : (
+              <OcrIdentityForm onSwitchToManual={() => setShowManualForm(true)} />
+            )}
           </div>
         </div>
       </div>
     );
+
+
+    // return (
+    //   <div className="container my-4">
+    //     <div className="card">
+    //       <div className="card-body text-center">
+    //         <h5 className="text-muted">Vui lòng đăng nhập để tiếp tục</h5>
+    //       </div>
+    //     </div>
+    //   </div>
+    // );
   }
 
   const kycStatus: KycStatus = user.kycStatus || 'NEED_UPLOAD';
@@ -68,7 +108,7 @@ const KycVerification: React.FC = () => {
     );
   }
 
-  if (user.status === 'PENDING_VERIFICATION ') {
+  if (user.status === 'PENDING_VERIFICATION') {
     return (
       <div className="container my-4">
         <div className="card border-warning">

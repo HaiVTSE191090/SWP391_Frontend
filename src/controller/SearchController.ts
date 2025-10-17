@@ -1,8 +1,6 @@
 import { LocationSelection, GeoPoint } from "../models/SearchModel";
 import axios from "axios";
 
-// GEOCODING SERVICE 
-
 const geocodeAddress = async (address: string): Promise<GeoPoint | null> => {
   const res = await axios
     .get("https://nominatim.openstreetmap.org/search", {
