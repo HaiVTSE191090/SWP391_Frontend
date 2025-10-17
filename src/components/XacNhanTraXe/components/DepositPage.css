@@ -1,0 +1,100 @@
+.deposit-page {
+  max-width: 700px;
+}
+
+.card-custom {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  transition: all 0.3s ease;
+}
+
+.card-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-list li {
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+.info-box {
+  background: #f8fbff; /* nền xanh nhạt */
+  border-left: 6px solid #0d6efd; /* border bên trái màu xanh */
+  border-radius: 10px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* bóng nhẹ */
+  transition: all 0.3s ease;
+}
+
+.info-box:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.info-box h5 {
+  color: #0d6efd;
+  margin-bottom: 16px;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-list li {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.payment-option-modern {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fa;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  min-width: 180px;
+  justify-content: center;
+}
+
+.payment-option-modern:hover {
+  background: #eef1f4;
+}
+
+.payment-option-modern.active {
+  border-color: #0d6efd;
+  background: #e7f0ff;
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.qr-image {
+  border-radius: 12px;
+  margin-top: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
