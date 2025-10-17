@@ -108,7 +108,7 @@ const OTPVerificationModal: React.FC = () => {
             }
 
             closeModal("otpVerificationModal");
-            navigate("/kyc-verification"); // Hoặc dùng navigate nếu dùng react-router
+            navigate("/xac-nhan-cccd-&-gplx"); // Hoặc dùng navigate nếu dùng react-router
             
         } catch (err) {
             setError("Có lỗi xảy ra. Vui lòng thử lại");

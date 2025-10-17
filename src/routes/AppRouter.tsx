@@ -23,7 +23,7 @@ const router = createBrowserRouter([
             { index: true, element: <HomePage /> },
             { path: "/sign-up", element: <SignUpForm /> },
             { path: "/manualIdentity", element: <ManualIdentityPage /> },
-            { path: "/kyc-verification", element: <KycVerificationPage /> },
+            { path: "/xac-nhan-cccd-&-gplx", element: <KycVerificationPage /> },
             {path: "/staff", element: <Staff /> },
              // 🟢 Route mới cho trang xác nhận & thanh toán
             { path: "/xac-nhan-dat-xe", element: <DepositPage /> }

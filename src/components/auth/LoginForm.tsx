@@ -5,6 +5,7 @@ import { UserContext } from "../../context/UserContext";
 import { FormContext } from "../../context/FormContext";
 import { useModal } from "../../hooks/useModal";
 import FieldError from "../common/FieldError";
+import { useNavigate } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
     const { closeModalAndReload } = useModal();
@@ -14,7 +15,7 @@ const LoginForm: React.FC = () => {
     const userCtx = useContext(UserContext);
     const formCtx = useContext(FormContext);
     const { closeModal } = useModal();
-
+    const navigate = useNavigate();
 
     if (!userCtx) return null;
     const { login, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
@@ -41,8 +42,9 @@ const LoginForm: React.FC = () => {
             };
             setTimeout(() => {
                 closeModal('loginForm');
+                navigate("/xac-nhan-cccd-&-gplx");
 
-            }, 2000)
+            }, 1500)
             resetForm();
         } catch {
             console.error("Login failed due to an unexpected error");
