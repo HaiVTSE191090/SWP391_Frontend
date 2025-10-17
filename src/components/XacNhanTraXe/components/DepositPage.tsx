@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Button, Modal, Spinner } from "react-bootstrap";
+import axios from "axios";
+import { Button, Spinner, Alert } from "react-bootstrap";
 import "./DepositPage.css";
 
 interface Booking {
@@ -26,35 +27,36 @@ export default function DepositPage() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loadingBooking, setLoadingBooking] = useState(true);
   const [loadingVehicle, setLoadingVehicle] = useState(true);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [showConfirmBox, setShowConfirmBox] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // 🛰️ Lấy dữ liệu đặt xe từ backend
+  // 🛰️ Lấy dữ liệu đặt xe
   useEffect(() => {
     const fetchBooking = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/bookings/101"); // ví dụ
-        const data = await response.json();
+        const res = await axios.get("http://localhost:8080/api/bookings/101");
+        const data = res.data;
         setBooking(data);
         setLoadingBooking(false);
 
-        // Sau khi có thông tin booking → gọi tiếp để lấy thông tin xe
         if (data.vehicleId) {
           fetchVehicle(data.vehicleId);
         }
       } catch (err) {
         console.error("❌ Lỗi khi tải thông tin đặt xe:", err);
         setLoadingBooking(false);
+        setErrorMsg("Không thể tải thông tin đặt xe.");
       }
     };
 
     const fetchVehicle = async (vehicleId: number) => {
       try {
-        const res = await fetch(`http://localhost:8080/api/vehicles/${vehicleId}`);
-        const vehicleData = await res.json();
-        setVehicle(vehicleData);
+        const res = await axios.get(`http://localhost:8080/api/vehicles/${vehicleId}`);
+        setVehicle(res.data);
       } catch (err) {
         console.error("❌ Lỗi khi tải thông tin xe:", err);
+        setErrorMsg("Không thể tải thông tin xe.");
       } finally {
         setLoadingVehicle(false);
       }
@@ -66,26 +68,21 @@ export default function DepositPage() {
   const handleRedirectToMomo = async () => {
     try {
       setLoading(true);
-
-      const response = await fetch("http://localhost:8080/api/bookings/deposit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookingId: booking?.id,
-          paymentMethod: "momo",
-          amount: booking?.deposit,
-        }),
+      const res = await axios.post("http://localhost:8080/api/bookings/deposit", {
+        bookingId: booking?.id,
+        paymentMethod: "momo",
+        amount: booking?.deposit,
       });
 
-      const data = await response.json();
+      const data = res.data;
       if (data.paymentUrl) {
         window.location.href = data.paymentUrl;
       } else {
-        alert("Không thể tạo liên kết thanh toán.");
+        setErrorMsg("Không thể tạo liên kết thanh toán.");
       }
     } catch (err) {
-      console.error(err);
-      alert("Có lỗi xảy ra khi redirect sang MoMo.");
+      console.error("❌ Lỗi khi redirect sang MoMo:", err);
+      setErrorMsg("Có lỗi xảy ra khi redirect sang MoMo.");
     } finally {
       setLoading(false);
     }
@@ -95,6 +92,8 @@ export default function DepositPage() {
     <div className="container py-5 deposit-page">
       <h2 className="text-center fw-bold mb-5">Xác nhận đặt xe</h2>
 
+      {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
+
       {/* THÔNG TIN ĐẶT XE */}
       <section className="card-custom mb-4 info-box">
         <h5 className="fw-bold mb-3 text-primary">THÔNG TIN ĐẶT XE</h5>
@@ -102,21 +101,10 @@ export default function DepositPage() {
           <p>Đang tải thông tin đặt xe...</p>
         ) : booking ? (
           <ul className="info-list">
-            <li>
-              <strong>Mã đặt xe:</strong> {booking.id}
-            </li>
-            <li>
-              <strong>Thời gian thuê:</strong>{" "}
-              {booking.startTime} - {booking.endTime}
-            </li>
-            <li>
-              <strong>Giá ước tính:</strong>{" "}
-              {booking.estimatedPrice.toLocaleString()} VND
-            </li>
-            <li>
-              <strong>Tiền cọc:</strong>{" "}
-              {booking.deposit.toLocaleString()} VND
-            </li>
+            <li><strong>Mã đặt xe:</strong> {booking.id}</li>
+            <li><strong>Thời gian thuê:</strong> {booking.startTime} - {booking.endTime}</li>
+            <li><strong>Giá ước tính:</strong> {booking.estimatedPrice.toLocaleString()} VND</li>
+            <li><strong>Tiền cọc:</strong> {booking.deposit.toLocaleString()} VND</li>
           </ul>
         ) : (
           <p className="text-muted">Không tìm thấy thông tin đặt xe.</p>
@@ -130,11 +118,7 @@ export default function DepositPage() {
           <p>Đang tải thông tin xe...</p>
         ) : vehicle ? (
           <div className="car-info d-flex align-items-center flex-wrap gap-4">
-            <img
-              src={vehicle.imageUrl}
-              alt={vehicle.name}
-              className="car-image shadow-sm"
-            />
+            <img src={vehicle.imageUrl} alt={vehicle.name} className="car-image shadow-sm" />
             <div className="car-details">
               <p><strong>Tên xe:</strong> {vehicle.name}</p>
               <p><strong>Hãng:</strong> {vehicle.brand}</p>
@@ -158,51 +142,52 @@ export default function DepositPage() {
           className="mb-3"
         />
         <p>Nhấn xác nhận để chuyển đến trang MoMo và thanh toán tiền cọc.</p>
-        <Button
-          variant="success"
-          size="lg"
-          onClick={() => setShowConfirm(true)}
-          className="rounded-pill px-4"
-        >
-          Xác nhận thanh toán
-        </Button>
-      </section>
 
-      {/* Modal xác nhận */}
-      <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Xác nhận thanh toán</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="text-center">
-          <p>
-            Bạn sắp được chuyển hướng sang trang thanh toán của{" "}
-            <strong>MoMo</strong> để thanh toán{" "}
-            <strong>{booking?.deposit?.toLocaleString()} VND</strong>.
-          </p>
-          <p className="text-muted">
-            Vui lòng không tắt trình duyệt trong quá trình xử lý.
-          </p>
-        </Modal.Body>
-        <Modal.Footer className="border-0 justify-content-center">
-          <Button variant="secondary" onClick={() => setShowConfirm(false)}>
-            Hủy
-          </Button>
+        {!showConfirmBox ? (
           <Button
             variant="success"
-            onClick={handleRedirectToMomo}
-            disabled={loading}
-            className="px-4"
+            size="lg"
+            onClick={() => setShowConfirmBox(true)}
+            className="rounded-pill px-4"
           >
-            {loading ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" /> Đang chuyển hướng...
-              </>
-            ) : (
-              "Tiếp tục đến MoMo"
-            )}
+            Xác nhận thanh toán
           </Button>
-        </Modal.Footer>
-      </Modal>
+        ) : (
+          <div className="confirm-box mt-4 p-3 fade-in">
+            <h6 className="fw-bold mb-2">Xác nhận thanh toán</h6>
+            <p>
+              Bạn sắp được chuyển hướng đến trang <strong>MoMo</strong> để thanh toán{" "}
+              <strong>{booking?.deposit?.toLocaleString()} VND</strong>.
+            </p>
+            <p className="text-muted small">
+              ⚠️ Vui lòng không tắt trình duyệt trong quá trình xử lý.
+            </p>
+            <div className="d-flex justify-content-center gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowConfirmBox(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="success"
+                size="sm"
+                onClick={handleRedirectToMomo}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...
+                  </>
+                ) : (
+                  "Tiếp tục đến MoMo"
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
