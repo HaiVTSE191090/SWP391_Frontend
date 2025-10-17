@@ -1,25 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Button, Modal, Spinner } from "react-bootstrap";
 import "./DepositPage.css";
+import { Vehicle } from "../../../models/VehicleModel";
+import { Booking } from "../../../models/BookingModel";
 
-interface Booking {
-  id: number;
-  startTime: string;
-  endTime: string;
-  estimatedPrice: number;
-  deposit: number;
-  vehicleId: number;
-}
 
-interface Vehicle {
-  id: number;
-  name: string;
-  brand: string;
-  plateNumber: string;
-  battery: string;
-  range: string;
-  imageUrl: string;
-}
 
 export default function DepositPage() {
   const [booking, setBooking] = useState<Booking | null>(null);
