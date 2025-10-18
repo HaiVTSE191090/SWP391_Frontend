@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useContext } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import InputField from "../common/InputField";
 import { useModal } from "../../hooks/useModal";
@@ -9,18 +9,23 @@ import { useAuth } from "../../hooks/useAuth";
 import FieldError from "../common/FieldError";
 
 const SignUpForm: React.FC = () => {
-    const [clientError, setClientError] = useState<string | null>(null);
     const { switchModal, closeModal } = useModal();
     const formCtx = useContext(FormContext);
-    const { signUp, loginWithGoogle, sendOTP, loading, error, message, clearError, fieldErrors: userFieldErrors } = useAuth();
+    const { signUp, loginWithGoogle, sendOTP, loading, fieldErrors: userFieldErrors } = useAuth();
+
+    // Clear messages khi component mount (mở modal) - must be before conditional return
+    React.useEffect(() => {
+        if (formCtx) {
+            formCtx.clearMessages();
+        }
+    }, [formCtx]);
 
     if (!formCtx) return null;
-    const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors, } = formCtx;
+    const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors, message, error, setMessage, setError, clearMessages } = formCtx;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setClientError(null);
-        clearError();
+        setError(null);
         clearErrors();
 
         const { fieldErrors: errs } = validateSignUp(formData);
@@ -40,16 +45,17 @@ const SignUpForm: React.FC = () => {
         try {
             const ok = await signUp(payload);
             if (!ok) {
-                console.log("Sign up failed");
+                setError("Đăng ký thất bại. Vui lòng thử lại.");
                 return;
             }
             await sendOTP(formData.email);
+            setMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác thực OTP.");
             setTimeout(() => {
                 switchModal("signUpForm", "otpVerificationModal");
             }, 1000);
 
         } catch {
-            console.log("Sign up error");
+            setError("Có lỗi xảy ra. Vui lòng thử lại.");
         }
     };
 
@@ -152,20 +158,24 @@ const SignUpForm: React.FC = () => {
                                 >
                                     <GoogleLogin
                                         onSuccess={async (credentialRes: any) => {
-                                            clearError();
+                                            clearMessages();
                                             try {
                                                 const ok = await loginWithGoogle(
                                                     credentialRes.credential
                                                 );
                                                 if (!ok) {
+                                                    setError("Đăng nhập với Google thất bại");
                                                     return;
                                                 }
+                                                setMessage("Đăng nhập thành công!");
                                                 resetForm();
                                                 closeModal("signUpForm");
-                                            } catch { }
+                                            } catch {
+                                                setError("Có lỗi xảy ra khi đăng nhập với Google");
+                                            }
                                         }}
                                         onError={() => {
-                                            console.log("Login Failed");
+                                            setError("Đăng nhập với Google thất bại");
                                         }}
                                     />
                                 </GoogleOAuthProvider>
@@ -174,9 +184,7 @@ const SignUpForm: React.FC = () => {
                     </div>
 
                     {message && <div className="alert alert-success">{message}</div>}
-                    {(clientError || error) && (
-                        <div className="alert alert-danger">{clientError || error}</div>
-                    )}
+                    {error && <div className="alert alert-danger">{error}</div>}
                 </div>
             </div>
         </div>

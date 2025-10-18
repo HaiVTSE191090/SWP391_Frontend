@@ -5,14 +5,20 @@ import { FormContext } from "../../context/FormContext";
 
 const OTPVerificationModal: React.FC = () => {
     const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
-    const [error, setError] = useState<string | null>(null);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const { switchModal } = useModal();
     const { verifyOTP, sendOTP, loading } = useAuth();
     const formCtx = useContext(FormContext);
 
+    // Clear messages khi component mount - must be before conditional return
+    React.useEffect(() => {
+        if (formCtx) {
+            formCtx.clearMessages();
+        }
+    }, [formCtx]);
+
     if (!formCtx) return null;
-    const { formData } = formCtx;
+    const { formData, resetForm, error, setError } = formCtx;
     
 
     const handleChange = (index: number, value: string) => {
@@ -104,7 +110,8 @@ const OTPVerificationModal: React.FC = () => {
             
             // Mở modal đăng nhập
             setTimeout(() => {
-                switchModal("otpVerificationModal", "loginModal");
+                switchModal("otpVerificationModal", "loginForm");
+                resetForm();
             }, 1000);
             
         } catch (err) {

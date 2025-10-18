@@ -68,54 +68,76 @@ export class AuthController {
       try {
         decodedGoogle = jwtDecode<any>(credential);
       } catch (decodeErr) {
-        console.error("Failed to decode Google credential:", decodeErr);
+        console.error(" Failed to decode Google credential:", decodeErr);
+        return {
+          success: false,
+          error: "Google credential không hợp lệ",
+        };
       }
 
-      const email = decodedGoogle?.email || decodedGoogle?.sub || undefined;
-      const fullName =
-        decodedGoogle?.name || decodedGoogle?.fullName || undefined;
+      // Lấy thông tin từ Google token
+      const sub = decodedGoogle?.sub;
+      const email = decodedGoogle?.email;
+      const name = decodedGoogle?.name;
+      const picture = decodedGoogle?.picture;
+
+      if (!sub || !email || !name) {
+        console.error("Missing required fields from Google credential");
+        return {
+          success: false,
+          error: "Thông tin từ Google không đầy đủ",
+        };
+      }
+
 
       const res = await this.authService.loginWithGoogle({
-        token: credential,
+        sub,
         email,
-        fullName,
-        // phoneNumber không gửi vì Google không cung cấp
+        name,
+        picture,
       });
 
-      if (res.status === 200) {
-        const successData = res.data as model.LoginSuccessData;
-        const newToken = successData.token;
+      console.log( res.status);
 
-        let decoded: any = {};
-        try {
-          decoded = jwtDecode<any>(newToken);
-        } catch {}
+      const successData = res.data;
+      const token = successData.data.user.token;
 
-        const userObj = {
-          email: decoded?.email || decoded?.sub || successData.email,
-          fullName: decoded?.fullName || decoded?.name,
-          kycStatus: successData.kycStatus,
-        };
 
+      const userRes = await this.authService.getProfile(token);
+
+      const userObj = {
+        email: successData.data.user.email,
+        fullName: userRes.data.data.fullName,
+        kycStatus: successData.data.user.kycStatus,
+        renterId: userRes.data.data.renterId,
+        status: userRes.data.data.status,
+      };
+
+      console.log(" Google :", userObj);
+
+      return {
+        success: true,
+        token,
+        user: userObj,
+        message: "Đăng nhập Google thành công!",
+      };
+    } catch (err: any) {
+      console.error(" Google login error:", err?.response?.data || err?.message);
+      
+      const errorData = err?.response?.data;
+
+      if (errorData?.data && typeof errorData.data === "object") {
         return {
-          success: true,
-          token: newToken,
-          user: userObj,
-          message: "Đăng nhập Google thành công!",
+          success: false,
+          fieldErrors: errorData.data,
+          error: null,
         };
       }
 
       return {
         success: false,
-        error: (res as any)?.data?.message || "Đăng nhập Google thất bại",
-      };
-    } catch (err: any) {
-      return {
-        success: false,
-        error:
-          err?.response?.data?.message ||
-          err?.message ||
-          "Đăng nhập Google thất bại",
+        error: errorData?.data || err?.message || "Đăng nhập Google thất bại",
+        fieldErrors: {},
       };
     }
   }

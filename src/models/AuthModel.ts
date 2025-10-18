@@ -19,10 +19,10 @@ export interface LoginRequest {
 }
 
 export interface GoogleLoginRequest {
-  token: string;
-  email?: string;
-  fullName?: string;
-  phoneNumber?: string;
+  sub: string;          // Google user ID
+  email: string;        // Email
+  name: string;         // Full name
+  picture?: string;     // Profile picture URL
 }
 
 export interface ApiResponse<T> {

@@ -8,6 +8,11 @@ interface FormContextType {
     fieldErrors: Record<string, string>;
     setFieldErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
     clearErrors: () => void;
+    message: string | null;
+    error: string | null;
+    setMessage: (message: string | null) => void;
+    setError: (error: string | null) => void;
+    clearMessages: () => void;
 }
 
 export const FormContext = createContext<FormContextType | null>(null);
@@ -19,6 +24,8 @@ interface Props {
 export const FormProvider = ({ children }: Props) => {
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [message, setMessage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -36,9 +43,16 @@ export const FormProvider = ({ children }: Props) => {
     const resetForm = () => {
         setFormData({});
         setFieldErrors({});
+        setMessage(null);
+        setError(null);
     };
     
     const clearErrors = () => setFieldErrors({});
+    
+    const clearMessages = () => {
+        setMessage(null);
+        setError(null);
+    };
 
     const value = { 
         formData, 
@@ -47,7 +61,12 @@ export const FormProvider = ({ children }: Props) => {
         resetForm, 
         fieldErrors, 
         setFieldErrors, 
-        clearErrors 
+        clearErrors,
+        message,
+        error,
+        setMessage,
+        setError,
+        clearMessages,
     };
 
     return <FormContext.Provider value={value}>{children}</FormContext.Provider>

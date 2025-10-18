@@ -13,6 +13,7 @@ export const loginApi = async (data: models.LoginRequest) => {
 };
 
 export const loginWithGoogle = async (payload: models.GoogleLoginRequest) => {
+  console.log("Google login payload:", payload);
   return await api.post(`${baseURL}/api/auth/google/login`, payload);
 };
 
