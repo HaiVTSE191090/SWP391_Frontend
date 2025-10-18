@@ -22,14 +22,14 @@ export class AuthController {
     try {
       const res = await this.authService.loginApi(data);
       const successData = res.data;
-      const token = successData.data.token;
+      const token = successData.data.user.token;
 
       const userRes = await this.authService.getProfile(token);
 
       const userObj = {
-        email: successData.data.email,
+        email: successData.data.user.email,
         fullName: userRes.data.data.fullName,
-        kycStatus: successData.data.kycStatus,
+        kycStatus: successData.data.user.kycStatus,
         renterId: userRes.data.data.renterId,
         status: userRes.data.data.status,
       };
@@ -79,7 +79,7 @@ export class AuthController {
         token: credential,
         email,
         fullName,
-        phoneNumber: "",
+        // phoneNumber không gửi vì Google không cung cấp
       });
 
       if (res.status === 200) {
