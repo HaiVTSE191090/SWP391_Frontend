@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react-bootstrap';
+import ListRenter from './ListRenter';
+
+// Import ảnh xe trực tiếp từ thư mục
+import vf3Blue from '../../images/car-list/source/vf3-blue.jpg';
+import vf3Red from '../../images/car-list/source/vf3-red.png';
+import vf3 from '../../images/car-list/source/vf3.png';
+import vf31 from '../../images/car-list/source/vf31.png';
+import vf5Grey from '../../images/car-list/source/vf5-grey.png';
+import vf5PlusRed from '../../images/car-list/source/vf5-plus-red.png';
+import vf7Black from '../../images/car-list/source/vf7-black.png';
+import vf8Grey from '../../images/car-list/source/vf8-grey.png';
 
 interface Car {
   id: number;
@@ -9,19 +20,22 @@ interface Car {
   status: 'available' | 'rented' | 'maintenance';
 }
 
-// Mock data - thay thế bằng dữ liệu từ car list của bạn
+// Mock data - sử dụng ảnh xe thật từ thư mục local
 const mockCars: Car[] = [
-  { id: 1, name: 'Honda City', image: '/api/placeholder/300/200', price: '500,000 VND/ngày', status: 'available' },
-  { id: 2, name: 'Toyota Vios', image: '/api/placeholder/300/200', price: '550,000 VND/ngày', status: 'rented' },
-  { id: 3, name: 'Hyundai Accent', image: '/api/placeholder/300/200', price: '520,000 VND/ngày', status: 'available' },
-  { id: 4, name: 'Mazda 3', image: '/api/placeholder/300/200', price: '600,000 VND/ngày', status: 'maintenance' },
-  { id: 5, name: 'Kia Cerato', image: '/api/placeholder/300/200', price: '580,000 VND/ngày', status: 'available' },
-  { id: 6, name: 'Nissan Sunny', image: '/api/placeholder/300/200', price: '530,000 VND/ngày', status: 'available' },
+  { id: 1, name: 'VinFast VF3 Blue', image: vf3Blue, price: '500,000 VND/ngày', status: 'available' },
+  { id: 2, name: 'VinFast VF3 Red', image: vf3Red, price: '550,000 VND/ngày', status: 'rented' },
+  { id: 3, name: 'VinFast VF3', image: vf3, price: '520,000 VND/ngày', status: 'available' },
+  { id: 4, name: 'VinFast VF3.1', image: vf31, price: '600,000 VND/ngày', status: 'maintenance' },
+  { id: 5, name: 'VinFast VF5 Grey', image: vf5Grey, price: '650,000 VND/ngày', status: 'available' },
+  { id: 6, name: 'VinFast VF5 Plus Red', image: vf5PlusRed, price: '700,000 VND/ngày', status: 'available' },
+  { id: 7, name: 'VinFast VF7 Black', image: vf7Black, price: '850,000 VND/ngày', status: 'rented' },
+  { id: 8, name: 'VinFast VF8 Grey', image: vf8Grey, price: '950,000 VND/ngày', status: 'available' },
 ];
 
 export default function Staff() {
   const [show, setShow] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả xe');
+  const [showListRenter, setShowListRenter] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -31,6 +45,7 @@ export default function Staff() {
     'Xe có sẵn',
     'Xe đang cho thuê',
     'Xe bảo trì',
+    'Danh sách người thuê',
     'Quản lý đặt xe',
     'Báo cáo',
   ];
@@ -61,6 +76,55 @@ export default function Staff() {
     }
   };
 
+  const handleMenuClick = (item: string) => {
+    if (item === 'Danh sách người thuê') {
+      setShowListRenter(true);
+    } else {
+      setShowListRenter(false);
+      setSelectedCategory(item);
+    }
+    handleClose();
+  };
+
+  // Nếu đang xem Danh sách người thuê
+  if (showListRenter) {
+    return (
+      <div className="staff-interface">
+        <Navbar bg="dark" variant="dark" className="px-3">
+          <Button variant="outline-light" onClick={handleShow} className="me-3">
+            ☰
+          </Button>
+          <Navbar.Brand>Staff Dashboard - Danh sách người thuê</Navbar.Brand>
+          <Nav className="ms-auto">
+            <Nav.Link>Đăng xuất</Nav.Link>
+          </Nav>
+        </Navbar>
+
+        <Offcanvas show={show} onHide={handleClose} placement="start">
+          <Offcanvas.Header closeButton>
+            <Offcanvas.Title>Menu Quản lý</Offcanvas.Title>
+          </Offcanvas.Header>
+          <Offcanvas.Body>
+            <Nav className="flex-column">
+              {menuItems.map((item, index) => (
+                <Nav.Link
+                  key={index}
+                  className={`py-3 border-bottom ${item === 'Danh sách người thuê' ? 'bg-light fw-bold' : ''}`}
+                  onClick={() => handleMenuClick(item)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {item}
+                </Nav.Link>
+              ))}
+            </Nav>
+          </Offcanvas.Body>
+        </Offcanvas>
+
+        <ListRenter />
+      </div>
+    );
+  }
+
   return (
     <div className="staff-interface">
       {/* Navigation Bar với Hamburger Menu */}
@@ -85,10 +149,7 @@ export default function Staff() {
               <Nav.Link
                 key={index}
                 className={`py-3 border-bottom ${selectedCategory === item ? 'bg-light fw-bold' : ''}`}
-                onClick={() => {
-                  setSelectedCategory(item);
-                  handleClose();
-                }}
+                onClick={() => handleMenuClick(item)}
                 style={{ cursor: 'pointer' }}
               >
                 {item}
