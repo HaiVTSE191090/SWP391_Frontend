@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { LoginRequest } from "../../models/AuthModel";
 import { useAuth } from "../../hooks/useAuth";
@@ -15,23 +15,14 @@ const LoginForm: React.FC = () => {
         login, 
         loginWithGoogle, 
         loading,
-        fieldErrors: userFieldErrors 
+        fieldErrors: userFieldErrors,
+        message,
+        error,
+        clearError
     } = useAuth();
     
     const formCtx = useContext(FormContext);
     const { closeModal } = useModal();
-
-    // Lấy message/error từ FormContext (LOCAL)
-    const message = formCtx?.message;
-    const error = formCtx?.error;
-    const setMessage = formCtx?.setMessage;
-    const setError = formCtx?.setError;
-    const clearMessages = formCtx?.clearMessages;
-    
-    // Clear message khi component mount (mở modal)
-    useEffect(() => {
-        clearMessages?.();
-    }, [clearMessages]);
 
     if (!formCtx) {
         console.error("FormContext is not available");
@@ -54,25 +45,15 @@ const LoginForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        clearMessages?.(); // Clear messages cũ
+        clearError(); // Clear messages cũ
         
         const loginData = createLoginRequest();
-        try {
-            const result = await login(loginData);
-            if (!result) {
-                setError?.("Đăng nhập thất bại");
-                return;
-            }
-            
-            // Success
-            setMessage?.("Đăng nhập thành công!");
+        const result = await login(loginData);
+        if (result) {
             setTimeout(() => {
                 closeModal('loginForm');
                 resetForm();
             }, 2000);
-        } catch (err) {
-            console.error("Login failed due to an unexpected error:", err);
-            setError?.("Đã xảy ra lỗi không mong muốn");
         }
     };
 
@@ -95,6 +76,7 @@ const LoginForm: React.FC = () => {
                             className="btn-close"
                             data-bs-dismiss="modal"
                             aria-label="Close"
+                            onClick={clearError}
                         ></button>
                     </div>
 
@@ -221,26 +203,17 @@ const LoginForm: React.FC = () => {
                                     <GoogleOAuthProvider clientId={process.env.REACT_APP_CLIENT_ID!}>
                                         <GoogleLogin
                                             onSuccess={async (credentialRes: any) => {
-                                                clearMessages?.(); // Clear messages cũ
-                                                try {
-                                                    const result = await loginWithGoogle(credentialRes.credential);
-                                                    if (!result) {
-                                                        setError?.("Đăng nhập Google thất bại");
-                                                        return;
-                                                    }
-                                                    
-                                                    setMessage?.("Đăng nhập Google thành công!");
+                                                clearError(); // Clear messages cũ
+                                                const result = await loginWithGoogle(credentialRes.credential);
+                                                if (result) {
                                                     setTimeout(() => {
                                                         resetForm();
                                                         closeModalAndReload("loginForm");
                                                     }, 1000);
-                                                } catch (err) {
-                                                    console.error("Google login error:", err);
-                                                    setError?.("Đăng nhập Google thất bại");
                                                 }
                                             }}
                                             onError={() => {
-                                                setError?.("Google OAuth thất bại. Vui lòng kiểm tra cấu hình.");
+                                                console.log("Google OAuth failed");
                                             }}
                                         />
                                     </GoogleOAuthProvider>

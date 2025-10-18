@@ -97,23 +97,22 @@ export class AuthController {
         picture,
       });
 
-      console.log( res.status);
-
       const successData = res.data;
-      const token = successData.data.user.token;
+      const token = successData.data.token;
 
-
+      // Gọi getProfile để lấy đầy đủ thông tin user (giống login bình thường)
       const userRes = await this.authService.getProfile(token);
 
+      console.log(" đây:", userRes);
       const userObj = {
-        email: successData.data.user.email,
+        email: successData.data.email,
         fullName: userRes.data.data.fullName,
-        kycStatus: successData.data.user.kycStatus,
+        kycStatus: successData.data.kycStatus,
         renterId: userRes.data.data.renterId,
         status: userRes.data.data.status,
       };
 
-      console.log(" Google :", userObj);
+      console.log(" và đây:", userObj);
 
       return {
         success: true,
@@ -136,7 +135,7 @@ export class AuthController {
 
       return {
         success: false,
-        error: errorData?.data || err?.message || "Đăng nhập Google thất bại",
+        error: errorData?.message || errorData?.data || err?.message || "Đăng nhập Google thất bại",
         fieldErrors: {},
       };
     }

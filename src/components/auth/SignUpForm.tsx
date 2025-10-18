@@ -11,21 +11,13 @@ import FieldError from "../common/FieldError";
 const SignUpForm: React.FC = () => {
     const { switchModal, closeModal } = useModal();
     const formCtx = useContext(FormContext);
-    const { signUp, loginWithGoogle, sendOTP, loading, fieldErrors: userFieldErrors } = useAuth();
-
-    // Clear messages khi component mount (mở modal) - must be before conditional return
-    React.useEffect(() => {
-        if (formCtx) {
-            formCtx.clearMessages();
-        }
-    }, [formCtx]);
+    const { signUp, loginWithGoogle, sendOTP, loading, fieldErrors: userFieldErrors, message, error, clearError } = useAuth();
 
     if (!formCtx) return null;
-    const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors, message, error, setMessage, setError, clearMessages } = formCtx;
+    const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors } = formCtx;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
         clearErrors();
 
         const { fieldErrors: errs } = validateSignUp(formData);
@@ -42,20 +34,12 @@ const SignUpForm: React.FC = () => {
             confirmPassword: formData.confirmPassword,
         };
 
-        try {
-            const ok = await signUp(payload);
-            if (!ok) {
-                setError("Đăng ký thất bại. Vui lòng thử lại.");
-                return;
-            }
+        const ok = await signUp(payload);
+        if (ok) {
             await sendOTP(formData.email);
-            setMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác thực OTP.");
             setTimeout(() => {
                 switchModal("signUpForm", "otpVerificationModal");
             }, 1000);
-
-        } catch {
-            setError("Có lỗi xảy ra. Vui lòng thử lại.");
         }
     };
 
@@ -72,6 +56,7 @@ const SignUpForm: React.FC = () => {
                             className="btn-close"
                             data-bs-dismiss="modal"
                             aria-label="Close"
+                            onClick={clearError}
                         ></button>
                     </div>
 
@@ -158,24 +143,14 @@ const SignUpForm: React.FC = () => {
                                 >
                                     <GoogleLogin
                                         onSuccess={async (credentialRes: any) => {
-                                            clearMessages();
-                                            try {
-                                                const ok = await loginWithGoogle(
-                                                    credentialRes.credential
-                                                );
-                                                if (!ok) {
-                                                    setError("Đăng nhập với Google thất bại");
-                                                    return;
-                                                }
-                                                setMessage("Đăng nhập thành công!");
+                                            const ok = await loginWithGoogle(credentialRes.credential);
+                                            if (ok) {
                                                 resetForm();
                                                 closeModal("signUpForm");
-                                            } catch {
-                                                setError("Có lỗi xảy ra khi đăng nhập với Google");
                                             }
                                         }}
                                         onError={() => {
-                                            setError("Đăng nhập với Google thất bại");
+                                            console.log("Google Login Failed");
                                         }}
                                     />
                                 </GoogleOAuthProvider>

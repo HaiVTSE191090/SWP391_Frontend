@@ -7,18 +7,11 @@ const OTPVerificationModal: React.FC = () => {
     const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const { switchModal } = useModal();
-    const { verifyOTP, sendOTP, loading } = useAuth();
+    const { verifyOTP, sendOTP, loading, error, message, clearError } = useAuth();
     const formCtx = useContext(FormContext);
 
-    // Clear messages khi component mount - must be before conditional return
-    React.useEffect(() => {
-        if (formCtx) {
-            formCtx.clearMessages();
-        }
-    }, [formCtx]);
-
     if (!formCtx) return null;
-    const { formData, resetForm, error, setError } = formCtx;
+    const { formData, resetForm } = formCtx;
     
 
     const handleChange = (index: number, value: string) => {
@@ -34,7 +27,7 @@ const OTPVerificationModal: React.FC = () => {
         const newOtp = [...otp];
         newOtp[index] = value;
         setOtp(newOtp);
-        setError(null);
+        clearError();
 
         if (value && index < 5) {
             inputRefs.current[index + 1]?.focus();
@@ -47,13 +40,13 @@ const OTPVerificationModal: React.FC = () => {
                 const newOtp = [...otp];
                 newOtp[index] = "";
                 setOtp(newOtp);
-                setError(null);
+                clearError();
             } else if (index > 0) {
                 const newOtp = [...otp];
                 newOtp[index - 1] = "";
                 setOtp(newOtp);
                 inputRefs.current[index - 1]?.focus();
-                setError(null);
+                clearError();
             }
             e.preventDefault();
         }
@@ -75,37 +68,32 @@ const OTPVerificationModal: React.FC = () => {
         
         // Chỉ chấp nhận 6 số
         if (!/^\d{6}$/.test(pastedData)) {
-            setError("Vui lòng paste mã OTP gồm 6 chữ số");
+            // Hiển thị error nhưng không set vào state (không cần thiết cho paste)
             return;
         }
 
         const newOtp = pastedData.split("");
         setOtp(newOtp);
-        setError(null);
+        clearError();
         
         inputRefs.current[5]?.focus();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
+        clearError();
 
         const otpCode = otp.join("");
         
         if (otpCode.length !== 6) {
-            setError("Vui lòng nhập đầy đủ 6 chữ số");
+            // Không cần set error, chỉ return
             return;
         }
 
-        try {
-            const email = formData?.email;
-            const ok = await verifyOTP(email, otpCode);
+        const email = formData?.email;
+        const ok = await verifyOTP(email, otpCode);
 
-            if (!ok) {
-                setError("Mã OTP không chính xác hoặc đã hết hạn");
-                return;
-            }
-
+        if (ok) {
             alert("Xác thực OTP thành công! Vui lòng đăng nhập để tiếp tục.");
             
             // Mở modal đăng nhập
@@ -113,24 +101,18 @@ const OTPVerificationModal: React.FC = () => {
                 switchModal("otpVerificationModal", "loginForm");
                 resetForm();
             }, 1000);
-            
-        } catch (err) {
-            setError("Có lỗi xảy ra. Vui lòng thử lại");
         }
     };
 
     const handleResendOTP = async () => {
-        setError(null);
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         
-        try {
-            const email = formData?.email;
-            console.log("Resending OTP to email:", email);
-            await sendOTP(email);
+        const email = formData?.email;
+        console.log("Resending OTP to email:", email);
+        const ok = await sendOTP(email);
+        if (ok) {
             alert("Đã gửi lại mã OTP về email của bạn");
-        } catch (err) {
-            setError("Không thể gửi lại mã OTP. Vui lòng thử lại");
         }
     };
 
@@ -147,6 +129,7 @@ const OTPVerificationModal: React.FC = () => {
                             className="btn-close"
                             data-bs-dismiss="modal"
                             aria-label="Close"
+                            onClick={clearError}
                         ></button>
                     </div>
 
@@ -182,6 +165,12 @@ const OTPVerificationModal: React.FC = () => {
                             {error && (
                                 <div className="alert alert-danger text-center" role="alert">
                                     {error}
+                                </div>
+                            )}
+
+                            {message && (
+                                <div className="alert alert-success text-center" role="alert">
+                                    {message}
                                 </div>
                             )}
 
