@@ -59,6 +59,53 @@
   font-size: 15px;
 }
 
+/* --- THÔNG TIN XE --- */
+.car-box {
+  background: #f8fff9; /* nền xanh lá nhạt, phân biệt nhẹ */
+  border-left: 6px solid #198754; /* viền trái màu xanh lá bootstrap */
+  border-radius: 10px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.car-box:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.car-box h5 {
+  color: #198754; /* xanh lá đậm cho tiêu đề */
+  margin-bottom: 16px;
+}
+
+/* layout cho phần ảnh xe và chi tiết */
+.car-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.car-image {
+  width: 150px;
+  height: 100px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  border: 1px solid #ddd;
+}
+
+.car-details p {
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+.car-details strong {
+  color: #333;
+}
+
+
 .payment-option-modern {
   cursor: pointer;
   display: flex;
