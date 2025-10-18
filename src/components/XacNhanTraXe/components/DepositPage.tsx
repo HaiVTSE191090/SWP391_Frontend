@@ -90,7 +90,7 @@ export default function DepositPage() {
 
   return (
     <div className="container py-5 deposit-page">
-      <h2 className="text-center fw-bold mb-5">Xác nhận đặt xe</h2>
+      <h2 className="text-center fw-bold mb-5">XÁC NHẬN ĐẶT XE</h2>
 
       {errorMsg && <Alert variant="danger">{errorMsg}</Alert>}
 

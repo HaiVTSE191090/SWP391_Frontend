@@ -7,6 +7,8 @@ import ManualIdentityPage from "../pages/ManualIdentityPage";
 import KycVerificationPage from "../pages/KycVerificationPage";
 import Staff from "../components/StaffInterface/Staff";
 import DepositPage from "../components/XacNhanTraXe/components/DepositPage";
+import RentalHistoryPage from "../components/HistoryPage/RentalHistoryPage";
+import ContractPreviewPage from "../components/ContractPage/ContractPage";
 
 
 // Lazy load các trang (tối ưu bundle)
@@ -25,8 +27,10 @@ const router = createBrowserRouter([
             { path: "/manualIdentity", element: <ManualIdentityPage /> },
             { path: "/kyc-verification", element: <KycVerificationPage /> },
             {path: "/staff", element: <Staff /> },
-             // 🟢 Route mới cho trang xác nhận & thanh toán
-            { path: "/xac-nhan-dat-xe", element: <DepositPage /> }
+             //cho trang xác nhận & thanh toán
+            { path: "/xac-nhan-dat-xe", element: <DepositPage /> },
+            { path: "/rental-history", element: <RentalHistoryPage /> },
+            { path: "/contract-preview", element: <ContractPreviewPage /> },
             // // 404 bắt mọi thứ còn lại
             // { path: "*", element: <NotFoundPage /> },
         ],
