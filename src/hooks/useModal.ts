@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useAuth } from './useAuth';
 
 interface UseModalReturn {
   closeModalAndReload: (modalId: string) => void;
@@ -9,8 +10,10 @@ interface UseModalReturn {
 }
 
 export const useModal = (): UseModalReturn => {
+  const { clearError } = useAuth();
   
   const closeModalAndReload = useCallback((modalId: string) => {
+    clearError(); // Clear message/error trước khi đóng modal
     const modal = document.getElementById(modalId);
     if (modal) {
       const bsModal = (window as any).bootstrap?.Modal?.getInstance(modal);
@@ -22,9 +25,10 @@ export const useModal = (): UseModalReturn => {
     setTimeout(() => {
       window.location.reload();
     }, 300); 
-  }, []);
+  }, [clearError]);
 
   const closeModal = useCallback((modalId: string) => {
+    clearError(); // Clear message/error trước khi đóng modal
     const modal = document.getElementById(modalId);
     if (modal) {
       const bsModal = (window as any).bootstrap?.Modal?.getInstance(modal);
@@ -32,7 +36,7 @@ export const useModal = (): UseModalReturn => {
         bsModal.hide();
       }
     }
-  }, []);
+  }, [clearError]);
 
   const openModal = useCallback((modalId: string) => {
     const modalElement = document.getElementById(modalId);
@@ -43,6 +47,7 @@ export const useModal = (): UseModalReturn => {
   }, []);
 
   const switchModal = useCallback((fromModalId: string, toModalId: string) => {
+    clearError(); // Clear message/error trước khi chuyển modal
     const fromModal = document.getElementById(fromModalId);
     const bsFromModal = (window as any).bootstrap?.Modal?.getInstance(fromModal);
     
@@ -57,7 +62,7 @@ export const useModal = (): UseModalReturn => {
         bsToModal.show();
       }
     }, 300); 
-  }, []);
+  }, [clearError]);
 
   const reloadPage = useCallback(() => {
     window.location.reload();
