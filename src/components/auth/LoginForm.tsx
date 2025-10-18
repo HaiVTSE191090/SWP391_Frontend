@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { LoginRequest } from "../../models/AuthModel";
-import { UserContext } from "../../context/UserContext";
+import { useAuth } from "../../hooks/useAuth";
 import { FormContext } from "../../context/FormContext";
 import { useModal } from "../../hooks/useModal";
 import FieldError from "../common/FieldError";
@@ -11,15 +11,24 @@ const LoginForm: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showForgot, setShowForgot] = useState(false);
 
-    const userCtx = useContext(UserContext);
+    const { 
+        login, 
+        loginWithGoogle, 
+        loading, 
+        error, 
+        message, 
+        clearError, 
+        fieldErrors: userFieldErrors 
+    } = useAuth();
+    
     const formCtx = useContext(FormContext);
     const { closeModal } = useModal();
 
+    if (!formCtx) {
+        console.error("FormContext is not available");
+        return null;
+    }
 
-    if (!userCtx) return null;
-    const { login, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
-
-    if (!formCtx) return null;
     const { formData, handleChange, resetForm } = formCtx;
 
     const createLoginRequest = (): LoginRequest => {

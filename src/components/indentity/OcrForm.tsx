@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { ocrAPI } from "../../services/ocrService";
-import { verifyKyc } from "../../services/authService";
+import { useAuth } from "../../hooks/useAuth";
+import { authController } from "../../controller/AuthController";
 
 type Props = {
     onSwitchToManual: () => void;
 };
 
 const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
+    const { token } = useAuth();
     const [loading, setLoading] = useState(false);
     const [image, setImage] = useState<File | null>(null);
     const [ocrData, setOcrData] = useState<any>(null);
@@ -40,21 +42,34 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
         setMessage(null);
         try {
             const payload = {
-                ocrData: ocrData,
-                documentType: 'CCCD'
+                idNumber: ocrData.data[0].id,
+                fullName: ocrData.data[0].name,
+                dateOfBirth: ocrData.data[0].dob,
+                gender: ocrData.data[0].sex,
+                nationality: ocrData.data[0].nationality,
+                ocrConfidence: ocrData.data[0].overall_score,
             };
+            
 
-            const result = await verifyKyc(payload);
+            const result = await authController.verifyKyc(payload);
 
-            if (result.status === 200) {
-                setMessage("Xác thực thành công! Trạng thái tài khoản đã được cập nhật.");
+            if (result.success) {
+                setMessage("Xác thực thành công! Tài khoản của bạn đã được cập nhật.");
 
+
+                //tìm hiểu thêm
                 setTimeout(() => {
-                    window.dispatchEvent(new Event('userLogin'));
-                    window.location.reload();
+                    // Refresh user data từ server
+                    if (token) {
+                        authController.getProfile(token).then(profileRes => {
+                            const updatedUser = profileRes.data.data;
+                            authController.saveAuthData(token, updatedUser);
+                            window.location.reload();
+                        });
+                    }
                 }, 2000);
             } else {
-                setMessage("Xác thực thất bại. Vui lòng kiểm tra lại thông tin.");
+                setMessage(`Xác thực thất bại: ${result.error}`);
             }
         } catch (err: any) {
             setMessage(err.response?.data?.message || "Lỗi khi xác thực. Vui lòng thử lại.");

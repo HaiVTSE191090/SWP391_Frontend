@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Button, Spinner, Alert, Image } from 'react-bootstrap';
-import { RenterController } from '../../controller/RenterController';
 
 interface RenterDetail {
   id: string | number;
@@ -33,40 +32,37 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
     setLoading(true);
     setError('');
 
-    // Gọi Controller - KHÔNG gọi API trực tiếp
-    const result = await RenterController.getRenterDetail(renterId);
-
-    if (result.success) {
-      setDetail(result.data);
+    // TODO: Gọi API khi có backend
+    // Mock data tạm
+    setTimeout(() => {
+      const mockDetail: RenterDetail = {
+        id: renterId,
+        name: "Nguyễn Văn A",
+        birth: "1999-01-01",
+        phone: "0912345678",
+        email: "nguyenvana@gmail.com",
+        address: "123 Đường ABC, Quận 1, TP.HCM",
+        identityCard: "123456789",
+        license: "B2-123456",
+        avatarUrl: `https://i.pravatar.cc/120?u=${renterId}`,
+      };
+      setDetail(mockDetail);
       setLoading(false);
-    } else {
-      setError(result.error);
-      setLoading(false);
-    }
+    }, 500);
   };
 
   const handleVerify = async () => {
-    const result = await RenterController.verifyRenter(renterId);
-    
-    if (result.success) {
-      alert(result.message);
-      fetchDetail(); // Refresh lại dữ liệu
-    } else {
-      alert(`Lỗi: ${result.error}`);
-    }
+    // TODO: Gọi API khi có backend
+    alert('Đã xác minh người thuê thành công!');
+    fetchDetail(); // Refresh lại dữ liệu
   };
 
   const handleDelete = async () => {
     if (!window.confirm('Bạn có chắc muốn xóa người dùng này?')) return;
     
-    const result = await RenterController.deleteRenter(renterId);
-    
-    if (result.success) {
-      alert(result.message);
-      if (onBack) onBack(); // Quay về danh sách
-    } else {
-      alert(`Lỗi: ${result.error}`);
-    }
+    // TODO: Gọi API khi có backend
+    alert('Đã xóa người thuê thành công!');
+    if (onBack) onBack(); // Quay về danh sách
   };
 
   if (loading) {

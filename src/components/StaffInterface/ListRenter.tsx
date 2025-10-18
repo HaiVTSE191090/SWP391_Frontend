@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import UserDetail from './UserDetail';
-import { RenterController } from '../../controller/RenterController';
 
 // Interface cho dữ liệu Renter
 interface Renter {
@@ -27,27 +26,23 @@ const ListRenter: React.FC = () => {
     setLoading(true);
     setError('');
 
-    // Gọi Controller để lấy dữ liệu - KHÔNG gọi API trực tiếp
-    const result = await RenterController.getRenterList();
-
-    if (result.success) {
-      setRenters(result.data);
-    } else {
-      setError(result.error || 'Có lỗi xảy ra khi tải dữ liệu');
-    }
-    
-    setLoading(false);
+    // TODO: Gọi API khi có backend
+    // Mock data tạm
+    setTimeout(() => {
+      const mockData: Renter[] = [
+        { id: 1, name: "Nguyễn Văn A", phoneNumber: "0912345678", verificationStatus: "pending" },
+        { id: 2, name: "Trần Thị B", phoneNumber: "0987654321", verificationStatus: "verified" },
+        { id: 3, name: "Lê Văn C", phoneNumber: "0901234567", verificationStatus: "rejected" },
+      ];
+      setRenters(mockData);
+      setLoading(false);
+    }, 500);
   };
 
   // Handler cho nút Verification Status
   const handleVerificationStatus = async (renterId: string | number) => {
-    const result = await RenterController.checkVerificationStatus(renterId);
-    
-    if (result.success) {
-      alert(`${result.message}\nTrạng thái: ${result.status}`);
-    } else {
-      alert(`Lỗi: ${result.error}`);
-    }
+    // TODO: Gọi API khi có backend
+    alert(`Kiểm tra trạng thái cho Renter ID: ${renterId}\nTrạng thái: verified`);
   };
 
   // Handler cho nút Verify OTP link
@@ -55,14 +50,9 @@ const ListRenter: React.FC = () => {
     const otpCode = prompt('Nhập mã OTP:');
     if (!otpCode) return;
 
-    const result = await RenterController.verifyRenterOTP(renterId, otpCode);
-    
-    if (result.success) {
-      alert(result.message);
-      fetchRenters(); // Refresh lại danh sách
-    } else {
-      alert(`Lỗi: ${result.error}`);
-    }
+    // TODO: Gọi API khi có backend
+    alert(`Xác thực OTP thành công cho Renter ID: ${renterId}`);
+    fetchRenters(); // Refresh lại danh sách
   };
 
   // Handler cho nút Details

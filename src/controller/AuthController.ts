@@ -1,17 +1,30 @@
 import { jwtDecode } from "jwt-decode";
-import * as authService from "../services/authService";
+import * as authServiceModule from "../services/authService";
 import * as model from "../models/AuthModel";
+export interface IAuthService {
+  loginApi: typeof authServiceModule.loginApi;
+  loginWithGoogle: typeof authServiceModule.loginWithGoogle;
+  signUpApi: typeof authServiceModule.signUpApi;
+  verifyOTP: typeof authServiceModule.verifyOTP;
+  sendOTP: typeof authServiceModule.sendOTP;
+  getProfile: typeof authServiceModule.getProfile;
+  verifyKyc: typeof authServiceModule.verifyKyc;
+}
 
 export class AuthController {
+  constructor(private authService: IAuthService = authServiceModule) {}
 
-  static async login(data: model.LoginRequest) {
+  async login(data: model.LoginRequest) {
+    /**
+     * @param data nhập vào email với password
+     * @returns Kết quả đăng nhập, bao gồm success(boolean), token, user, message, error, fieldErrors
+     */
     try {
-      const res = await authService.loginApi(data);
+      const res = await this.authService.loginApi(data);
       const successData = res.data;
       const token = successData.data.token;
 
-      // Lấy thông tin profile
-      const userRes = await authService.getProfile(token);
+      const userRes = await this.authService.getProfile(token);
 
       const userObj = {
         email: successData.data.email,
@@ -30,7 +43,6 @@ export class AuthController {
     } catch (err: any) {
       const errorData = err?.response?.data;
 
-      // Xử lý lỗi validation từ backend
       if (errorData?.data && typeof errorData.data === "object") {
         return {
           success: false,
@@ -38,8 +50,6 @@ export class AuthController {
           error: null,
         };
       }
-
-      // Xử lý lỗi chung
       return {
         success: false,
         error: errorData?.data || "Đăng nhập thất bại, vui lòng thử lại.",
@@ -49,11 +59,11 @@ export class AuthController {
   }
 
   /**
-   * Xử lý đăng nhập bằng Google
+   * @param credential Chuỗi credential JWT từ Google
+   * @returns Kết quả đăng nhập Google, bao gồm success(boolean), token, user, message nếu đúng, error nếu sai
    */
-  static async loginWithGoogle(credential: string) {
+  async loginWithGoogle(credential: string) {
     try {
-      // Decode Google JWT để lấy thông tin
       let decodedGoogle: any = {};
       try {
         decodedGoogle = jwtDecode<any>(credential);
@@ -62,10 +72,10 @@ export class AuthController {
       }
 
       const email = decodedGoogle?.email || decodedGoogle?.sub || undefined;
-      const fullName = decodedGoogle?.name || decodedGoogle?.fullName || undefined;
+      const fullName =
+        decodedGoogle?.name || decodedGoogle?.fullName || undefined;
 
-      // Gọi API backend
-      const res = await authService.loginWithGoogle({
+      const res = await this.authService.loginWithGoogle({
         token: credential,
         email,
         fullName,
@@ -76,7 +86,6 @@ export class AuthController {
         const successData = res.data as model.LoginSuccessData;
         const newToken = successData.token;
 
-        // Decode token từ backend
         let decoded: any = {};
         try {
           decoded = jwtDecode<any>(newToken);
@@ -112,11 +121,17 @@ export class AuthController {
   }
 
   /**
-   * Xử lý đăng ký
+   * @param data nhập vào
+   *  fullName: string;
+   *  email: string;
+   *  password: string;
+   *  phoneNumber: string;
+   *  confirmPassword: string;
+   * @returns Kết quả đăng ký, bao gồm success(boolean), message nếu đúng, error và fieldErrors nếu sai
    */
-  static async signUp(data: model.SignUpRequest) {
+  async signUp(data: model.SignUpRequest) {
     try {
-      const res = await authService.signUpApi(data);
+      const res = await this.authService.signUpApi(data);
 
       if (res.status === 201) {
         return {
@@ -159,12 +174,14 @@ export class AuthController {
   }
 
   /**
-   * Xác thực OTP
+   * @param email email người dùng
+   * @param otpCode mã OTP
+   * @returns Kết quả xác thực OTP, bao gồm success(boolean), message nếu đúng, error nếu sai
    */
-  static async verifyOTP(email: string, otpCode: string) {
+  async verifyOTP(email: string, otpCode: string) {
     try {
       console.log("Verifying OTP for email:", email, "with code:", otpCode);
-      const response = await authService.verifyOTP(email, otpCode);
+      const response = await this.authService.verifyOTP(email, otpCode);
 
       if (response.status === 200) {
         return {
@@ -186,11 +203,12 @@ export class AuthController {
   }
 
   /**
-   * Gửi OTP
+   * @param email email người dùng
+   * @returns Kết quả gửi OTP, bao gồm success(boolean), message nếu đúng, error nếu sai
    */
-  static async sendOTP(email: string) {
+  async sendOTP(email: string) {
     try {
-      const response = await authService.sendOTP(email);
+      const response = await this.authService.sendOTP(email);
 
       if (response.status === 200) {
         return {
@@ -212,26 +230,67 @@ export class AuthController {
   }
 
   /**
-   * Lưu thông tin user và token vào localStorage
+   * đợi API của ae xác thực KYC
    */
-  static saveAuthData(token: string, user: any) {
+  async verifyKyc(payload: any) {
+    try {
+      const response = await this.authService.verifyKyc(payload);
+
+      if (response.status === 200 || response.status === 201) {
+        return {
+          success: true,
+          message: "Xác thực KYC thành công!",
+        };
+      }
+
+      return {
+        success: false,
+        error: "Xác thực KYC thất bại",
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.response?.data?.message || "Có lỗi xảy ra khi xác thực KYC",
+      };
+    }
+  }
+
+  /**
+   * Lấy profile người dùng
+   * @param token JWT token
+   * @returns User profile data
+   */
+  async getProfile(token: string) {
+    try {
+      return await this.authService.getProfile(token);
+    } catch (err: any) {
+      throw err;
+    }
+  }
+
+  /**
+   * @param token token authentication
+   * @param user thông tin user
+   * Lưu thông tin authentication vào localStorage
+   */
+  saveAuthData(token: string, user: any) {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     window.dispatchEvent(new Event("userLogin"));
   }
 
   /**
-   * Xóa thông tin authentication
+   * @returns Xóa thông tin authentication khỏi localStorage
    */
-  static clearAuthData() {
+  clearAuthData() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   }
 
   /**
-   * Lấy thông tin auth từ localStorage
+   * @returns Lấy thông tin authentication từ localStorage
    */
-  static getStoredAuth() {
+  getStoredAuth() {
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
 
@@ -245,3 +304,8 @@ export class AuthController {
     }
   }
 }
+
+
+export const authController = new AuthController();
+
+

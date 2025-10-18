@@ -1,39 +1,15 @@
-import React, { useContext, useEffect } from "react";
-import logo from "../../images/favicon.png"; // logo trong src/images
+import React from "react";
+import logo from "../../images/favicon.png";
 import { useNavigate } from "react-router-dom";
 import SignUpForm from "../auth/SignUpForm";
 import LoginForm from "../auth/LoginForm";
 import { FormProvider } from "../../context/FormContext";
-import { UserContext } from "../../context/UserContext";
+import { useAuth } from "../../hooks/useAuth";
 import OTPVerificationModal from "../auth/OtpVerificationForm";
-
-
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const userCtx = useContext(UserContext);
-
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try {
-        console.log(JSON.parse(userData));
-        console.log(user);
-      } catch (error) {
-        console.log("Invalid user data in localStorage, logging out.");
-        if (userCtx) {
-          userCtx.logout();
-        }
-      }
-    }
-  });
-
-
-  if (userCtx === null) {
-    return null;
-  }
-
-  const { logout, user } = userCtx;
+  const { user, logout } = useAuth();
 
 
   return (

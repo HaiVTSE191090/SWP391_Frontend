@@ -5,18 +5,14 @@ import { useModal } from "../../hooks/useModal";
 import { FormContext } from "../../context/FormContext";
 import { validateSignUp } from "../../utils/validators";
 import { SignUpRequest } from "../../models/AuthModel";
-import { UserContext } from "../../context/UserContext";
+import { useAuth } from "../../hooks/useAuth";
 import FieldError from "../common/FieldError";
-import { sendOTP } from "../../services/authService";
 
 const SignUpForm: React.FC = () => {
     const [clientError, setClientError] = useState<string | null>(null);
     const { switchModal, closeModal } = useModal();
     const formCtx = useContext(FormContext);
-    const userCtx = useContext(UserContext);
-
-    if (!userCtx) return null;
-    const { signUp, loginWithGoogle, loading, error, message, clearError, fieldErrors: userFieldErrors } = userCtx;
+    const { signUp, loginWithGoogle, sendOTP, loading, error, message, clearError, fieldErrors: userFieldErrors } = useAuth();
 
     if (!formCtx) return null;
     const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors, } = formCtx;
@@ -47,7 +43,7 @@ const SignUpForm: React.FC = () => {
                 console.log("Sign up failed");
                 return;
             }
-            sendOTP(formData.email);
+            await sendOTP(formData.email);
             setTimeout(() => {
                 switchModal("signUpForm", "otpVerificationModal");
             }, 1000);

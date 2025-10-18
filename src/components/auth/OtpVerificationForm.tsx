@@ -1,21 +1,15 @@
 import React, { useState, useRef, useContext } from "react";
 import { useModal } from "../../hooks/useModal";
-import { UserContext } from "../../context/UserContext";
-import { useNavigate } from "react-router-dom";
-import { send } from "process";
+import { useAuth } from "../../hooks/useAuth";
 import { FormContext } from "../../context/FormContext";
 
 const OTPVerificationModal: React.FC = () => {
     const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
     const [error, setError] = useState<string | null>(null);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const { closeModal } = useModal();
-    const userCtx = useContext(UserContext);
+    const { switchModal } = useModal();
+    const { verifyOTP, sendOTP, loading } = useAuth();
     const formCtx = useContext(FormContext);
-    const navigate = useNavigate();
-
-    if (!userCtx) return null;
-    const { verifyOTP, sendOTP, loading } = userCtx;
 
     if (!formCtx) return null;
     const { formData } = formCtx;
@@ -100,15 +94,18 @@ const OTPVerificationModal: React.FC = () => {
         try {
             const email = formData?.email;
             const ok = await verifyOTP(email, otpCode);
-            console.log("OTP verification result:", ok);
 
             if (!ok) {
                 setError("Mã OTP không chính xác hoặc đã hết hạn");
                 return;
             }
 
-            closeModal("otpVerificationModal");
-            navigate("/kyc-verification"); // Hoặc dùng navigate nếu dùng react-router
+            alert("Xác thực OTP thành công! Vui lòng đăng nhập để tiếp tục.");
+            
+            // Mở modal đăng nhập
+            setTimeout(() => {
+                switchModal("otpVerificationModal", "loginModal");
+            }, 1000);
             
         } catch (err) {
             setError("Có lỗi xảy ra. Vui lòng thử lại");
