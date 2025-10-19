@@ -1,103 +1,89 @@
-import React from "react";
-import vf9 from "../../images/car-list/Car.png"; 
-import vf7 from "../../images/car-list/Car-2.png";
-import vf6 from "../../images/car-list/Car-7.png";
-import vf3p from "../../images/car-list/source/vf31.png";
-import vf3b from "../../images/car-list/source/vf3-blue.jpg";
-import vf3r from "../../images/car-list/source/vf3-red.png";
-import vf5 from "../../images/car-list/Car-4.png";
-import vf8 from "../../images/car-list/Car-1.png";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useVehicle } from "../../hooks/useVehicle";
+import VehicleCard from "../vehicle/VehicleCard";
 
-type Car = {
-  id: number;
-  name: string;
-  variant: string;     // ví dụ: E-SUV, City Car...
-  pricePerDay: number; // VND/day
-  image?: string;      // sẽ thay bằng import ảnh thật sau
-  seats?: number;
-  rangeKm?: number;
-  gearbox?: "AT" | "MT";
-};
+/**
+ * Component hiển thị danh sách xe trên trang chủ
+ * Sử dụng VehicleContext theo MVC pattern
+ */
+export const CarList: React.FC = () => {
+  const navigate = useNavigate();
+  const { vehicles, loading, error, searchVehicles } = useVehicle();
 
-//nơi để demo, sẽ thay bằng API sau
-const defaultCars: Car[] = [
-  { id: 1, name: "VinFast VF 9",  variant: "E-SUV",     pricePerDay: 2590000, seats: 6,  rangeKm: 400, gearbox: "AT", image: vf9 },
-  { id: 2, name: "VinFast VF 7",  variant: "Crossover", pricePerDay: 1500000, seats: 5,  rangeKm: 350, gearbox: "AT", image: vf7 },
-  { id: 3, name: "VinFast VF 6 Plus", variant: "B-SUV", pricePerDay: 1250000, seats: 5,  rangeKm: 330, gearbox: "AT", image: vf6 },
-  { id: 4, name: "VinFast VF 3",  variant: "City Car",  pricePerDay: 590000,  seats: 4,  rangeKm: 210, gearbox: "AT", image: vf3p },
-  { id: 5, name: "VinFast VF 3",  variant: "City Car",  pricePerDay: 590000,  seats: 4,  rangeKm: 210, gearbox: "AT", image: vf3b },
-  { id: 6, name: "VinFast VF 3",  variant: "City Car",  pricePerDay: 590000,  seats: 4,  rangeKm: 210, gearbox: "AT", image: vf3r },
-  { id: 7, name: "VinFast VF 5",  variant: "A-SUV",     pricePerDay: 1000000, seats: 5,  rangeKm: 300, gearbox: "AT", image: vf5 },
-  { id: 8, name: "VinFast VF 8",  variant: "D-SUV",     pricePerDay: 1750000, seats: 5,  rangeKm: 420, gearbox: "AT", image: vf8 },
-  { id: 9, name: "VinFast VF 5 Plus", variant: "A-SUV", pricePerDay: 1250000, seats: 5,  rangeKm: 300, gearbox: "AT", image: vf5 },
-];
+  useEffect(() => {
+    // Load tất cả xe có status AVAILABLE
+    searchVehicles({ status: "AVAILABLE" });
+  }, [searchVehicles]);
 
-function formatVND(n: number) {
-  return n.toLocaleString("vi-VN");
-}
+  if (loading) {
+    return (
+      <section className="container py-5">
+        <h2 className="text-center fw-bold mb-4">Xe dành cho bạn</h2>
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Đang tải...</span>
+          </div>
+          <p className="mt-3 text-muted">Đang tải danh sách xe...</p>
+        </div>
+      </section>
+    );
+  }
 
-export const CarList: React.FC<{ cars?: Car[] }> = ({ cars = defaultCars }) => {
+  if (error) {
+    return (
+      <section className="container py-5">
+        <h2 className="text-center fw-bold mb-4">Xe dành cho bạn</h2>
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          {error}
+        </div>
+      </section>
+    );
+  }
+
+  if (vehicles.length === 0) {
+    return (
+      <section className="container py-5">
+        <h2 className="text-center fw-bold mb-4">Xe dành cho bạn</h2>
+        <div className="alert alert-info text-center" role="alert">
+          <i className="bi bi-info-circle me-2"></i>
+          Hiện chưa có xe nào khả dụng
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="container py-5">
-      <h2 className="text-center fw-bold mb-4">Xe dành cho bạn</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="fw-bold mb-0">Xe dành cho bạn</h2>
+        <button
+          className="btn btn-outline-primary"
+          onClick={() => navigate("/demo/vehicles")}
+        >
+          Xem tất cả <i className="bi bi-arrow-right ms-2"></i>
+        </button>
+      </div>
 
       <div className="row g-4">
-        {cars.map((car) => (
-          <div key={car.id} className="col-12 col-sm-6 col-md-4">
-            <div
-              className="card h-100 shadow-sm border-0 position-relative"
-              style={{ transition: "transform .18s ease" }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-            >
-              {/* Nút yêu thích (demo) */}
-              <button
-                type="button"
-                className="btn btn-light border position-absolute top-0 end-0 m-2 rounded-circle"
-                aria-label="Yêu thích"
-              >
-                ❤
-              </button>
-
-              {/* Ảnh: dùng ratio + object-fit để thay ảnh sau rất dễ */}
-              <div className="ratio ratio-16x9 bg-light">
-                <img
-                  src={
-                    car.image && car.image.length > 0
-                      ? car.image
-                      : "https://via.placeholder.com/600x340?text=Car+Image"
-                  }
-                  alt={car.name}
-                  className="img-fluid p-3 object-fit-contain"
-                />
-              </div>
-
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <h6 className="mb-1">{car.name}</h6>
-                    <small className="text-muted">{car.variant}</small>
-                  </div>
-                </div>
-
-                {/* Thông số nhanh */}
-                <ul className="list-inline small text-muted mt-3 mb-0">
-                  <li className="list-inline-item me-3">🚘 {car.seats ?? 5} chỗ</li>
-                  <li className="list-inline-item me-3">⚡ {car.rangeKm ?? 300} km</li>
-                  <li className="list-inline-item">🕹 {car.gearbox ?? "AT"}</li>
-                </ul>
-              </div>
-
-              <div className="card-footer bg-white">
-                <div className="fw-bold">
-                  {formatVND(car.pricePerDay)} VND
-                  <span className="text-muted">/Ngày</span>
-                </div>
-              </div>
-            </div>
+        {vehicles.slice(0, 6).map((vehicle) => (
+          <div key={vehicle.id} className="col-12 col-sm-6 col-lg-4">
+            <VehicleCard vehicle={vehicle} showStation={true} />
           </div>
         ))}
       </div>
+
+      {vehicles.length > 6 && (
+        <div className="text-center mt-4">
+          <button
+            className="btn btn-primary btn-lg"
+            onClick={() => navigate("/demo/vehicles")}
+          >
+            Xem thêm {vehicles.length - 6} xe khác
+          </button>
+        </div>
+      )}
     </section>
   );
 };

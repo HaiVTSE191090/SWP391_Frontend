@@ -3,23 +3,30 @@ import { authController } from "../controller/AuthController";
 import * as model from "../models/AuthModel";
 
 /**
- * Interface cho UserContext - Export để dùng trong components
+ * Interface cho UserContext - CHỈ quản lý auth logic & user state
+ * KHÔNG quản lý error/message - để forms tự xử lý qua FormContext
  */
 export interface UserContextType {
   user: any | null;
   token: string | null;
   loading: boolean;
-  error: string | null;
-  message: string | null;
-  fieldErrors: Record<string, string>;
-  login: (data: model.LoginRequest) => Promise<boolean>;
-  loginWithGoogle: (credential: string) => Promise<boolean>;
-  signUp: (data: model.SignUpRequest) => Promise<boolean>;
+  
+  login: (data: model.LoginRequest) => Promise<AuthResult>;
+  loginWithGoogle: (credential: string) => Promise<AuthResult>;
+  signUp: (data: model.SignUpRequest) => Promise<AuthResult>;
+  verifyOTP: (email: string, otpCode: string) => Promise<AuthResult>;
+  sendOTP: (email: string) => Promise<AuthResult>;
   logout: () => void;
-  clearError: () => void;
-  clearFieldErrors: () => void;
-  verifyOTP: (email: string, otpCode: string) => Promise<boolean>;
-  sendOTP: (email: string) => Promise<boolean>;
+}
+
+/**
+ * Result type cho auth operations
+ */
+export interface AuthResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+  fieldErrors?: Record<string, string>;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);
@@ -32,9 +39,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<any | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Load auth data từ localStorage khi component mount
   useEffect(() => {
@@ -45,12 +49,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     }
   }, []);
 
-
-  const login = async (data: model.LoginRequest): Promise<boolean> => {
+  /**
+   * Login - CHỈ xử lý logic, return result cho form tự xử lý
+   */
+  const login = async (data: model.LoginRequest): Promise<AuthResult> => {
     setLoading(true);
-    setError(null);
-    setMessage(null);
-    setFieldErrors({});
 
     try {
       const result = await authController.login(data);
@@ -58,29 +61,31 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       if (result.success) {
         setToken(result.token!);
         setUser(result.user!);
-        setMessage(result.message!);
         authController.saveAuthData(result.token!, result.user!);
-        return true;
+        
+        return {
+          success: true,
+          message: result.message || "Đăng nhập thành công!",
+        };
       } else {
-        if (result.fieldErrors) {
-          setFieldErrors(result.fieldErrors);
-        }
-        if (result.error) {
-          setError(result.error);
-        }
-        return false;
+        return {
+          success: false,
+          error: result.error,
+          fieldErrors: result.fieldErrors,
+        };
       }
+    } catch (err) {
+      return {
+        success: false,
+        error: "Có lỗi xảy ra, vui lòng thử lại",
+      };
     } finally {
       setLoading(false);
     }
   };
 
-  
-  const loginWithGoogle = async (credential: string): Promise<boolean> => {
+  const loginWithGoogle = async (credential: string): Promise<AuthResult> => {
     setLoading(true);
-    setError(null);
-    setMessage(null);
-    setFieldErrors({});
 
     try {
       const result = await authController.loginWithGoogle(credential);
@@ -88,119 +93,127 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       if (result.success) {
         setToken(result.token!);
         setUser(result.user!);
-        setMessage(result.message!);
         authController.saveAuthData(result.token!, result.user!);
-        return true;
+        
+        return {
+          success: true,
+          message: result.message || "Đăng nhập Google thành công!",
+        };
       } else {
-        setError(result.error!);
-        return false;
+        return {
+          success: false,
+          error: result.error || "Đăng nhập Google thất bại",
+        };
       }
+    } catch (err) {
+      return {
+        success: false,
+        error: "Có lỗi xảy ra, vui lòng thử lại",
+      };
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Đăng ký - Gọi Controller
+   * Sign Up - CHỈ xử lý logic, return result
    */
-  const signUp = async (data: model.SignUpRequest): Promise<boolean> => {
+  const signUp = async (data: model.SignUpRequest): Promise<AuthResult> => {
     setLoading(true);
-    setError(null);
-    setMessage(null);
-    setFieldErrors({});
 
     try {
       const result = await authController.signUp(data);
 
       if (result.success) {
-        setMessage(result.message!);
-        return true;
+        return {
+          success: true,
+          message: result.message || "Đăng ký thành công!",
+        };
       } else {
-        if (result.fieldErrors) {
-          setFieldErrors(result.fieldErrors);
-        }
-        if (result.error) {
-          setError(result.error);
-        }
-        return false;
+        return {
+          success: false,
+          error: result.error,
+          fieldErrors: result.fieldErrors,
+        };
       }
+    } catch (err) {
+      console.error("Sign Up error:", err);
+      return {
+        success: false,
+        error: "Có lỗi xảy ra, vui lòng thử lại",
+      };
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Xác thực OTP - Gọi Controller
+   * Verify OTP - CHỈ xử lý logic, return result
    */
-  const verifyOTP = async (email: string, otpCode: string): Promise<boolean> => {
+  const verifyOTP = async (email: string, otpCode: string): Promise<AuthResult> => {
     setLoading(true);
-    setError(null);
-    setMessage(null);
 
     try {
       const result = await authController.verifyOTP(email, otpCode);
 
       if (result.success) {
-        setMessage(result.message!);
-        return true;
+        return {
+          success: true,
+          message: result.message || "Xác thực OTP thành công!",
+        };
       } else {
-        setError(result.error!);
-        return false;
+        return {
+          success: false,
+          error: "Xác thực OTP thất bại",
+        };
       }
+    } catch (err) {
+      return {
+        success: false,
+        error: "Có lỗi xảy ra, vui lòng thử lại",
+      };
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Gửi OTP - Gọi Controller
+   * Send OTP - CHỈ xử lý logic, return result
    */
-  const sendOTP = async (email: string): Promise<boolean> => {
+  const sendOTP = async (email: string): Promise<AuthResult> => {
     setLoading(true);
-    setError(null);
-    setMessage(null);
 
     try {
       const result = await authController.sendOTP(email);
 
       if (result.success) {
-        setMessage(result.message!);
-        return true;
+        return {
+          success: true,
+          message: result.message || "Gửi OTP thành công!",
+        };
       } else {
-        setError(result.error!);
-        return false;
+        return {
+          success: false,
+          error: result.error || "Gửi OTP thất bại",
+        };
       }
+    } catch (err) {
+      return {
+        success: false,
+        error: "Có lỗi xảy ra, vui lòng thử lại",
+      };
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Đăng xuất
+   * Logout - CHỈ clear auth state
    */
   const logout = () => {
     setToken(null);
     setUser(null);
-    setMessage(null);
-    setError(null);
-    setFieldErrors({});
     authController.clearAuthData();
-  };
-
-  /**
-   * Clear error messages
-   */
-  const clearError = () => {
-    setError(null);
-    setMessage(null);
-    setFieldErrors({});
-  };
-
-  /**
-   * Clear field errors
-   */
-  const clearFieldErrors = () => {
-    setFieldErrors({});
   };
 
   const value = useMemo(
@@ -208,19 +221,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       user,
       token,
       loading,
-      error,
-      message,
-      fieldErrors,
       login,
       loginWithGoogle,
       signUp,
       logout,
-      clearError,
-      clearFieldErrors,
       verifyOTP,
       sendOTP,
     }),
-    [user, token, loading, error, message, fieldErrors]
+    [user, token, loading]
   );
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

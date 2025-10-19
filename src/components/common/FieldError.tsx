@@ -9,13 +9,15 @@ interface FieldErrorProps {
 const FieldError = ({ fieldName, className = "" } : FieldErrorProps) => {
   const userContext = useContext(UserContext);
   
-  if (!userContext?.fieldErrors || !userContext.fieldErrors[fieldName]) {
+  const fieldErrors = (userContext as any)?.fieldErrors as Record<string, string>;
+
+  if (!fieldErrors || !fieldErrors[fieldName]) {
     return null;
   }
 
   return (
     <div className={`text-danger small mt-1 ${className}`}>
-      {userContext.fieldErrors[fieldName]}
+      {fieldErrors[fieldName]}
     </div>
   );
 };

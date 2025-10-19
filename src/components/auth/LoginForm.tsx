@@ -2,25 +2,22 @@ import React, { useContext, useState } from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { LoginRequest } from "../../models/AuthModel";
 import { useAuth } from "../../hooks/useAuth";
-import { FormContext } from "../../context/FormContext";
+import { FormContext, FormProvider } from "../../context/FormContext";
 import { useModal } from "../../hooks/useModal";
-import FieldError from "../common/FieldError";
 
-const LoginForm: React.FC = () => {
+/**
+ * LoginForm Content - Sử dụng LOCAL form state từ FormContext
+ * Không dùng global error/message từ UserContext
+ */
+const LoginFormContent: React.FC = () => {
     const { closeModalAndReload } = useModal();
     const [showPassword, setShowPassword] = useState(false);
     const [showForgot, setShowForgot] = useState(false);
 
-    const { 
-        login, 
-        loginWithGoogle, 
-        loading,
-        fieldErrors: userFieldErrors,
-        message,
-        error,
-        clearError
-    } = useAuth();
+    // ✅ Chỉ lấy login/loginWithGoogle từ UserContext (logic only)
+    const { login, loginWithGoogle, loading } = useAuth();
     
+    // ✅ Local form state - error/message độc lập cho form này
     const formCtx = useContext(FormContext);
     const { closeModal } = useModal();
 
@@ -29,11 +26,17 @@ const LoginForm: React.FC = () => {
         return null;
     }
 
-    // Lấy form data từ FormContext
     const { 
         formData, 
         handleChange, 
-        resetForm
+        resetForm,
+        error: formError,
+        message: formMessage,
+        fieldErrors: formFieldErrors,
+        setError: setFormError,
+        setMessage: setFormMessage,
+        setFieldErrors: setFormFieldErrors,
+        clearMessages
     } = formCtx;
 
     const createLoginRequest = (): LoginRequest => {
@@ -45,15 +48,39 @@ const LoginForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        clearError(); // Clear messages cũ
+        clearMessages(); // Clear local messages
         
         const loginData = createLoginRequest();
+        
+        // ✅ Call login và manually set LOCAL form state
         const result = await login(loginData);
-        if (result) {
+        
+        if (result.success) {
+            setFormMessage(result.message || "Đăng nhập thành công!");
             setTimeout(() => {
                 closeModal('loginForm');
                 resetForm();
             }, 2000);
+        } else {
+            // Set error vào LOCAL form state
+            if (result.error) setFormError(result.error);
+            if (result.fieldErrors) setFormFieldErrors(result.fieldErrors);
+        }
+    };
+
+    const handleGoogleLogin = async (credentialRes: any) => {
+        clearMessages();
+        
+        const result = await loginWithGoogle(credentialRes.credential);
+        
+        if (result.success) {
+            setFormMessage(result.message || "Đăng nhập Google thành công!");
+            setTimeout(() => {
+                resetForm();
+                closeModalAndReload("loginForm");
+            }, 1000);
+        } else {
+            setFormError(result.error || "Đăng nhập Google thất bại");
         }
     };
 
@@ -76,7 +103,7 @@ const LoginForm: React.FC = () => {
                             className="btn-close"
                             data-bs-dismiss="modal"
                             aria-label="Close"
-                            onClick={clearError}
+                            onClick={clearMessages}
                         ></button>
                     </div>
 
@@ -122,16 +149,21 @@ const LoginForm: React.FC = () => {
                                         id="email"
                                         name="email"
                                         type="text"
-                                        className={`form-control form-control-lg rounded-3 ${userFieldErrors.email ? "is-invalid" : ""
-                                            }`}
+                                        className={`form-control form-control-lg rounded-3 ${
+                                            formFieldErrors.email ? "is-invalid" : ""
+                                        }`}
                                         value={formData.email || ""}
                                         onChange={handleChange}
                                         placeholder="Nhập Email"
                                     />
-                                    <FieldError fieldName="email" />
+                                    {formFieldErrors.email && (
+                                        <div className="invalid-feedback d-block">
+                                            {formFieldErrors.email}
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div  className="mb-2 position-relative">
+                                <div className="mb-2 position-relative">
                                     <label htmlFor="password" className="form-label fw-semibold">
                                         Mật khẩu
                                     </label>
@@ -140,7 +172,9 @@ const LoginForm: React.FC = () => {
                                             id="password"
                                             name="password"
                                             type={showPassword ? "text" : "password"}
-                                            className={`form-control ${userFieldErrors.password ? "is-invalid" : ""}`}
+                                            className={`form-control ${
+                                                formFieldErrors.password ? "is-invalid" : ""
+                                            }`}
                                             value={formData.password || ""}
                                             onChange={handleChange}
                                             placeholder="Nhập mật khẩu"
@@ -153,7 +187,11 @@ const LoginForm: React.FC = () => {
                                             {showPassword ? "Ẩn" : "Hiện"}
                                         </button>
                                     </div>
-                                    <FieldError fieldName="password" />
+                                    {formFieldErrors.password && (
+                                        <div className="invalid-feedback d-block">
+                                            {formFieldErrors.password}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="d-flex align-items-center justify-content-between mt-2 mb-3">
@@ -172,8 +210,19 @@ const LoginForm: React.FC = () => {
                                     </button>
                                 </div>
 
-                                {message && <div className="alert alert-success">{message}</div>}
-                                {error && <div className="alert alert-danger">{error}</div>}
+                                {/* ✅ LOCAL form messages - không share với form khác */}
+                                {formMessage && (
+                                    <div className="alert alert-success">
+                                        <i className="bi bi-check-circle me-2"></i>
+                                        {formMessage}
+                                    </div>
+                                )}
+                                {formError && (
+                                    <div className="alert alert-danger">
+                                        <i className="bi bi-exclamation-triangle me-2"></i>
+                                        {formError}
+                                    </div>
+                                )}
 
                                 <div className="d-grid mb-3">
                                     <button
@@ -202,18 +251,9 @@ const LoginForm: React.FC = () => {
                                 <div className="d-grid">
                                     <GoogleOAuthProvider clientId={process.env.REACT_APP_CLIENT_ID!}>
                                         <GoogleLogin
-                                            onSuccess={async (credentialRes: any) => {
-                                                clearError(); // Clear messages cũ
-                                                const result = await loginWithGoogle(credentialRes.credential);
-                                                if (result) {
-                                                    setTimeout(() => {
-                                                        resetForm();
-                                                        closeModalAndReload("loginForm");
-                                                    }, 1000);
-                                                }
-                                            }}
+                                            onSuccess={handleGoogleLogin}
                                             onError={() => {
-                                                console.log("Google OAuth failed");
+                                                setFormError("Đăng nhập Google thất bại");
                                             }}
                                         />
                                     </GoogleOAuthProvider>
@@ -224,6 +264,18 @@ const LoginForm: React.FC = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+/**
+ * ✅ Wrapper với FormProvider - Mỗi LoginForm có state độc lập
+ * Component này unmount → FormContext tự động clear state
+ */
+const LoginForm: React.FC = () => {
+    return (
+        <FormProvider>
+            <LoginFormContent />
+        </FormProvider>
     );
 };
 

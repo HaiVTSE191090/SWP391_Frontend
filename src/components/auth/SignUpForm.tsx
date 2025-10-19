@@ -1,8 +1,8 @@
-import React, { useContext } from "react";
+import React from "react";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import InputField from "../common/InputField";
 import { useModal } from "../../hooks/useModal";
-import { FormContext } from "../../context/FormContext";
+import { useForm } from "../../hooks/useForm";
 import { validateSignUp } from "../../utils/validators";
 import { SignUpRequest } from "../../models/AuthModel";
 import { useAuth } from "../../hooks/useAuth";
@@ -10,19 +10,26 @@ import FieldError from "../common/FieldError";
 
 const SignUpForm: React.FC = () => {
     const { switchModal, closeModal } = useModal();
-    const formCtx = useContext(FormContext);
-    const { signUp, loginWithGoogle, sendOTP, loading, fieldErrors: userFieldErrors, message, error, clearError } = useAuth();
+    const { signUp, loginWithGoogle, sendOTP, loading } = useAuth();
 
-    if (!formCtx) return null;
-    const { formData, handleChange, resetForm, fieldErrors, setFieldErrors, clearErrors } = formCtx;
+    const { formData,
+        handleChange,
+        resetForm,
+        error: formError,
+        message: formMessage,
+        fieldErrors: formFieldErrors,
+        setError: setFormError,
+        setMessage: setFormMessage,
+        setFieldErrors: setFormFieldErrors,
+        clearMessages } = useForm();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        clearErrors();
+        clearMessages();
 
         const { fieldErrors: errs } = validateSignUp(formData);
         if (Object.keys(errs).length > 0) {
-            setFieldErrors(errs);
+            setFormFieldErrors(errs);
             return;
         }
 
@@ -34,12 +41,23 @@ const SignUpForm: React.FC = () => {
             confirmPassword: formData.confirmPassword,
         };
 
-        const ok = await signUp(payload);
-        if (ok) {
-            await sendOTP(formData.email);
-            setTimeout(() => {
-                switchModal("signUpForm", "otpVerificationModal");
-            }, 1000);
+        const result = await signUp(payload);
+        if (result.success) {
+            
+            // Send OTP
+            const otpResult = await sendOTP(formData.email);
+            if (otpResult.success) {
+                setFormMessage(result.message || "Đăng ký thành công!");
+                setTimeout(() => {
+                    switchModal("signUpForm", "otpVerificationModal");
+                    clearMessages();
+                }, 500);
+            } else {
+                setFormError(otpResult.error || "Gửi OTP thất bại");
+            }
+        } else {
+            if (result.error) setFormError(result.error);
+            if (result.fieldErrors) setFormFieldErrors(result.fieldErrors);
         }
     };
 
@@ -56,18 +74,20 @@ const SignUpForm: React.FC = () => {
                             className="btn-close"
                             data-bs-dismiss="modal"
                             aria-label="Close"
-                            onClick={clearError}
+                            onClick={clearMessages}
                         ></button>
                     </div>
 
                     <div className="modal-body">
+
+
                         <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
                             <InputField
                                 name="fullName"
                                 placeholder="Họ và tên *"
                                 value={formData.fullName || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.fullName || userFieldErrors.fullName}
+                                error={formFieldErrors.fullName}
                                 required
                             />
                             <FieldError fieldName="fullName" />
@@ -78,7 +98,7 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Email *"
                                 value={formData.email || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.email || userFieldErrors.email}
+                                error={formFieldErrors.email}
                                 required
                             />
                             <FieldError fieldName="email" />
@@ -88,7 +108,7 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Số điện thoại *"
                                 value={formData.phoneNumber || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.phoneNumber || userFieldErrors.phoneNumber}
+                                error={formFieldErrors.phoneNumber}
                                 required
                             />
                             <FieldError fieldName="phoneNumber" />
@@ -99,7 +119,7 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Mật khẩu *"
                                 value={formData.password || ""}
                                 onChange={handleChange}
-                                error={fieldErrors.password || userFieldErrors.password}
+                                error={formFieldErrors.password}
                                 required
                             />
                             <FieldError fieldName="password" />
@@ -110,12 +130,23 @@ const SignUpForm: React.FC = () => {
                                 placeholder="Xác nhận mật khẩu *"
                                 value={formData.confirmPassword || ""}
                                 onChange={handleChange}
-                                error={
-                                    fieldErrors.confirmPassword || userFieldErrors.confirmPassword
-                                }
+                                error={formFieldErrors.confirmPassword}
                                 required
                             />
                             <FieldError fieldName="confirmPassword" />
+
+                            {formMessage && (
+                                <div className="alert alert-success">
+                                    <i className="bi bi-check-circle me-2"></i>
+                                    {formMessage}
+                                </div>
+                            )}
+                            {formError && (
+                                <div className="alert alert-danger">
+                                    <i className="bi bi-exclamation-triangle me-2"></i>
+                                    {formError}
+                                </div>
+                            )}
 
                             <button
                                 type="submit"
@@ -156,10 +187,8 @@ const SignUpForm: React.FC = () => {
                                 </GoogleOAuthProvider>
                             </div>
                         </form>
-                    </div>
 
-                    {message && <div className="alert alert-success">{message}</div>}
-                    {error && <div className="alert alert-danger">{error}</div>}
+                    </div>
                 </div>
             </div>
         </div>

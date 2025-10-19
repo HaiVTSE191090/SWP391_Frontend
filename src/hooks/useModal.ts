@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAuth } from './useAuth';
+import { useForm } from './useForm';
 
 interface UseModalReturn {
   closeModalAndReload: (modalId: string) => void;
@@ -10,10 +10,12 @@ interface UseModalReturn {
 }
 
 export const useModal = (): UseModalReturn => {
-  const { clearError } = useAuth();
-  
+
+  const { clearErrors } = useForm();
+
+
   const closeModalAndReload = useCallback((modalId: string) => {
-    clearError(); // Clear message/error trước khi đóng modal
+    clearErrors();
     const modal = document.getElementById(modalId);
     if (modal) {
       const bsModal = (window as any).bootstrap?.Modal?.getInstance(modal);
@@ -25,10 +27,10 @@ export const useModal = (): UseModalReturn => {
     setTimeout(() => {
       window.location.reload();
     }, 300); 
-  }, [clearError]);
+  }, [clearErrors]);
 
   const closeModal = useCallback((modalId: string) => {
-    clearError(); // Clear message/error trước khi đóng modal
+    clearErrors(); // Clear message/error trước khi đóng modal
     const modal = document.getElementById(modalId);
     if (modal) {
       const bsModal = (window as any).bootstrap?.Modal?.getInstance(modal);
@@ -36,7 +38,7 @@ export const useModal = (): UseModalReturn => {
         bsModal.hide();
       }
     }
-  }, [clearError]);
+  }, [clearErrors]);
 
   const openModal = useCallback((modalId: string) => {
     const modalElement = document.getElementById(modalId);
@@ -47,7 +49,7 @@ export const useModal = (): UseModalReturn => {
   }, []);
 
   const switchModal = useCallback((fromModalId: string, toModalId: string) => {
-    clearError(); // Clear message/error trước khi chuyển modal
+    clearErrors(); // Clear message/error trước khi chuyển modal
     const fromModal = document.getElementById(fromModalId);
     const bsFromModal = (window as any).bootstrap?.Modal?.getInstance(fromModal);
     
@@ -62,7 +64,7 @@ export const useModal = (): UseModalReturn => {
         bsToModal.show();
       }
     }, 300); 
-  }, [clearError]);
+  }, [clearErrors]);
 
   const reloadPage = useCallback(() => {
     window.location.reload();

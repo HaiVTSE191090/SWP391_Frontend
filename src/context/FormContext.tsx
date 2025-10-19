@@ -1,6 +1,6 @@
 import React, { createContext, useState, ReactNode } from "react";
 
-interface FormContextType {
+export interface FormContextType {
     formData: Record<string, any>,
     setFormData: React.Dispatch<React.SetStateAction<Record<string, any>>>,
     handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void

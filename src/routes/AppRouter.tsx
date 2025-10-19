@@ -9,6 +9,8 @@ import Staff from "../components/StaffInterface/Staff";
 import DepositPage from "../components/XacNhanTraXe/components/DepositPage";
 import RentalHistoryPage from "../components/HistoryPage/RentalHistoryPage";
 import ContractPreviewPage from "../components/ContractPage/ContractPage";
+import VehicleDetailPage from "../pages/VehicleDetailPage";
+import VehicleDemoPage from "../pages/VehicleDemoPage";
 
 
 // Lazy load các trang (tối ưu bundle)
@@ -31,6 +33,10 @@ const router = createBrowserRouter([
             { path: "/xac-nhan-dat-xe", element: <DepositPage /> },
             { path: "/rental-history", element: <RentalHistoryPage /> },
             { path: "/contract-preview", element: <ContractPreviewPage /> },
+            // Trang demo vehicle (MOCK DATA)
+            { path: "/demo/vehicles", element: <VehicleDemoPage /> },
+            // Trang chi tiết xe
+            { path: "/vehicles/:id", element: <VehicleDetailPage /> },
             // // 404 bắt mọi thứ còn lại
             // { path: "*", element: <NotFoundPage /> },
         ],
