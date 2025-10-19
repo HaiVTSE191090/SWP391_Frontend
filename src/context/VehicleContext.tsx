@@ -2,24 +2,19 @@ import React, { createContext, ReactNode, useState, useMemo, useCallback } from 
 import { vehicleController } from "../controller/VehicleController";
 import { VehicleWithStation, StationWithVehicles } from "../models/VehicleModel";
 
-/**
- * Context cho Vehicle - Quản lý state và actions
- */
+
 export interface VehicleContextType {
-  // State
   vehicles: VehicleWithStation[];
   stations: StationWithVehicles[];
   loading: boolean;
   error: string | null;
 
-  // Actions
   loadAllVehicles: () => Promise<boolean>;
   loadAvailableVehicles: () => Promise<boolean>;
   loadVehiclesByStation: (stationId: number) => Promise<boolean>;
   loadAllStations: () => Promise<boolean>;
   clearError: () => void;
 
-  // Helpers
   formatBattery: (batteryLevel: number) => string;
   formatMileage: (mileage: number) => string;
   isVehicleAvailable: (vehicle: VehicleWithStation) => boolean;
@@ -142,23 +137,17 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     setError(null);
   }, []);
 
-  /**
-   * Format battery
-   */
+  
   const formatBattery = useCallback((batteryLevel: number): string => {
     return vehicleController.formatBattery(batteryLevel);
   }, []);
 
-  /**
-   * Format mileage
-   */
+  
   const formatMileage = useCallback((mileage: number): string => {
     return vehicleController.formatMileage(mileage);
   }, []);
 
-  /**
-   * Check available
-   */
+
   const isVehicleAvailable = useCallback((vehicle: VehicleWithStation): boolean => {
     return vehicleController.isVehicleAvailable(vehicle);
   }, []);

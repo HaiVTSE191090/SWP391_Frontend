@@ -178,23 +178,17 @@ export class VehicleController {
     return filtered;
   }
 
-  /**
-   * Format battery level
-   */
+  
   formatBattery(batteryLevel: number): string {
     return `${batteryLevel.toFixed(0)}%`;
   }
 
-  /**
-   * Check xe có available không
-   */
+ 
   isVehicleAvailable(vehicle: Vehicle): boolean {
     return checkVehicleAvailable(vehicle);
   }
 
-  /**
-   * Format số km
-   */
+  
   formatMileage(mileage: number): string {
     return `${mileage.toLocaleString("vi-VN")} km`;
   }

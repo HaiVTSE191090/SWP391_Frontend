@@ -1,6 +1,4 @@
-/**
- * Vehicle Model - Khớp với data từ BE
- */
+
 export interface Vehicle {
   vehicleId: number;
   plateNumber: string;
@@ -11,9 +9,7 @@ export interface Vehicle {
   modelName: string | null;
 }
 
-/**
- * Vehicle với thông tin station (cho display)
- */
+
 export interface VehicleWithStation extends Vehicle {
   stationId: number;
   stationName: string;
@@ -33,7 +29,7 @@ export interface StationWithVehicles {
   status: "ACTIVE" | "INACTIVE";
   vehicles: Vehicle[];
   distance: number | null;
-  availableCount: number; // Số xe AVAILABLE
+  availableCount: number; 
 }
 
 export interface AllStationsResponse {
@@ -42,9 +38,7 @@ export interface AllStationsResponse {
   data: StationWithVehicles[];
 }
 
-/**
- * Helpers
- */
+
 export const isVehicleAvailable = (vehicle: Vehicle): boolean => {
   return vehicle.status === "AVAILABLE";
 };
