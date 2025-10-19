@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react-bootstrap';
 import ListRenter from './ListRenter';
+import ChooseCar from './ChooseCar';
 
 // Import ảnh xe trực tiếp từ thư mục
 import vf3Blue from '../../images/car-list/source/vf3-blue.jpg';
@@ -36,6 +37,8 @@ export default function Staff() {
   const [show, setShow] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả xe');
   const [showListRenter, setShowListRenter] = useState(false);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Car | null>(null);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -79,12 +82,41 @@ export default function Staff() {
   const handleMenuClick = (item: string) => {
     if (item === 'Danh sách người thuê') {
       setShowListRenter(true);
+      setSelectedVehicleId(null);
+      setSelectedVehicle(null);
     } else {
       setShowListRenter(false);
+      setSelectedVehicleId(null);
+      setSelectedVehicle(null);
       setSelectedCategory(item);
     }
     handleClose();
   };
+
+  // Xử lý khi click vào xe
+  const handleCarClick = (car: Car) => {
+    if (car.status === 'rented') {
+      setSelectedVehicleId(car.id);
+      setSelectedVehicle(car);
+    }
+  };
+
+  // Nếu đang xem chi tiết xe
+  if (selectedVehicleId !== null && selectedVehicle !== null) {
+    return (
+      <ChooseCar 
+        vehicleId={selectedVehicleId} 
+        onBack={() => {
+          setSelectedVehicleId(null);
+          setSelectedVehicle(null);
+        }}
+        vehicleImage={selectedVehicle.image}
+        vehicleName={selectedVehicle.name}
+        vehiclePrice={selectedVehicle.price}
+        vehicleStatus={selectedVehicle.status}
+      />
+    );
+  }
 
   // Nếu đang xem Danh sách người thuê
   if (showListRenter) {
@@ -172,7 +204,11 @@ export default function Staff() {
             <Row>
               {filteredCars().map((car) => (
                 <Col lg={4} md={6} sm={12} className="mb-4" key={car.id}>
-                  <Card className="h-100 shadow-sm">
+                  <Card 
+                    className="h-100 shadow-sm"
+                    style={{ cursor: car.status === 'rented' ? 'pointer' : 'default' }}
+                    onClick={() => handleCarClick(car)}
+                  >
                     <Card.Img
                       variant="top"
                       src={car.image}
@@ -188,7 +224,15 @@ export default function Staff() {
                       <div className="mt-auto">
                         <Row>
                           <Col>
-                            <Button variant="outline-primary" size="sm" className="w-100 mb-2">
+                            <Button 
+                              variant="outline-primary" 
+                              size="sm" 
+                              className="w-100 mb-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // TODO: Xem chi tiết xe
+                              }}
+                            >
                               Xem chi tiết
                             </Button>
                           </Col>
@@ -200,6 +244,7 @@ export default function Staff() {
                               size="sm" 
                               className="w-100"
                               disabled={car.status !== 'available'}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               {car.status === 'available' ? 'Cho thuê' : 
                                car.status === 'rented' ? 'Đang thuê' : 'Bảo trì'}
