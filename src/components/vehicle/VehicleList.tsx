@@ -8,10 +8,6 @@ interface VehicleListProps {
   title?: string;
 }
 
-/**
- * Component hiển thị danh sách xe
- * Reusable - có thể dùng để hiển thị xe theo station
- */
 const VehicleList: React.FC<VehicleListProps> = ({
   stationId,
   showStation = false,

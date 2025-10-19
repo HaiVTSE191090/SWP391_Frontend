@@ -53,6 +53,7 @@ export interface User {
   address?: string;
   status?: string;
   blacklisted?: boolean;
+  kycStatus?: "VERIFIED" | "PENDING_VERIFICATION" | "NEED_UPLOAD";
 }
 
 export type RegisterErrorData = string | Record<string, string>;

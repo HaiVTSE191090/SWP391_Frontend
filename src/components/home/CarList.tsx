@@ -22,7 +22,6 @@ export const CarList: React.FC = () => {
     setVisibleCount(6);
   }, [filterStatus, searchQuery]);
 
-  console.log('Vehicles:', vehicles);
   const filteredVehicles = vehicles.filter((vehicle) => {
     const statusMatch = filterStatus === 'ALL' || vehicle.status === filterStatus;
     
