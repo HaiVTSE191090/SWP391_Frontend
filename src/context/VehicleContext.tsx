@@ -1,21 +1,28 @@
-import React, { createContext, ReactNode, useState, useMemo } from "react";
+import React, { createContext, ReactNode, useState, useMemo, useCallback } from "react";
 import { vehicleController } from "../controller/VehicleController";
-import { Vehicle } from "../models/VehicleModel";
+import { VehicleWithStation, StationWithVehicles } from "../models/VehicleModel";
 
 /**
  * Context cho Vehicle - Quản lý state và actions
  */
 export interface VehicleContextType {
-  vehicle: Vehicle | null;
-  vehicles: Vehicle[];
+  // State
+  vehicles: VehicleWithStation[];
+  stations: StationWithVehicles[];
   loading: boolean;
   error: string | null;
-  getVehicleDetail: (vehicleId: number) => Promise<boolean>;
-  getVehiclesByStation: (stationId: number) => Promise<boolean>;
-  searchVehicles: (filters: any) => Promise<boolean>;
+
+  // Actions
+  loadAllVehicles: () => Promise<boolean>;
+  loadAvailableVehicles: () => Promise<boolean>;
+  loadVehiclesByStation: (stationId: number) => Promise<boolean>;
+  loadAllStations: () => Promise<boolean>;
   clearError: () => void;
-  formatPrice: (price: number) => string;
-  isVehicleAvailable: (vehicle: Vehicle) => boolean;
+
+  // Helpers
+  formatBattery: (batteryLevel: number) => string;
+  formatMileage: (mileage: number) => string;
+  isVehicleAvailable: (vehicle: VehicleWithStation) => boolean;
 }
 
 export const VehicleContext = createContext<VehicleContextType | null>(null);
@@ -25,40 +32,65 @@ interface VehicleProviderProps {
 }
 
 export const VehicleProvider = ({ children }: VehicleProviderProps) => {
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleWithStation[]>([]);
+  const [stations, setStations] = useState<StationWithVehicles[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Lấy chi tiết xe
+   * Load tất cả xe từ tất cả stations
    */
-  const getVehicleDetail = async (vehicleId: number): Promise<boolean> => {
+  const loadAllVehicles = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await vehicleController.getVehicleDetail(vehicleId);
+      const result = await vehicleController.getAllVehicles();
 
       if (result.success) {
-        setVehicle(result.data);
+        setVehicles(result.data);
         return true;
       } else {
         setError(result.error!);
         return false;
       }
     } catch (err) {
-      setError("Có lỗi xảy ra khi lấy thông tin xe");
+      setError("Có lỗi xảy ra khi lấy danh sách xe");
       return false;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
-   * Lấy danh sách xe theo station
+   * Load chỉ xe AVAILABLE
    */
-  const getVehiclesByStation = async (stationId: number): Promise<boolean> => {
+  const loadAvailableVehicles = useCallback(async (): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await vehicleController.getAvailableVehicles();
+
+      if (result.success) {
+        setVehicles(result.data);
+        return true;
+      } else {
+        setError(result.error!);
+        return false;
+      }
+    } catch (err) {
+      setError("Có lỗi xảy ra khi lấy danh sách xe");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * Load xe theo station
+   */
+  const loadVehiclesByStation = useCallback(async (stationId: number): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
@@ -66,6 +98,7 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
       const result = await vehicleController.getVehiclesByStation(stationId);
 
       if (result.success) {
+        // Cần convert sang VehicleWithStation nếu BE không có station info
         setVehicles(result.data);
         return true;
       } else {
@@ -75,65 +108,90 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
-   * Tìm kiếm xe
+   * Load tất cả stations
    */
-  const searchVehicles = async (filters: any): Promise<boolean> => {
+  const loadAllStations = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await vehicleController.searchVehicles(filters);
+      const result = await vehicleController.getAllStations();
 
       if (result.success) {
-        setVehicles(result.data);
+        setStations(result.data);
         return true;
       } else {
         setError(result.error!);
         return false;
       }
+    } catch (err) {
+      setError("Có lỗi xảy ra khi lấy danh sách trạm");
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Clear error
    */
-  const clearError = () => {
+  const clearError = useCallback(() => {
     setError(null);
-  };
+  }, []);
 
   /**
-   * Format giá
+   * Format battery
    */
-  const formatPrice = (price: number): string => {
-    return vehicleController.formatPrice(price);
-  };
+  const formatBattery = useCallback((batteryLevel: number): string => {
+    return vehicleController.formatBattery(batteryLevel);
+  }, []);
+
+  /**
+   * Format mileage
+   */
+  const formatMileage = useCallback((mileage: number): string => {
+    return vehicleController.formatMileage(mileage);
+  }, []);
 
   /**
    * Check available
    */
-  const isVehicleAvailable = (vehicle: Vehicle): boolean => {
+  const isVehicleAvailable = useCallback((vehicle: VehicleWithStation): boolean => {
     return vehicleController.isVehicleAvailable(vehicle);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
-      vehicle,
       vehicles,
+      stations,
       loading,
       error,
-      getVehicleDetail,
-      getVehiclesByStation,
-      searchVehicles,
+      loadAllVehicles,
+      loadAvailableVehicles,
+      loadVehiclesByStation,
+      loadAllStations,
       clearError,
-      formatPrice,
+      formatBattery,
+      formatMileage,
       isVehicleAvailable,
     }),
-    [vehicle, vehicles, loading, error]
+    [
+      vehicles,
+      stations,
+      loading,
+      error,
+      loadAllVehicles,
+      loadAvailableVehicles,
+      loadVehiclesByStation,
+      loadAllStations,
+      clearError,
+      formatBattery,
+      formatMileage,
+      isVehicleAvailable,
+    ]
   );
 
   return <VehicleContext.Provider value={value}>{children}</VehicleContext.Provider>;

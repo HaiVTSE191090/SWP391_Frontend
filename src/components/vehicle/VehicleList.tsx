@@ -4,35 +4,28 @@ import VehicleCard from "./VehicleCard";
 
 interface VehicleListProps {
   stationId?: number;
-  filters?: {
-    brand?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    status?: string;
-  };
   showStation?: boolean;
   title?: string;
 }
 
 /**
  * Component hiển thị danh sách xe
- * Reusable - có thể dùng để hiển thị xe theo station, search, filter, etc
+ * Reusable - có thể dùng để hiển thị xe theo station
  */
 const VehicleList: React.FC<VehicleListProps> = ({
   stationId,
-  filters,
   showStation = false,
   title = "Danh sách xe",
 }) => {
-  const { vehicles, loading, error, getVehiclesByStation, searchVehicles } = useVehicle();
+  const { vehicles, loading, error, loadVehiclesByStation, loadAllVehicles } = useVehicle();
 
   useEffect(() => {
     if (stationId) {
-      getVehiclesByStation(stationId);
-    } else if (filters) {
-      searchVehicles(filters);
+      loadVehiclesByStation(stationId);
+    } else {
+      loadAllVehicles();
     }
-  }, [stationId, filters, getVehiclesByStation, searchVehicles]);
+  }, [stationId, loadVehiclesByStation, loadAllVehicles]);
 
   if (loading) {
     return (
@@ -71,7 +64,7 @@ const VehicleList: React.FC<VehicleListProps> = ({
       <h2 className="fw-bold mb-4">{title}</h2>
       <div className="row g-4">
         {vehicles.map((vehicle) => (
-          <div key={vehicle.id} className="col-md-6 col-lg-4">
+          <div key={vehicle.vehicleId} className="col-md-6 col-lg-4">
             <VehicleCard vehicle={vehicle} showStation={showStation} />
           </div>
         ))}

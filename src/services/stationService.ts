@@ -1,29 +1,36 @@
-import  api  from "./apiClient";
+import api from "./apiClient";
+import { AllStationsResponse } from "../models/VehicleModel";
 
-export interface StationResponseDTO {
-  stationId: number;
-  name: string;
-  location: string;
-  latitude: number;
-  longitude: number;
-  capacity: number;
-  status: string;
-  vehicles?: any[];
-  distance?: number;
-  availableCount?: number;
-}
+/**
+ * Station Service - Gọi API liên quan đến stations
+ */
 
-export const getStations = async (lat: number, lng: number) => {
-  // GET /api/stations?lat=..&lng=..
-  return await api.get(`/api/stations/${lat}/${lng}`);
+/**
+ * Lấy tất cả stations kèm vehicles
+ * GET /api/stations/all
+ */
+export const getAllStations = async (): Promise<AllStationsResponse> => {
+  const response = await api.get("/api/stations/all");
+  return response.data;
 };
 
-export const getAllStations = async () => {
-  // GET /api/stations/all
-  return await api.get("/api/stations/all");
+/**
+ * Lấy stations theo vị trí (có distance)
+ * GET /api/stations/{lat}/{lng}
+ */
+export const getStationsByLocation = async (
+  lat: number,
+  lng: number
+): Promise<AllStationsResponse> => {
+  const response = await api.get(`/api/stations/${lat}/${lng}`);
+  return response.data;
 };
 
+/**
+ * Lấy vehicles của một station cụ thể
+ * GET /api/stations/{stationId}/vehicles
+ */
 export const getVehiclesByStationId = async (stationId: number) => {
-  // GET /api/stations/{stationId}/vehicles
-  return await api.get(`/api/stations/${stationId}/vehicles`);
+  const response = await api.get(`/api/stations/${stationId}/vehicles`);
+  return response.data;
 };

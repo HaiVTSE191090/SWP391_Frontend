@@ -1,69 +1,105 @@
-import * as vehicleServiceModule from "../services/vehicleService";
-import { Vehicle } from "../models/VehicleModel";
+import { 
+  Vehicle, 
+  VehicleWithStation, 
+  StationWithVehicles,
+  isVehicleAvailable as checkVehicleAvailable 
+} from "../models/VehicleModel";
+import * as stationService from "../services/stationService";
 
 /**
- * Controller - Business logic layer
- * Xử lý data từ Service trước khi trả về cho View
+ * Vehicle Controller - Business logic layer
+ * Xử lý data từ Service trước khi trả về cho Context/View
  */
 
-export interface IVehicleService {
-  getVehicleById: typeof vehicleServiceModule.getVehicleById;
-  getVehiclesByStationId: typeof vehicleServiceModule.getVehiclesByStationId;
-  getAllVehicles: typeof vehicleServiceModule.getAllVehicles;
-  searchVehicles: typeof vehicleServiceModule.searchVehicles;
-}
-
 export class VehicleController {
-  constructor(private vehicleService: IVehicleService = vehicleServiceModule) {}
-
   /**
-   * Lấy chi tiết xe theo ID
-   * @param vehicleId - ID của xe
-   * @returns Object chứa success, data (vehicle), error
+   * Lấy tất cả xe từ tất cả các trạm
+   * Sử dụng API /api/stations/all
    */
-  async getVehicleDetail(vehicleId: number) {
+  async getAllVehicles() {
     try {
-      const response = await this.vehicleService.getVehicleById(vehicleId);
+      const response = await stationService.getAllStations();
 
-      if (response.status === 200 && response.data.data) {
+      if (response.status === "success" && response.data) {
+        // Flatten: Gộp tất cả vehicles từ tất cả stations
+        const allVehiclesWithStation: VehicleWithStation[] = [];
+
+        response.data.forEach((station: StationWithVehicles) => {
+          station.vehicles.forEach((vehicle: Vehicle) => {
+            allVehiclesWithStation.push({
+              ...vehicle,
+              stationId: station.stationId,
+              stationName: station.name,
+              stationLocation: station.location,
+            });
+          });
+        });
+
         return {
           success: true,
-          data: response.data.data,
-          message: "Lấy thông tin xe thành công",
+          data: allVehiclesWithStation,
+          message: `Tìm thấy ${allVehiclesWithStation.length} xe`,
         };
       }
 
       return {
         success: false,
-        data: null,
-        error: "Không tìm thấy thông tin xe",
+        data: [],
+        error: "Không thể lấy danh sách xe",
       };
     } catch (err: any) {
-      console.error("❌ Get vehicle detail error:", err?.response?.data || err?.message);
+      console.error("❌ Get all vehicles error:", err?.response?.data || err?.message);
 
-      const errorData = err?.response?.data;
       return {
         success: false,
-        data: null,
-        error: errorData?.message || "Không thể lấy thông tin xe",
+        data: [],
+        error: err?.response?.data?.message || "Không thể lấy danh sách xe",
       };
     }
   }
 
   /**
-   * Lấy danh sách xe theo station
-   * @param stationId - ID của trạm
-   * @returns Object chứa success, data (vehicles array), error
+   * Lấy chỉ xe AVAILABLE từ tất cả các trạm
+   */
+  async getAvailableVehicles() {
+    try {
+      const result = await this.getAllVehicles();
+
+      if (result.success) {
+        const availableVehicles = result.data.filter((vehicle: VehicleWithStation) =>
+          checkVehicleAvailable(vehicle)
+        );
+
+        return {
+          success: true,
+          data: availableVehicles,
+          message: `Tìm thấy ${availableVehicles.length} xe có sẵn`,
+        };
+      }
+
+      return result;
+    } catch (err: any) {
+      console.error("❌ Get available vehicles error:", err);
+      return {
+        success: false,
+        data: [],
+        error: "Không thể lấy danh sách xe có sẵn",
+      };
+    }
+  }
+
+  /**
+   * Lấy xe theo station ID
    */
   async getVehiclesByStation(stationId: number) {
     try {
-      const response = await this.vehicleService.getVehiclesByStationId(stationId);
+      const response = await stationService.getVehiclesByStationId(stationId);
 
-      if (response.status === 200 && response.data.data) {
+      if (response.status === "success" && response.data) {
         return {
           success: true,
-          data: response.data.data,
-          message: `Tìm thấy ${response.data.data.length} xe`,
+          data: response.data,
+          message: `Tìm thấy ${response.data.length} xe`,
         };
       }
 
@@ -73,89 +109,94 @@ export class VehicleController {
         error: "Không tìm thấy xe nào",
       };
     } catch (err: any) {
-      console.error("❌ Get vehicles by station error:", err?.response?.data || err?.message);
+      console.error("❌ Get vehicles by station error:", err);
 
-      const errorData = err?.response?.data;
       return {
         success: false,
         data: [],
-        error: errorData?.message || "Không thể lấy danh sách xe",
+        error: "Không thể lấy danh sách xe",
       };
     }
   }
 
   /**
-   * Tìm kiếm xe theo filter
-   * @param filters - Object chứa các điều kiện filter
-   * @returns Object chứa success, data (vehicles array), error
+   * Lấy tất cả stations kèm vehicles
    */
-  async searchVehicles(filters: {
-    stationId?: number;
-    brand?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    status?: string;
-  }) {
+  async getAllStations() {
     try {
-      const response = await this.vehicleService.searchVehicles(filters);
+      const response = await stationService.getAllStations();
 
-      if (response.status === 200 && response.data.data) {
-        const vehicles = response.data.data;
-
-        // Business logic: Filter theo giá (nếu BE chưa filter)
-        let filteredVehicles = vehicles;
-        
-        if (filters.minPrice !== undefined) {
-          filteredVehicles = filteredVehicles.filter(
-            (v) => (v.pricePerHour || 0) >= filters.minPrice!
-          );
-        }
-
-        if (filters.maxPrice !== undefined) {
-          filteredVehicles = filteredVehicles.filter(
-            (v) => (v.pricePerHour || 0) <= filters.maxPrice!
-          );
-        }
-
+      if (response.status === "success" && response.data) {
         return {
           success: true,
-          data: filteredVehicles,
-          message: `Tìm thấy ${filteredVehicles.length} xe phù hợp`,
+          data: response.data,
+          message: `Tìm thấy ${response.data.length} trạm`,
         };
       }
 
       return {
         success: false,
         data: [],
-        error: "Không tìm thấy xe nào",
+        error: "Không thể lấy danh sách trạm",
       };
     } catch (err: any) {
-      console.error("❌ Search vehicles error:", err?.response?.data || err?.message);
+      console.error("❌ Get all stations error:", err);
 
-      const errorData = err?.response?.data;
       return {
         success: false,
         data: [],
-        error: errorData?.message || "Không thể tìm kiếm xe",
+        error: "Không thể lấy danh sách trạm",
       };
     }
   }
 
   /**
-   * Format giá tiền
+   * Filter vehicles theo điều kiện
    */
-  formatPrice(price: number): string {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
+  filterVehicles(
+    vehicles: VehicleWithStation[],
+    filters: {
+      status?: Vehicle["status"];
+      stationId?: number;
+      minBattery?: number;
+    }
+  ): VehicleWithStation[] {
+    let filtered = [...vehicles];
+
+    if (filters.status) {
+      filtered = filtered.filter((v) => v.status === filters.status);
+    }
+
+    if (filters.stationId) {
+      filtered = filtered.filter((v) => v.stationId === filters.stationId);
+    }
+
+    if (filters.minBattery) {
+      filtered = filtered.filter((v) => v.batteryLevel >= filters.minBattery!);
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Format battery level
+   */
+  formatBattery(batteryLevel: number): string {
+    return `${batteryLevel.toFixed(0)}%`;
   }
 
   /**
    * Check xe có available không
    */
   isVehicleAvailable(vehicle: Vehicle): boolean {
-    return vehicle.status === "AVAILABLE" || vehicle.status === "available";
+    return checkVehicleAvailable(vehicle);
+  }
+
+  /**
+   * Format số km
+   */
+  formatMileage(mileage: number): string {
+    return `${mileage.toLocaleString("vi-VN")} km`;
   }
 }
 

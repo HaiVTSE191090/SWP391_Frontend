@@ -1,34 +1,17 @@
 import api from "./apiClient";
-import { VehicleDetailResponse, VehicleListResponse } from "../models/VehicleModel";
+
+/**
+ * Vehicle Service - Gọi API liên quan đến vehicles
+ * NOTE: Hiện tại chủ yếu dùng stationService.getAllStations()
+ * File này giữ lại cho tương lai nếu BE có riêng vehicle endpoints
+ */
 
 const baseURL = process.env.REACT_APP_API_URL || "http://localhost:8080";
 
-/**
- * Service layer - Chỉ lo việc gọi API, không có business logic
- */
-
-// Lấy chi tiết 1 xe theo ID
+// Lấy chi tiết 1 xe theo ID (nếu BE có API này)
 export const getVehicleById = async (vehicleId: number) => {
-  return await api.get<VehicleDetailResponse>(`${baseURL}/api/vehicles/${vehicleId}`);
+  return await api.get(`${baseURL}/api/vehicles/${vehicleId}`);
 };
 
-// Lấy danh sách xe theo station
-export const getVehiclesByStationId = async (stationId: number) => {
-  return await api.get<VehicleListResponse>(`${baseURL}/api/stations/${stationId}/vehicles`);
-};
-
-// Lấy tất cả xe (nếu cần)
-export const getAllVehicles = async () => {
-  return await api.get<VehicleListResponse>(`${baseURL}/api/vehicles`);
-};
-
-// Tìm kiếm xe theo filter (optional)
-export const searchVehicles = async (params: {
-  stationId?: number;
-  brand?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  status?: string;
-}) => {
-  return await api.get<VehicleListResponse>(`${baseURL}/api/vehicles/search`, { params });
-};
+// Các functions khác có thể bỏ hoặc giữ lại cho tương lai
+// Hiện tại đang dùng stationService.getAllStations() để lấy vehicles

@@ -103,13 +103,15 @@ export default function DepositPage() {
           <p>Đang tải thông tin xe...</p>
         ) : vehicle ? (
           <div className="car-info d-flex align-items-center flex-wrap gap-4">
-            <img src={vehicle.imageUrl} alt={vehicle.name} className="car-image shadow-sm" />
+            <div className="car-image shadow-sm">
+              <i className="bi bi-car-front-fill" style={{ fontSize: '4rem', color: '#ccc' }}></i>
+            </div>
             <div className="car-details">
-              <p><strong>Tên xe:</strong> {vehicle.name}</p>
-              <p><strong>Hãng:</strong> {vehicle.brand}</p>
               <p><strong>Biển số:</strong> {vehicle.plateNumber}</p>
-              <p><strong>Pin:</strong> {vehicle.battery}</p>
-              <p><strong>Quãng đường:</strong> {vehicle.range}</p>
+              <p><strong>Model:</strong> {vehicle.modelName || 'Xe điện'}</p>
+              <p><strong>Pin:</strong> {vehicle.batteryLevel}%</p>
+              <p><strong>Quãng đường đã đi:</strong> {vehicle.mileage.toLocaleString('vi-VN')} km</p>
+              <p><strong>Trạng thái:</strong> {vehicle.status}</p>
             </div>
           </div>
         ) : (
