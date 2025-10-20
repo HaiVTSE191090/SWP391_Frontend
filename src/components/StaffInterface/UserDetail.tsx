@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Button, Spinner, Alert, Image } from 'react-bootstrap';
 import axios from 'axios';
 import ConfirmationPopup from './ConfirmationPopup';
+// import OTPModal from './OTPModal';
 
 // Thông tin chi tiết người thuê
 interface RenterDetail {
@@ -32,6 +33,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info'
   });
+  // const [showOTPModal, setShowOTPModal] = useState(false);
 
   // Tự động load data khi vào trang
   useEffect(() => {
@@ -71,6 +73,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
   };
 
   // Xử lý khi bấm Verify
+
   const handleVerify = async () => {
     try {
       // TODO: Gọi API xác thực
@@ -185,6 +188,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
         </Row>
       </Card>
       
+
       {/* 2 nút Verify và Delete */}
       <div className="d-flex justify-content-center gap-4 mt-4">
         <Button variant="success" size="lg" onClick={handleVerify}>
@@ -202,6 +206,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
         </Button>
       )}
 
+      {/* Popup OTP đã chuyển sang ListRenter */}
       {/* Popup thông báo */}
       <ConfirmationPopup
         show={showPopup}

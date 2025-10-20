@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+// import { useNavigate, useParams } from 'react-router-dom';
 import { Container, Row, Col, Card, Button, Spinner, Alert, Image } from 'react-bootstrap';
 import axios from 'axios';
 
@@ -27,6 +28,7 @@ interface ChooseCarProps {
   vehicleName?: string;   // Tên xe từ Staff
   vehiclePrice?: string;  // Giá xe từ Staff
   vehicleStatus?: string; // Trạng thái xe từ Staff
+  onShowBookingDetail?: () => void; // Callback chuyển sang BookingDetail
 }
 
 const ChooseCar: React.FC<ChooseCarProps> = ({ 
@@ -35,8 +37,11 @@ const ChooseCar: React.FC<ChooseCarProps> = ({
   vehicleImage, 
   vehicleName,
   vehiclePrice,
-  vehicleStatus 
+  vehicleStatus,
+  onShowBookingDetail
 }) => {
+  // const navigate = useNavigate();
+  // const params = useParams();
   const [vehicleDetail, setVehicleDetail] = useState<VehicleDetail | null>(null);
   const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,10 +100,14 @@ const ChooseCar: React.FC<ChooseCarProps> = ({
   };
 
   // Xử lý khi click vào nút booking
+  // Xử lý khi click vào nút booking
   const handleClickBooking = () => {
-    alert('Chuyển đến trang booking chi tiết...');
-    // TODO: Chuyển đến trang chi tiết booking
+    // Gọi callback từ Staff để chuyển sang BookingDetail
+    if (onShowBookingDetail) {
+      onShowBookingDetail();
+    }
   };
+  // ...existing code...
 
   // Đang loading
   if (loading) {
@@ -159,7 +168,7 @@ const ChooseCar: React.FC<ChooseCarProps> = ({
                 onClick={handleClickBooking}
                 className="w-100"
               >
-                Click vào booking
+                Xem chi tiết booking
               </Button>
             </Card.Body>
           </Card>

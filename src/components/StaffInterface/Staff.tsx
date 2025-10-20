@@ -1,3 +1,4 @@
+  // Xóa logic render BookingDetail qua callback, khôi phục SPA truyền thống
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react-bootstrap';
 import ListRenter from './ListRenter';
@@ -39,6 +40,7 @@ export default function Staff() {
   const [showListRenter, setShowListRenter] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Car | null>(null);
+  const [showBookingDetail, setShowBookingDetail] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -99,7 +101,20 @@ export default function Staff() {
       setSelectedVehicleId(car.id);
       setSelectedVehicle(car);
     }
+  } 
+
+  // Callback for SPA navigation to BookingDetail
+  const handleShowBookingDetail = () => {
+    setShowBookingDetail(true);
   };
+
+
+
+  // Nếu đang xem chi tiết booking
+  if (showBookingDetail) {
+    const BookingDetail = require('./BookingDetail').default;
+    return <BookingDetail />;
+  }
 
   // Nếu đang xem chi tiết xe
   if (selectedVehicleId !== null && selectedVehicle !== null) {
@@ -114,6 +129,7 @@ export default function Staff() {
         vehicleName={selectedVehicle.name}
         vehiclePrice={selectedVehicle.price}
         vehicleStatus={selectedVehicle.status}
+        onShowBookingDetail={handleShowBookingDetail}
       />
     );
   }

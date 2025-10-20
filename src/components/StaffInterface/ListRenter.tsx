@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import axios from 'axios';
 import UserDetail from './UserDetail';
+import OTPModal from './OTPModal';
 
 // Interface cho dữ liệu Renter
 interface Renter {
@@ -64,17 +65,22 @@ const ListRenter: React.FC = () => {
     }
   };
 
+  // State cho OTP Modal
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otpRenterId, setOtpRenterId] = useState<string | number | null>(null);
+
   // Handler cho nút Verify OTP link
-  const handleVerifyOTP = async (renterId: string | number) => {
-    try {
-      // TODO: Gọi API xác thực OTP
-      // const response = await axios.post(`YOUR_API_ENDPOINT/renters/${renterId}/verify-otp`, { otp: 'xxx' });
-      console.log('Verify OTP for renter:', renterId);
-      alert(`Xác thực OTP cho Renter ID: ${renterId}`);
-    } catch (err: any) {
-      console.error('Error verifying OTP:', err);
-      alert('Có lỗi xảy ra khi xác thực OTP');
-    }
+  const handleVerifyOTP = (renterId: string | number) => {
+    setOtpRenterId(renterId);
+    setShowOTPModal(true);
+  };
+
+  // Xử lý submit OTP
+  const handleSubmitOTP = (otp: string) => {
+    // TODO: Gọi API xác thực OTP với otpRenterId và otp
+    setShowOTPModal(false);
+    setOtpRenterId(null);
+    alert(`OTP xác thực thành công cho Renter ID: ${otpRenterId}, mã OTP: ${otp}`);
   };
 
   // Handler cho nút Details
@@ -207,6 +213,12 @@ const ListRenter: React.FC = () => {
           <small>Tổng số người thuê: {renters.length}</small>
         </div>
       )}
+      {/* Popup OTP nhập mã OTP */}
+      <OTPModal
+        show={showOTPModal}
+        onSubmit={handleSubmitOTP}
+        onCancel={() => { setShowOTPModal(false); setOtpRenterId(null); }}
+      />
     </Container>
   );
 };
