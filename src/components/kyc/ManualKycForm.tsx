@@ -71,7 +71,6 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
         confidenceScore: 0, // Manual input = 0
       };
 
-      console.log("Submitting KYC payload:", payload);
 
       const result = await submitKycVerification(payload);
 
@@ -108,7 +107,6 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
     } catch (error: any) {
       console.error("KYC submission error:", error);
       
-      // Field name mapping để hiển thị thân thiện hơn
       const fieldNames: Record<string, string> = {
         renterId: "Mã người thuê",
         nationalId: "Số CCCD",
@@ -126,17 +124,14 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
         confidenceScore: "Điểm tin cậy"
       };
       
-      // Xử lý lỗi từ backend
       if (error.response?.data?.data) {
         if (typeof error.response.data.data === 'string') {
-          // Trường hợp data là string đơn giản
           setMessage({ type: "error", text: error.response.data.data });
         } else if (typeof error.response.data.data === 'object') {
-          // Trường hợp data là object chứa validation errors
           const errors = Object.entries(error.response.data.data)
             .map(([field, msg]) => {
               const displayName = fieldNames[field] || field;
-              return `🔸 ${displayName}: ${msg}`;
+              return `🔸 ${displayName}: ${msg}\n`;
             })
             .join('\n');
           setMessage({ type: "error", text: errors });
