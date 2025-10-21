@@ -6,7 +6,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { ocrCCCD, ocrGPLX, submitKycVerification } from "../../services/kycService";
 import { OcrCCCDData, OcrGPLXData, KycVerificationRequest } from "../../models/KycModel";
 import { authController } from "../../controller/AuthController";
-import { parseDateSafe } from "../../utils/dateHelpers";
+import { parseDateSafe, convertToDateInput } from "../../utils/dateHelpers";
 
 type Props = {
   onSwitchToManual: () => void;
@@ -100,21 +100,19 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
         renterId: user?.renterId || 0,
         nationalId: cccdData.id,
         nationalName: cccdData.name,
-        nationalDob: cccdData.dob,
-        nationalAddress: cccdData.address || cccdData.home, //cái này
-        nationalIssueDate: cccdData.issue_date, //sai cái này
-        nationalExpireDate: cccdData.doe,
+        nationalDob: convertToDateInput(cccdData.dob), // Convert to YYYY-MM-DD
+        nationalAddress: cccdData.address || cccdData.home,
+        nationalExpireDate: convertToDateInput(cccdData.doe), // Convert to YYYY-MM-DD
         driverLicense: gplxData.id,
         driverName: gplxData.name,
         driverAddress: gplxData.address,
         driverClass: gplxData.class,
-        driverIssueDate: gplxData.issue_date, //cái này
-        driverExpireDate: gplxData.doe,
+        driverExpireDate: convertToDateInput(gplxData.doe), // Convert to YYYY-MM-DD
         confidenceScore: Math.min(cccdData.overall_score, gplxData.overall_score),
       };
 
-      console.log("Submitting KYC payload:", payload);
 
+      console.log("KYC Payload:", payload);
       const result = await submitKycVerification(payload);
 
       if (result.status === "success") {
@@ -125,19 +123,68 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
             authController.getProfile(token).then((profileRes: any) => {
               const updatedUser = profileRes.data.data;
               authController.saveAuthData(token, updatedUser);
-              window.location.reload();
             });
           }
         }, 2000);
       } else {
-        setMessage({ type: "error", text: result.message || "Xác thực thất bại!" });
+        // Hiển thị lỗi từ backend
+        if (result.data) {
+          if (typeof result.data === 'string') {
+            // Trường hợp data là string đơn giản
+            setMessage({ type: "error", text: result.data });
+          } else if (typeof result.data === 'object') {
+            // Trường hợp data là object chứa validation errors
+            const errors = Object.entries(result.data)
+              .map(([field, msg]) => `• ${msg}`)
+              .join('\n');
+            setMessage({ type: "error", text: errors });
+          }
+        } else {
+          setMessage({ type: "error", text: result.message || "Xác thực thất bại!" });
+        }
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
-      setMessage({
-        type: "error",
-        text: error.response?.data?.message || "Lỗi khi gửi thông tin. Vui lòng thử lại.",
-      });
+      
+      // Field name mapping để hiển thị thân thiện hơn
+      const fieldNames: Record<string, string> = {
+        renterId: "Mã người thuê",
+        nationalId: "Số CCCD",
+        nationalName: "Tên trên CCCD",
+        nationalDob: "Ngày sinh (CCCD)",
+        nationalAddress: "Địa chỉ (CCCD)",
+        nationalIssueDate: "Ngày cấp CCCD",
+        nationalExpireDate: "Ngày hết hạn CCCD",
+        driverLicense: "Số GPLX",
+        driverName: "Tên trên GPLX",
+        driverAddress: "Địa chỉ (GPLX)",
+        driverClass: "Hạng GPLX",
+        driverIssueDate: "Ngày cấp GPLX",
+        driverExpireDate: "Ngày hết hạn GPLX",
+        confidenceScore: "Điểm tin cậy"
+      };
+      
+      // Xử lý lỗi từ backend
+      if (error.response?.data?.data) {
+        if (typeof error.response.data.data === 'string') {
+          // Trường hợp data là string đơn giản
+          setMessage({ type: "error", text: error.response.data.data });
+        } else if (typeof error.response.data.data === 'object') {
+          // Trường hợp data là object chứa validation errors
+          const errors = Object.entries(error.response.data.data)
+            .map(([field, msg]) => {
+              const displayName = fieldNames[field] || field;
+              return `🔸 ${displayName}: ${msg}`;
+            })
+            .join('\n');
+          setMessage({ type: "error", text: errors });
+        }
+      } else {
+        setMessage({
+          type: "error",
+          text: error.response?.data?.message || "Lỗi khi gửi thông tin. Vui lòng thử lại.",
+        });
+      }
     } finally {
       setVerifying(false);
     }
@@ -471,9 +518,9 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       <option value="B1">B1</option>
                       <option value="B2">B2</option>
                       <option value="C">C</option>
-                      <option value="C1">C1</option>
                       <option value="D">D</option>
                       <option value="E">E</option>
+                      <option value="F">F</option>
                     </select>
                   ) : (
                     <div className="fw-bold">{gplxData.class}</div>

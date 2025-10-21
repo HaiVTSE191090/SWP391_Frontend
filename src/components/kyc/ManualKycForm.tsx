@@ -6,7 +6,7 @@ import { authController } from "../../controller/AuthController";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./DatePickerCustom.css";
-import { convertToDisplayDate, parseDateSafe } from "../../utils/dateHelpers";
+import { convertToDateInput, parseDateSafe } from "../../utils/dateHelpers";
 
 type Props = {
   onSwitchToOcr: () => void;
@@ -58,16 +58,16 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
         renterId: user?.renterId || 0,
         nationalId: nationalId,
         nationalName: nationalName,
-        nationalDob: convertToDisplayDate(nationalDob), // Convert YYYY-MM-DD to DD/MM/YYYY
+        nationalDob: convertToDateInput(nationalDob), // Convert DD/MM/YYYY to YYYY-MM-DD
         nationalAddress: nationalAddress,
-        nationalIssueDate: convertToDisplayDate(nationalIssueDate),
-        nationalExpireDate: convertToDisplayDate(nationalExpireDate),
+        nationalIssueDate: nationalIssueDate ? convertToDateInput(nationalIssueDate) : undefined,
+        nationalExpireDate: convertToDateInput(nationalExpireDate),
         driverLicense: driverLicense,
         driverName: driverName,
         driverAddress: driverAddress,
         driverClass: driverClass,
-        driverIssueDate: convertToDisplayDate(driverIssueDate),
-        driverExpireDate: convertToDisplayDate(driverExpireDate),
+        driverIssueDate: convertToDateInput(driverIssueDate),
+        driverExpireDate: convertToDateInput(driverExpireDate),
         confidenceScore: 0, // Manual input = 0
       };
 
@@ -89,14 +89,64 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
           }
         }, 2000);
       } else {
-        setMessage({ type: "error", text: result.message || "Xác thực thất bại!" });
+        // Hiển thị lỗi từ backend
+        if (result.data) {
+          if (typeof result.data === 'string') {
+            // Trường hợp data là string đơn giản
+            setMessage({ type: "error", text: result.data });
+          } else if (typeof result.data === 'object') {
+            // Trường hợp data là object chứa validation errors
+            const errors = Object.entries(result.data)
+              .map(([field, msg]) => `• ${msg}`)
+              .join('\n');
+            setMessage({ type: "error", text: errors });
+          }
+        } else {
+          setMessage({ type: "error", text: result.message || "Xác thực thất bại!" });
+        }
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
-      setMessage({
-        type: "error",
-        text: error.response?.data?.message || "Lỗi khi gửi thông tin. Vui lòng thử lại.",
-      });
+      
+      // Field name mapping để hiển thị thân thiện hơn
+      const fieldNames: Record<string, string> = {
+        renterId: "Mã người thuê",
+        nationalId: "Số CCCD",
+        nationalName: "Tên trên CCCD",
+        nationalDob: "Ngày sinh (CCCD)",
+        nationalAddress: "Địa chỉ (CCCD)",
+        nationalIssueDate: "Ngày cấp CCCD",
+        nationalExpireDate: "Ngày hết hạn CCCD",
+        driverLicense: "Số GPLX",
+        driverName: "Tên trên GPLX",
+        driverAddress: "Địa chỉ (GPLX)",
+        driverClass: "Hạng GPLX",
+        driverIssueDate: "Ngày cấp GPLX",
+        driverExpireDate: "Ngày hết hạn GPLX",
+        confidenceScore: "Điểm tin cậy"
+      };
+      
+      // Xử lý lỗi từ backend
+      if (error.response?.data?.data) {
+        if (typeof error.response.data.data === 'string') {
+          // Trường hợp data là string đơn giản
+          setMessage({ type: "error", text: error.response.data.data });
+        } else if (typeof error.response.data.data === 'object') {
+          // Trường hợp data là object chứa validation errors
+          const errors = Object.entries(error.response.data.data)
+            .map(([field, msg]) => {
+              const displayName = fieldNames[field] || field;
+              return `🔸 ${displayName}: ${msg}`;
+            })
+            .join('\n');
+          setMessage({ type: "error", text: errors });
+        }
+      } else {
+        setMessage({
+          type: "error",
+          text: error.response?.data?.message || "Lỗi khi gửi thông tin. Vui lòng thử lại.",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -115,7 +165,7 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
 
       {message && (
         <div className={`alert alert-${message.type === "success" ? "success" : "danger"} alert-dismissible fade show`}>
-          {message.text}
+          <div style={{ whiteSpace: 'pre-line' }}>{message.text}</div>
           <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
         </div>
       )}

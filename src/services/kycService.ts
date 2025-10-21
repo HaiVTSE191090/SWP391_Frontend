@@ -10,7 +10,7 @@ export const submitKycVerification = async (
   payload: KycVerificationRequest
 ): Promise<KycVerificationResponse> => {
   try {
-    const response = await api.post(`${baseURL}/api/auth/verify`, payload);
+    const response = await api.post(`${baseURL}/api/renter/verify-kyc`, payload);
     return response.data;
   } catch (error: any) {
     throw error;

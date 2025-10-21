@@ -21,9 +21,14 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
     };
 
     const handleUpload = async () => {
-        if (!image) return alert("Chưa chọn ảnh CCCD hoặc GPLX!");
+        if (!image) {
+            setMessage("Chưa chọn ảnh CCCD hoặc GPLX!");
+            return;
+        }
+        
         setLoading(true);
         setMessage(null);
+        
         try {
             const result = await ocrAPI(image);
             setOcrData(result.data);
@@ -36,10 +41,14 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
     };
 
     const handleVerifyKyc = async () => {
-        if (!ocrData) return alert("Chưa có dữ liệu OCR!");
+        if (!ocrData) {
+            setMessage("Chưa có dữ liệu OCR!");
+            return;
+        }
 
         setVerifying(true);
         setMessage(null);
+        
         try {
             const payload = {
                 idNumber: ocrData.data[0].id,
@@ -49,17 +58,13 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                 nationality: ocrData.data[0].nationality,
                 ocrConfidence: ocrData.data[0].overall_score,
             };
-            
 
             const result = await authController.verifyKyc(payload);
 
             if (result.success) {
                 setMessage("Xác thực thành công! Tài khoản của bạn đã được cập nhật.");
 
-
-                //tìm hiểu thêm
                 setTimeout(() => {
-                    // Refresh user data từ server
                     if (token) {
                         authController.getProfile(token).then(profileRes => {
                             const updatedUser = profileRes.data.data;
@@ -83,8 +88,7 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
             <h4 className="fw-bold mb-3">Quét CCCD bằng OCR</h4>
 
             <div className="card mb-4">
-
-                <div className="card-body text-center" >
+                <div className="card-body text-center">
                     <div>
                         <input
                             type="file"
@@ -103,20 +107,18 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                         )}
                     </div>
 
-
-                    {loading ?
-                        <>
-                            <div className="">
-                                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                đang tải...
-                            </div>
-                        </>
-                        :
+                    {loading ? (
+                        <div>
+                            <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Đang tải...
+                        </div>
+                    ) : (
                         <>
                             <button
                                 className="btn btn-primary me-2"
                                 onClick={handleUpload}
-                                disabled={loading}>
+                                disabled={loading}
+                            >
                                 Bắt đầu nhận diện
                             </button>
 
@@ -127,10 +129,7 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                                 Nhập tay thay thế
                             </button>
                         </>
-                    }
-
-
-
+                    )}
                 </div>
             </div>
 
@@ -144,7 +143,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                 <div className="card">
                     <div className="card-body">
                         <h5 className="card-title fw-bold mb-4">
-                            <i className="fas fa-id-card me-2 text-primary"></i>
                             Thông tin định danh
                         </h5>
 
@@ -153,7 +151,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                             <div className="col-md-6">
                                 <div className="border rounded p-3 h-100">
                                     <label className="text-muted small mb-1">
-                                        <i className="fas fa-fingerprint me-1"></i>
                                         Số CCCD
                                     </label>
                                     <div className="fw-bold fs-5">{ocrData.data[0].id}</div>
@@ -167,7 +164,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                             <div className="col-md-6">
                                 <div className="border rounded p-3 h-100">
                                     <label className="text-muted small mb-1">
-                                        <i className="fas fa-user me-1"></i>
                                         Họ và tên
                                     </label>
                                     <div className="fw-bold fs-5">{ocrData.data[0].name}</div>
@@ -181,7 +177,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                             <div className="col-md-4">
                                 <div className="border rounded p-3 h-100">
                                     <label className="text-muted small mb-1">
-                                        <i className="fas fa-birthday-cake me-1"></i>
                                         Ngày sinh
                                     </label>
                                     <div className="fw-bold">{ocrData.data[0].dob}</div>
@@ -195,7 +190,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                             <div className="col-md-4">
                                 <div className="border rounded p-3 h-100">
                                     <label className="text-muted small mb-1">
-                                        <i className="fas fa-venus-mars me-1"></i>
                                         Giới tính
                                     </label>
                                     <div className="fw-bold">{ocrData.data[0].sex}</div>
@@ -209,7 +203,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                             <div className="col-md-4">
                                 <div className="border rounded p-3 h-100">
                                     <label className="text-muted small mb-1">
-                                        <i className="fas fa-flag me-1"></i>
                                         Quốc tịch
                                     </label>
                                     <div className="fw-bold">{ocrData.data[0].nationality}</div>
@@ -222,7 +215,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
 
                         {/* Overall Score */}
                         <div className="alert alert-info mt-3 mb-3">
-                            <i className="fas fa-chart-line me-2"></i>
                             <strong>Điểm tổng thể:</strong> {ocrData.data[0].overall_score}%
                         </div>
 
@@ -240,7 +232,6 @@ const OcrIdentityForm: React.FC<Props> = ({ onSwitchToManual }) => {
                                     </>
                                 ) : (
                                     <>
-                                        <i className="fas fa-check-circle me-2"></i>
                                         Xác thực danh tính
                                     </>
                                 )}

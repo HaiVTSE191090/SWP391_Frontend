@@ -5,13 +5,13 @@ export interface KycVerificationRequest {
   nationalName: string;         
   nationalDob: string;          
   nationalAddress: string;      
-  nationalIssueDate: string;    
+  nationalIssueDate?: string;    
   nationalExpireDate: string;   
   driverLicense: string;        
   driverName: string
   driverAddress: string;        
   driverClass: string;          
-  driverIssueDate: string;      
+  driverIssueDate?: string;      
   driverExpireDate: string;     
   confidenceScore: number;      
 }

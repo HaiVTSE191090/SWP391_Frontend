@@ -6,201 +6,189 @@ type Props = {
     onSwitchToOcr: () => void;
 };
 
-export default function ManualIdentityForm({ onSwitchToOcr }: Props) {
-  const { token } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  
-  const [cccdNumber, setCccdNumber] = useState("");
-  const [cccdIssueDate, setCccdIssueDate] = useState("");
-  const [cccdIssuePlace, setCccdIssuePlace] = useState("");
-  
-  
-  const [gplxNumber, setGplxNumber] = useState("");
-  const [gplxRank, setGplxRank] = useState("");
-  const [gplxExpiryDate, setGplxExpiryDate] = useState("");
+const ManualIdentityForm: React.FC<Props> = ({ onSwitchToOcr }) => {
+    const { token } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    if (!cccdNumber || !cccdIssueDate || !cccdIssuePlace) {
-      alert("Vui lòng nhập đầy đủ thông tin CCCD!");
-      return;
-    }
+    // Form fields
+    const [idNumber, setIdNumber] = useState("");
+    const [fullName, setFullName] = useState("");
+    const [dateOfBirth, setDateOfBirth] = useState("");
+    const [gender, setGender] = useState("");
+    const [nationality, setNationality] = useState("Việt Nam");
 
-    setLoading(true);
-    setMessage(null);
-    
-    try {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-      // hỏi đăng xem phần này có cần phải 2 thằng CCCD và GPLX k
-      const payload = {
-        idNumber: cccdNumber,
-        issueDate: cccdIssueDate,
-        issuePlace: cccdIssuePlace,
-        ...(gplxNumber && {
-          licenseNumber: gplxNumber,
-          licenseRank: gplxRank,
-          licenseExpiryDate: gplxExpiryDate,
-        }),
-      };
+        if (!idNumber || !fullName || !dateOfBirth || !gender || !nationality) {
+            setMessage("Vui lòng nhập đầy đủ thông tin!");
+            return;
+        }
 
-      const result = await authController.verifyKyc(payload);
+        setLoading(true);
+        setMessage(null);
 
-      if (result.success) {
-        setMessage("Xác thực thành công! Tài khoản của bạn đã được cập nhật.");
-        
-        setTimeout(() => {
-          if (token) {
-            authController.getProfile(token).then((profileRes: any) => {
-              const updatedUser = profileRes.data.data;
-              authController.saveAuthData(token, updatedUser);
-              
-            });
-          }
-        }, 2000);
-      } else {
-        setMessage(` Xác thực thất bại: ${result.error}`);
-      }
-    } catch (err: any) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        try {
+            const payload = {
+                idNumber,
+                fullName,
+                dateOfBirth,
+                gender,
+                nationality,
+                ocrConfidence: 0, // Manual input = 0 confidence
+            };
 
-  return (
-    <div className="container my-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h4 className="fw-bold mb-0">Nhập tay thông tin CCCD & GPLX</h4>
-        <button 
-          className="btn btn-outline-primary"
-          onClick={onSwitchToOcr}
-        >
-          <i className="fas fa-camera me-1"></i>
-          Quét OCR thay thế
-        </button>
-      </div>
+            const result = await authController.verifyKyc(payload);
 
-      {message && (
-        <div className={`alert ${message.includes('thành công') ? 'alert-success' : 'alert-danger'}`}>
-          {message}
+            if (result.success) {
+                setMessage("Xác thực thành công! Tài khoản của bạn đã được cập nhật.");
+
+                setTimeout(() => {
+                    if (token) {
+                        authController.getProfile(token).then(profileRes => {
+                            const updatedUser = profileRes.data.data;
+                            authController.saveAuthData(token, updatedUser);
+                            window.location.reload();
+                        });
+                    }
+                }, 2000);
+            } else {
+                setMessage(`Xác thực thất bại: ${result.error}`);
+            }
+        } catch (error: any) {
+            setMessage(error.response?.data?.message || "Lỗi khi gửi thông tin. Vui lòng thử lại.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="container my-4">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <h4 className="fw-bold mb-0">Nhập thông tin danh tính thủ công</h4>
+                <button className="btn btn-outline-primary" onClick={onSwitchToOcr}>
+                    Quét OCR
+                </button>
+            </div>
+
+            {message && (
+                <div className={`alert ${message.includes('thành công') ? 'alert-success' : 'alert-danger'} alert-dismissible fade show`}>
+                    {message}
+                    <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
+                </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+                <div className="card shadow-sm">
+                    <div className="card-header bg-primary text-white">
+                        <h5 className="mb-0">Thông tin Căn cước công dân (CCCD)</h5>
+                    </div>
+                    <div className="card-body">
+                        <div className="row g-3">
+                            {/* Số CCCD */}
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold">
+                                    Số CCCD <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Ví dụ: 842827589954"
+                                    value={idNumber}
+                                    onChange={(e) => setIdNumber(e.target.value)}
+                                    maxLength={12}
+                                    required
+                                />
+                                <small className="text-muted">12 chữ số</small>
+                            </div>
+
+                            {/* Họ và tên */}
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold">
+                                    Họ và tên <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Ví dụ: NGUYEN VAN A"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            {/* Ngày sinh */}
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold">
+                                    Ngày sinh <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    className="form-control"
+                                    value={dateOfBirth}
+                                    onChange={(e) => setDateOfBirth(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            {/* Giới tính */}
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold">
+                                    Giới tính <span className="text-danger">*</span>
+                                </label>
+                                <select
+                                    className="form-select"
+                                    value={gender}
+                                    onChange={(e) => setGender(e.target.value)}
+                                    required
+                                >
+                                    <option value="">-- Chọn giới tính --</option>
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+
+                            {/* Quốc tịch */}
+                            <div className="col-md-6">
+                                <label className="form-label fw-bold">
+                                    Quốc tịch <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={nationality}
+                                    onChange={(e) => setNationality(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="d-grid gap-2 mt-4">
+                    <button
+                        type="submit"
+                        className="btn btn-primary btn-lg"
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                Đang xử lý...
+                            </>
+                        ) : (
+                            <>
+                                Gửi thông tin xác thực
+                            </>
+                        )}
+                    </button>
+                </div>
+            </form>
         </div>
-      )}
+    );
+};
 
-      <div className="card mb-4">
-        <div className="card-body">
-          <h5 className="card-title">Thông tin CCCD</h5>
-
-          <div className="mb-3">
-            <label htmlFor="soCCCD" className="form-label">Số CCCD *</label>
-            <input
-              id="soCCCD"
-              type="text"
-              className="form-control"
-              placeholder="Nhập số CCCD (12 chữ số)"
-              value={cccdNumber}
-              onChange={(e) => setCccdNumber(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="row">
-            <div className="col-md-6 mb-3">
-              <label htmlFor="ngayCapCCCD" className="form-label">Ngày cấp *</label>
-              <input
-                id="ngayCapCCCD"
-                type="date"
-                className="form-control"
-                value={cccdIssueDate}
-                onChange={(e) => setCccdIssueDate(e.target.value)}
-                required
-              />
-            </div>
-            <div className="col-md-6 mb-3">
-              <label htmlFor="noiCapCCCD" className="form-label">Nơi cấp *</label>
-              <input
-                id="noiCapCCCD"
-                type="text"
-                className="form-control"
-                placeholder="Ví dụ: CA TP.HCM"
-                value={cccdIssuePlace}
-                onChange={(e) => setCccdIssuePlace(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      
-      <div className="card mb-4">
-        <div className="card-body">
-          <h5 className="card-title">Thông tin GPLX (không bắt buộc)</h5>
-
-          <div className="mb-3">
-            <label htmlFor="soGPLX" className="form-label">Số GPLX</label>
-            <input
-              id="soGPLX"
-              type="text"
-              className="form-control"
-              placeholder="Nhập số GPLX"
-              value={gplxNumber}
-              onChange={(e) => setGplxNumber(e.target.value)}
-            />
-          </div>
-
-          <div className="row">
-            <div className="col-md-6 mb-3">
-              <label htmlFor="hangGPLX" className="form-label">Hạng</label>
-              <select
-                id="hangGPLX"
-                className="form-select"
-                value={gplxRank}
-                onChange={(e) => setGplxRank(e.target.value)}
-              >
-                <option value="">-- Chọn hạng --</option>
-                <option value="A1">A1</option>
-                <option value="A2">A2</option>
-                <option value="B1">B1</option>
-                <option value="B2">B2</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="E">E</option>
-              </select>
-            </div>
-            <div className="col-md-6 mb-3">
-              <label htmlFor="ngayHetHanGPLX" className="form-label">Ngày hết hạn</label>
-              <input
-                id="ngayHetHanGPLX"
-                type="date"
-                className="form-control"
-                value={gplxExpiryDate}
-                onChange={(e) => setGplxExpiryDate(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="d-grid">
-        <button
-          type="button"
-          className="btn btn-primary btn-lg"
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-              Đang xác thực...
-            </>
-          ) : (
-            <>
-              <i className="fas fa-check-circle me-2"></i>
-              Lưu & Xác thực
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
+export default ManualIdentityForm;
