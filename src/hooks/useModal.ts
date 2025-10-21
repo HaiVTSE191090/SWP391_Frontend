@@ -11,11 +11,17 @@ interface UseModalReturn {
 
 export const useModal = (): UseModalReturn => {
 
-  const { clearErrors } = useForm();
+  let clearErrors: (() => void) | undefined;
+  try {
+    const formHook = useForm();
+    clearErrors = formHook.clearErrors;
+  } catch (error) {
+    clearErrors = undefined;
+  }
 
 
   const closeModalAndReload = useCallback((modalId: string) => {
-    clearErrors();
+    if (clearErrors) clearErrors();
     const modal = document.getElementById(modalId);
     if (modal) {
       const bsModal = (window as any).bootstrap?.Modal?.getInstance(modal);
@@ -30,7 +36,7 @@ export const useModal = (): UseModalReturn => {
   }, [clearErrors]);
 
   const closeModal = useCallback((modalId: string) => {
-    clearErrors(); // Clear message/error trước khi đóng modal
+    if (clearErrors) clearErrors(); 
     const modal = document.getElementById(modalId);
     if (modal) {
       const bsModal = (window as any).bootstrap?.Modal?.getInstance(modal);
@@ -49,7 +55,7 @@ export const useModal = (): UseModalReturn => {
   }, []);
 
   const switchModal = useCallback((fromModalId: string, toModalId: string) => {
-    clearErrors(); // Clear message/error trước khi chuyển modal
+    if (clearErrors) clearErrors(); 
     const fromModal = document.getElementById(fromModalId);
     const bsFromModal = (window as any).bootstrap?.Modal?.getInstance(fromModal);
     

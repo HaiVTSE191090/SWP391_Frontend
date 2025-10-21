@@ -1,0 +1,44 @@
+import * as VehicleModel from "../models/VehicleModel";
+
+export interface IVehicleController {
+  getAllVehicles(): Promise<{
+    success: boolean;
+    data: VehicleModel.VehicleWithStation[];
+    message?: string;
+    error?: string;
+  }>;
+  
+  getAvailableVehicles(): Promise<{
+    success: boolean;
+    data: VehicleModel.VehicleWithStation[];
+    message?: string;
+    error?: string;
+  }>;
+  
+  getVehiclesByStation(stationId: number): Promise<{
+    success: boolean;
+    data: VehicleModel.Vehicle[];
+    message?: string;
+    error?: string;
+  }>;
+  
+  getAllStations(): Promise<{
+    success: boolean;
+    data: VehicleModel.StationWithVehicles[];
+    message?: string;
+    error?: string;
+  }>;
+  
+  filterVehicles(
+    vehicles: VehicleModel.VehicleWithStation[],
+    filters: {
+      status?: VehicleModel.Vehicle["status"];
+      stationId?: number;
+      minBattery?: number;
+    }
+  ): VehicleModel.VehicleWithStation[];
+  
+  formatBattery(batteryLevel: number): string;
+  isVehicleAvailable(vehicle: VehicleModel.Vehicle): boolean;
+  formatMileage(mileage: number): string;
+}

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { submitKycVerification } from "../../services/kycService";
 import { KycVerificationRequest } from "../../models/KycModel";
@@ -7,6 +8,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./DatePickerCustom.css";
 import { convertToDateInput, parseDateSafe } from "../../utils/dateHelpers";
+import { toast } from 'react-toastify';
 
 type Props = {
   onSwitchToOcr: () => void;
@@ -14,8 +16,8 @@ type Props = {
 
 export default function ManualKycForm({ onSwitchToOcr }: Props) {
   const { user, token } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // CCCD Fields
   const [nationalId, setNationalId] = useState("");
@@ -39,19 +41,29 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
     // Validate CCCD
     if (!nationalId || !nationalName || !nationalDob || !nationalAddress || 
         !nationalIssueDate || !nationalExpireDate) {
-      setMessage({ type: "error", text: "Vui lòng nhập đầy đủ thông tin CCCD!" });
+      toast.error("Vui lòng nhập đầy đủ thông tin CCCD!", {
+        position: "top-center",
+        autoClose: 3000,
+      });
       return;
     }
 
     // Validate GPLX
     if (!driverLicense || !driverName || !driverAddress || !driverClass || 
         !driverIssueDate || !driverExpireDate) {
-      setMessage({ type: "error", text: "Vui lòng nhập đầy đủ thông tin GPLX!" });
+      toast.error("Vui lòng nhập đầy đủ thông tin GPLX!", {
+        position: "top-center",
+        autoClose: 3000,
+      });
       return;
     }
 
     setLoading(true);
-    setMessage(null);
+
+    // Hiển thị loading toast
+    const loadingToast = toast.loading("Đang gửi thông tin KYC...", {
+      position: "top-center"
+    });
 
     try {
       const payload: KycVerificationRequest = {
@@ -75,7 +87,12 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
       const result = await submitKycVerification(payload);
 
       if (result.status === "success") {
-        setMessage({ type: "success", text: "Xác thực KYC thành công! Đang chuyển hướng..." });
+        toast.update(loadingToast, {
+          render: "Xác thực KYC thành công! Đang chuyển hướng...",
+          type: "success",
+          isLoading: false,
+          autoClose: 2000,
+        });
 
         // Refresh user data
         setTimeout(() => {
@@ -83,26 +100,32 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
             authController.getProfile(token).then((profileRes: any) => {
               const updatedUser = profileRes.data.data;
               authController.saveAuthData(token, updatedUser);
-              window.location.reload();
+              navigate(-1); 
             });
           }
         }, 2000);
       } else {
         // Hiển thị lỗi từ backend
+        let errorMessage = "Xác thực thất bại!";
         if (result.data) {
           if (typeof result.data === 'string') {
-            // Trường hợp data là string đơn giản
-            setMessage({ type: "error", text: result.data });
+            errorMessage = result.data;
           } else if (typeof result.data === 'object') {
-            // Trường hợp data là object chứa validation errors
             const errors = Object.entries(result.data)
               .map(([field, msg]) => `• ${msg}`)
               .join('\n');
-            setMessage({ type: "error", text: errors });
+            errorMessage = errors;
           }
         } else {
-          setMessage({ type: "error", text: result.message || "Xác thực thất bại!" });
+          errorMessage = result.message || "Xác thực thất bại!";
         }
+        
+        toast.update(loadingToast, {
+          render: errorMessage,
+          type: "error",
+          isLoading: false,
+          autoClose: 4000,
+        });
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
@@ -124,24 +147,30 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
         confidenceScore: "Điểm tin cậy"
       };
       
+      let errorMessage = "Lỗi khi gửi thông tin. Vui lòng thử lại.";
+      
       if (error.response?.data?.data) {
         if (typeof error.response.data.data === 'string') {
-          setMessage({ type: "error", text: error.response.data.data });
+          errorMessage = error.response.data.data;
         } else if (typeof error.response.data.data === 'object') {
           const errors = Object.entries(error.response.data.data)
             .map(([field, msg]) => {
               const displayName = fieldNames[field] || field;
-              return `🔸 ${displayName}: ${msg}\n`;
+              return `🔸 ${displayName}: ${msg}`;
             })
             .join('\n');
-          setMessage({ type: "error", text: errors });
+          errorMessage = errors;
         }
-      } else {
-        setMessage({
-          type: "error",
-          text: error.response?.data?.message || "Lỗi khi gửi thông tin. Vui lòng thử lại.",
-        });
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       }
+      
+      toast.update(loadingToast, {
+        render: errorMessage,
+        type: "error",
+        isLoading: false,
+        autoClose: 4000,
+      });
     } finally {
       setLoading(false);
     }
@@ -157,13 +186,6 @@ export default function ManualKycForm({ onSwitchToOcr }: Props) {
           Quét OCR
         </button>
       </div>
-
-      {message && (
-        <div className={`alert alert-${message.type === "success" ? "success" : "danger"} alert-dismissible fade show`}>
-          <div style={{ whiteSpace: 'pre-line' }}>{message.text}</div>
-          <button type="button" className="btn-close" onClick={() => setMessage(null)}></button>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit}>
         {/* CCCD Section */}

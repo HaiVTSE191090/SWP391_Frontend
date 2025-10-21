@@ -9,6 +9,25 @@ export interface Vehicle {
   modelName: string | null;
 }
 
+export interface VehicleDetail {
+  vehicleId: number;
+  vehicleName: string;
+  plateNumber: string;
+  status: "AVAILABLE" | "IN_USE" | "MAINTENANCE";
+  description: string;
+  modelName: string;
+  stationName: string;
+  pricePerHour: number;
+  pricePerDay: number;
+  batteryLevel: number;
+  mileage: number;
+}
+
+export interface VehicleDetailResponse {
+  status: "success" | "error";
+  code: number;
+  data: VehicleDetail;
+}
 
 export interface VehicleWithStation extends Vehicle {
   stationId: number;
@@ -16,9 +35,6 @@ export interface VehicleWithStation extends Vehicle {
   stationLocation: string;
 }
 
-/**
- * Response từ API /api/stations/all
- */
 export interface StationWithVehicles {
   stationId: number;
   name: string;

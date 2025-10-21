@@ -267,10 +267,6 @@ const LoginFormContent: React.FC = () => {
     );
 };
 
-/**
- * ✅ Wrapper với FormProvider - Mỗi LoginForm có state độc lập
- * Component này unmount → FormContext tự động clear state
- */
 const LoginForm: React.FC = () => {
     return (
         <FormProvider>

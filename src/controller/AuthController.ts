@@ -30,6 +30,7 @@ export class AuthController {
         email: successData.data.user.email,
         fullName: userRes.data.data.fullName,
         kycStatus: successData.data.user.kycStatus,
+        nextStep: successData.data.nextStep, 
         renterId: userRes.data.data.renterId,
         status: userRes.data.data.status,
       };
@@ -58,10 +59,7 @@ export class AuthController {
     }
   }
 
-  /**
-   * @param credential Chuỗi credential JWT từ Google
-   * @returns Kết quả đăng nhập Google, bao gồm success(boolean), token, user, message nếu đúng, error nếu sai
-   */
+
   async loginWithGoogle(credential: string) {
     try {
       let decodedGoogle: any = {};
@@ -75,7 +73,6 @@ export class AuthController {
         };
       }
 
-      // Lấy thông tin từ Google token
       const sub = decodedGoogle?.sub;
       const email = decodedGoogle?.email;
       const name = decodedGoogle?.name;
@@ -100,7 +97,6 @@ export class AuthController {
       const successData = res.data;
       const token = successData.data.token;
 
-      // Gọi getProfile để lấy đầy đủ thông tin user (giống login bình thường)
       const userRes = await this.authService.getProfile(token);
 
       console.log(" đây:", userRes);
@@ -108,6 +104,7 @@ export class AuthController {
         email: successData.data.email,
         fullName: userRes.data.data.fullName,
         kycStatus: successData.data.kycStatus,
+        nextStep: successData.data.nextStep, 
         renterId: userRes.data.data.renterId,
         status: userRes.data.data.status,
       };

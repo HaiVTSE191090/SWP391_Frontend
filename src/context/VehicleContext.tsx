@@ -1,22 +1,25 @@
 import React, { createContext, ReactNode, useState, useMemo, useCallback } from "react";
 import { vehicleController } from "../controller/VehicleController";
-import { VehicleWithStation, StationWithVehicles } from "../models/VehicleModel";
+import { VehicleWithStation, StationWithVehicles, VehicleDetail } from "../models/VehicleModel";
 
 
 export interface VehicleContextType {
   vehicles: VehicleWithStation[];
   stations: StationWithVehicles[];
+  vehicleDetail: VehicleDetail | null;
   loading: boolean;
   error: string | null;
 
   loadAllVehicles: () => Promise<boolean>;
   loadAvailableVehicles: () => Promise<boolean>;
   loadVehiclesByStation: (stationId: number) => Promise<boolean>;
+  loadVehicleDetail: (vehicleId: number) => Promise<boolean>;
   loadAllStations: () => Promise<boolean>;
   clearError: () => void;
 
   formatBattery: (batteryLevel: number) => string;
   formatMileage: (mileage: number) => string;
+  formatPrice: (price: number) => string;
   isVehicleAvailable: (vehicle: VehicleWithStation) => boolean;
 }
 
@@ -29,12 +32,11 @@ interface VehicleProviderProps {
 export const VehicleProvider = ({ children }: VehicleProviderProps) => {
   const [vehicles, setVehicles] = useState<VehicleWithStation[]>([]);
   const [stations, setStations] = useState<StationWithVehicles[]>([]);
+  const [vehicleDetail, setVehicleDetail] = useState<VehicleDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Load tất cả xe từ tất cả stations
-   */
+
   const loadAllVehicles = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -57,9 +59,7 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     }
   }, []);
 
-  /**
-   * Load chỉ xe AVAILABLE
-   */
+
   const loadAvailableVehicles = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -82,9 +82,6 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     }
   }, []);
 
-  /**
-   * Load xe theo station
-   */
   const loadVehiclesByStation = useCallback(async (stationId: number): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -93,8 +90,14 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
       const result = await vehicleController.getVehiclesByStation(stationId);
 
       if (result.success) {
-        // Cần convert sang VehicleWithStation nếu BE không có station info
-        setVehicles(result.data);
+        const vehiclesWithStation: VehicleWithStation[] = result.data.map((vehicle: any) => ({
+          ...vehicle,
+          stationId: vehicle.stationId || stationId,
+          stationName: vehicle.stationName || `Trạm ${stationId}`,
+          stationLocation: vehicle.stationLocation || 'Chưa có thông tin',
+        }));
+        
+        setVehicles(vehiclesWithStation);
         return true;
       } else {
         setError(result.error!);
@@ -105,9 +108,6 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     }
   }, []);
 
-  /**
-   * Load tất cả stations
-   */
   const loadAllStations = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -124,6 +124,28 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
       }
     } catch (err) {
       setError("Có lỗi xảy ra khi lấy danh sách trạm");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadVehicleDetail = useCallback(async (vehicleId: number): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await vehicleController.getVehicleDetail(vehicleId);
+
+      if (result.success && result.data) {
+        setVehicleDetail(result.data);
+        return true;
+      } else {
+        setError(result.error!);
+        return false;
+      }
+    } catch (err) {
+      setError("Có lỗi xảy ra khi lấy thông tin xe");
       return false;
     } finally {
       setLoading(false);
@@ -147,6 +169,11 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     return vehicleController.formatMileage(mileage);
   }, []);
 
+  
+  const formatPrice = useCallback((price: number): string => {
+    return vehicleController.formatPrice(price);
+  }, []);
+
 
   const isVehicleAvailable = useCallback((vehicle: VehicleWithStation): boolean => {
     return vehicleController.isVehicleAvailable(vehicle);
@@ -156,29 +183,35 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     () => ({
       vehicles,
       stations,
+      vehicleDetail,
       loading,
       error,
       loadAllVehicles,
       loadAvailableVehicles,
       loadVehiclesByStation,
+      loadVehicleDetail,
       loadAllStations,
       clearError,
       formatBattery,
       formatMileage,
+      formatPrice,
       isVehicleAvailable,
     }),
     [
       vehicles,
       stations,
+      vehicleDetail,
       loading,
       error,
       loadAllVehicles,
       loadAvailableVehicles,
       loadVehiclesByStation,
+      loadVehicleDetail,
       loadAllStations,
       clearError,
       formatBattery,
       formatMileage,
+      formatPrice,
       isVehicleAvailable,
     ]
   );

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
+import axios from 'axios';
 import UserDetail from './UserDetail';
+import OTPModal from './OTPModal';
 
 // Interface cho dữ liệu Renter
 interface Renter {
@@ -17,42 +19,68 @@ const ListRenter: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [selectedRenterId, setSelectedRenterId] = useState<string | number | null>(null);
 
+  // Mock data để test giao diện - Xóa khi có API thật
+  const mockData: Renter[] = [
+    { id: 1, name: 'Nguyễn Văn A', phoneNumber: '0912345678', verificationStatus: 'pending' },
+    { id: 2, name: 'Trần Thị B', phoneNumber: '0987654321', verificationStatus: 'verified' },
+    { id: 3, name: 'Lê Văn C', phoneNumber: '0909123456', verificationStatus: 'pending' },
+  ];
+
   // Fetch data từ API
   useEffect(() => {
     fetchRenters();
   }, []);
 
   const fetchRenters = async () => {
-    setLoading(true);
-    setError('');
-
-    // TODO: Gọi API khi có backend
-    // Mock data tạm
-    setTimeout(() => {
-      const mockData: Renter[] = [
-        { id: 1, name: "Nguyễn Văn A", phoneNumber: "0912345678", verificationStatus: "pending" },
-        { id: 2, name: "Trần Thị B", phoneNumber: "0987654321", verificationStatus: "verified" },
-        { id: 3, name: "Lê Văn C", phoneNumber: "0901234567", verificationStatus: "rejected" },
-      ];
-      setRenters(mockData);
+    try {
+      setLoading(true);
+      setError('');
+      
+      // TODO: Thay YOUR_API_ENDPOINT bằng endpoint thật từ Backend
+      // const response = await axios.get('YOUR_API_ENDPOINT/renters');
+      // setRenters(response.data);
+      
+      // Tạm thời dùng mock data
+      setTimeout(() => {
+        setRenters(mockData);
+        setLoading(false);
+      }, 1000);
+      
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra khi tải dữ liệu');
       setLoading(false);
-    }, 500);
+    }
   };
 
   // Handler cho nút Verification Status
   const handleVerificationStatus = async (renterId: string | number) => {
-    // TODO: Gọi API khi có backend
-    alert(`Kiểm tra trạng thái cho Renter ID: ${renterId}\nTrạng thái: verified`);
+    try {
+      // TODO: Gọi API kiểm tra trạng thái xác minh
+      // const response = await axios.get(`YOUR_API_ENDPOINT/renters/${renterId}/verification-status`);
+      console.log('Check verification status for renter:', renterId);
+      alert(`Kiểm tra trạng thái xác minh cho Renter ID: ${renterId}`);
+    } catch (err: any) {
+      console.error('Error checking verification status:', err);
+      alert('Có lỗi xảy ra khi kiểm tra trạng thái');
+    }
   };
 
-  // Handler cho nút Verify OTP link
-  const handleVerifyOTP = async (renterId: string | number) => {
-    const otpCode = prompt('Nhập mã OTP:');
-    if (!otpCode) return;
+  // State cho OTP Modal
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [otpRenterId, setOtpRenterId] = useState<string | number | null>(null);
 
-    // TODO: Gọi API khi có backend
-    alert(`Xác thực OTP thành công cho Renter ID: ${renterId}`);
-    fetchRenters(); // Refresh lại danh sách
+  // Handler cho nút Verify OTP link
+  const handleVerifyOTP = (renterId: string | number) => {
+    setOtpRenterId(renterId);
+    setShowOTPModal(true);
+  };
+
+  // Xử lý submit OTP
+  const handleSubmitOTP = (otp: string) => {
+    // TODO: Gọi API xác thực OTP với otpRenterId và otp
+    setShowOTPModal(false);
+    setOtpRenterId(null);
+    alert(`OTP xác thực thành công cho Renter ID: ${otpRenterId}, mã OTP: ${otp}`);
   };
 
   // Handler cho nút Details
@@ -185,6 +213,12 @@ const ListRenter: React.FC = () => {
           <small>Tổng số người thuê: {renters.length}</small>
         </div>
       )}
+      {/* Popup OTP nhập mã OTP */}
+      <OTPModal
+        show={showOTPModal}
+        onSubmit={handleSubmitOTP}
+        onCancel={() => { setShowOTPModal(false); setOtpRenterId(null); }}
+      />
     </Container>
   );
 };

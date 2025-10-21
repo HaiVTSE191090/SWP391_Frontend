@@ -6,10 +6,8 @@ import {
   DEFAULT_LOCATION,
   getDefaultTimeSelection,
   formatTimeDisplay,
-  getTodayDate,
 } from "../../models/SearchModel";
-import { processSearch } from "../../controller/SearchController";
-import LocationModal from "./LocationModal";
+
 import TimeModal from "./TimeModal";
 
 type Props = {
@@ -20,8 +18,6 @@ type Props = {
 export default function SearchBar({ onSearch, onLocationDenied }: Props) {
   const [location, setLocation] = useState<LocationSelection>(DEFAULT_LOCATION);
   const [timeSel, setTimeSel] = useState<TimeSelection>(getDefaultTimeSelection());
-  const [showLocationModal, setShowLocationModal] = useState(false); // popup nhập tay
-
   const displayTime = useMemo(() => formatTimeDisplay(timeSel), [timeSel]);
 
 
@@ -33,6 +29,7 @@ export default function SearchBar({ onSearch, onLocationDenied }: Props) {
       return;
     }
 
+    console.log(location)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const coords = {

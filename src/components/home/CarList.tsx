@@ -53,8 +53,7 @@ export const CarList: React.FC = () => {
     return (
       <section className="container py-5">
         <h2 className="text-center fw-bold mb-4">
-          <i className="bi bi-car-front me-2"></i>
-          Xe dành cho bạn
+          Xe dành cho bạn 
         </h2>
         <div className="alert alert-danger d-flex align-items-center" role="alert">
           <i className="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
@@ -80,11 +79,9 @@ export const CarList: React.FC = () => {
     return (
       <section className="container py-5">
         <h2 className="text-center fw-bold mb-4">
-          <i className="bi bi-car-front me-2"></i>
           Xe dành cho bạn
         </h2>
         <div className="alert alert-info text-center py-5" role="alert">
-          <i className="bi bi-info-circle fs-1 d-block mb-3"></i>
           <h5 className="mb-2">Chưa có xe nào</h5>
           <p className="mb-0 text-muted">Hiện tại chưa có xe nào trong hệ thống. Vui lòng quay lại sau.</p>
         </div>
@@ -101,7 +98,6 @@ export const CarList: React.FC = () => {
 
   return (
     <section className="container py-5">
-      {/* Header */}
       <div className="text-center mb-4">
         <h2 className="fw-bold mb-1">
           <i className="bi bi-car-front-fill text-primary me-2"></i>
@@ -120,6 +116,7 @@ export const CarList: React.FC = () => {
               className="form-control"
               placeholder="Tìm kiếm theo biển số hoặc tên xe..."
               value={searchQuery}
+              style={{ border: "2px solid #9c9a9aff" }}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
@@ -154,7 +151,6 @@ export const CarList: React.FC = () => {
       {(filterStatus !== 'ALL' || searchQuery) && (
         <div className="alert alert-info d-flex justify-content-between align-items-center">
           <span>
-            <i className="bi bi-funnel me-2"></i>
             Đang hiển thị <strong>{displayVehicles.length}</strong> / {filteredVehicles.length} xe
             {searchQuery && ` với từ khóa "${searchQuery}"`}
           </span>
@@ -174,8 +170,7 @@ export const CarList: React.FC = () => {
 
       {filteredVehicles.length === 0 ? (
         <div className="alert alert-warning text-center py-5">
-          <i className="bi bi-inbox fs-1 d-block mb-3"></i>
-          <h5>Không tìm thấy xe nào</h5>
+          <h3>Không tìm thấy xe nào</h3>
           <p className="mb-0">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
         </div>
       ) : (

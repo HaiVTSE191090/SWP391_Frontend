@@ -11,6 +11,7 @@ import RentalHistoryPage from "../components/HistoryPage/RentalHistoryPage";
 import ContractPreviewPage from "../components/ContractPage/ContractPage";
 import VehicleDetailPage from "../pages/VehicleDetailPage";
 import VehiclesPage from "../pages/VehiclesPage";
+import NotFoundPage from "../components/404/NotFoundPage";
 
 
 // Lazy load các trang (tối ưu bundle)
@@ -28,15 +29,19 @@ const router = createBrowserRouter([
             { path: "/sign-up", element: <SignUpForm /> },
             { path: "/manualIdentity", element: <ManualIdentityPage /> },
             { path: "/kyc-verification", element: <KycVerificationPage /> },
-            {path: "/staff", element: <Staff /> },
             { path: "/xac-nhan-dat-xe", element: <DepositPage /> },
             { path: "/rental-history", element: <RentalHistoryPage /> },
             { path: "/contract-preview", element: <ContractPreviewPage /> },
             { path: "/vehicles", element: <VehiclesPage /> },
             { path: "/vehicles/:id", element: <VehicleDetailPage /> },
-            // // 404 bắt mọi thứ còn lại
-            // { path: "*", element: <NotFoundPage /> },
+            // 404 bắt mọi thứ còn lại
+            { path: "*", element: <NotFoundPage /> },
         ],
+    },
+    // Staff routes - Không dùng Layout (có navbar riêng)
+    {
+        path: "/staff",
+        element: <Staff />,
     },
 ]);
 

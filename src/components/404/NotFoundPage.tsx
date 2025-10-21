@@ -10,32 +10,12 @@ import {
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-import image1 from "./assets/b107a432-100b-4bdc-91ca-e8afcf78061c.png";
-import image2 from "./assets/c79a26a8-113c-463f-bc32-23c4aa1958bb.png";
+import image1 from "./b107a432-100b-4bdc-91ca-e8afcf78061c.png";
+import image2 from "./c79a26a8-113c-463f-bc32-23c4aa1958bb.png";
 
 const App: React.FC = () => {
   return (
     <>
-      {/* Navbar */}
-      <Navbar expand="lg" bg="white" className="shadow-sm px-4">
-        <Container fluid>
-          <Navbar.Brand href="#">
-            <Image src={image1} alt="Logo" width="150" />
-          </Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="mx-auto">
-              <Nav.Link href="#">Products</Nav.Link>
-              <Nav.Link href="#">Features</Nav.Link>
-              <Nav.Link href="#">Pricing</Nav.Link>
-              <Nav.Link href="#">Support</Nav.Link>
-            </Nav>
-            <Button variant="outline-primary" className="rounded-pill">
-              Start free trial
-            </Button>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
 
       {/* Main Section */}
       <Container fluid className="hero-section">

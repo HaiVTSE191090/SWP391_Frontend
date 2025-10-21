@@ -25,7 +25,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, showStation = false 
  
   const getVehicleImage = () => {
     try {
-
       const imageNumber = ((vehicle.vehicleId - 1) % 9) + 1;
       return require(`../../images/car-list/Car-${imageNumber}.png`);
     } catch (error) {
