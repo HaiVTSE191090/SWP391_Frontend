@@ -5,6 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { FormContext, FormProvider } from "../../context/FormContext";
 import { useModal } from "../../hooks/useModal";
 import { toast } from "react-toastify";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 
 /**
  * LoginForm Content - Sử dụng LOCAL form state từ FormContext
@@ -31,12 +32,8 @@ const LoginFormContent: React.FC = () => {
         formData, 
         handleChange, 
         resetForm,
-        error: formError,
-        message: formMessage,
         fieldErrors: formFieldErrors,
         setError: setFormError,
-        setMessage: setFormMessage,
-        setFieldErrors: setFormFieldErrors,
         clearMessages
     } = formCtx;
 
@@ -153,36 +150,7 @@ const LoginFormContent: React.FC = () => {
 
                     <div className="modal-body">
                         {showForgot ? (
-                            <form>
-                                <div className="mb-3">
-                                    <label htmlFor="forgotEmail" className="form-label">
-                                        Nhập email để đặt lại mật khẩu
-                                    </label>
-                                    <input
-                                        id="forgotEmail"
-                                        name="forgotEmail"
-                                        type="email"
-                                        className="form-control"
-                                        placeholder="Nhập email của bạn"
-                                    />
-                                </div>
-
-                                <div className="d-grid">
-                                    <button type="button" className="btn btn-primary">
-                                        Gửi liên kết đặt lại mật khẩu
-                                    </button>
-                                </div>
-
-                                <div className="text-center mt-3">
-                                    <button
-                                        type="button"
-                                        className="btn btn-link text-decoration-none"
-                                        onClick={() => setShowForgot(false)}
-                                    >
-                                        ← Quay lại đăng nhập
-                                    </button>
-                                </div>
-                            </form>
+                            <ForgotPasswordForm onBack={() => setShowForgot(false)} />
                         ) : (
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-3">
@@ -253,20 +221,6 @@ const LoginFormContent: React.FC = () => {
                                         Quên mật khẩu?
                                     </button>
                                 </div>
-
-                                {/* ✅ LOCAL form messages - không share với form khác */}
-                                {formMessage && (
-                                    <div className="alert alert-success">
-                                        <i className="bi bi-check-circle me-2"></i>
-                                        {formMessage}
-                                    </div>
-                                )}
-                                {formError && (
-                                    <div className="alert alert-danger">
-                                        <i className="bi bi-exclamation-triangle me-2"></i>
-                                        {formError}
-                                    </div>
-                                )}
 
                                 <div className="d-grid mb-3">
                                     <button
