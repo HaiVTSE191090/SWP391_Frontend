@@ -73,7 +73,14 @@ const VehicleDetailPage: React.FC = () => {
     }
 
     if (authCheck.action === 'UPLOAD_KYC') {
-      navigate('/kyc-verification');
+      toast.info("Vui lòng hoàn thành xác thực KYC để đặt xe", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      
+      setTimeout(() => {
+        navigate('/kyc-verification');
+      }, 500);
       return;
     }
 

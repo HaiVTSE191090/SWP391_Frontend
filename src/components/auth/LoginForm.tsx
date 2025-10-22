@@ -4,6 +4,7 @@ import { LoginRequest } from "../../models/AuthModel";
 import { useAuth } from "../../hooks/useAuth";
 import { FormContext, FormProvider } from "../../context/FormContext";
 import { useModal } from "../../hooks/useModal";
+import { toast } from "react-toastify";
 
 /**
  * LoginForm Content - Sử dụng LOCAL form state từ FormContext
@@ -52,35 +53,78 @@ const LoginFormContent: React.FC = () => {
         
         const loginData = createLoginRequest();
         
+        const loadingToast = toast.loading("Đang đăng nhập...", {
+            position: "top-center"
+        });
+        
         // ✅ Call login và manually set LOCAL form state
         const result = await login(loginData);
         
         if (result.success) {
-            setFormMessage(result.message || "Đăng nhập thành công!");
+            toast.update(loadingToast, {
+                render: result.message || "Đăng nhập thành công!",
+                type: "success",
+                isLoading: false,
+                autoClose: 2000,
+            });
+            
             setTimeout(() => {
                 closeModal('loginForm');
                 resetForm();
-            }, 2000);
+            }, 1000);
         } else {
-            // Set error vào LOCAL form state
-            if (result.error) setFormError(result.error);
-            if (result.fieldErrors) setFormFieldErrors(result.fieldErrors);
+            // Hiển thị lỗi bằng toast
+            if (result.error) {
+                toast.update(loadingToast, {
+                    render: result.error,
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 3000,
+                });
+            } else if (result.fieldErrors) {
+                // Format field errors thành multi-line
+                const errors = Object.entries(result.fieldErrors)
+                    .map(([field, msg]) => `• ${msg}`)
+                    .join('\n');
+                
+                toast.update(loadingToast, {
+                    render: errors,
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 4000,
+                });
+            }
         }
     };
 
     const handleGoogleLogin = async (credentialRes: any) => {
         clearMessages();
         
+        const loadingToast = toast.loading("Đang đăng nhập với Google...", {
+            position: "top-center"
+        });
+        
         const result = await loginWithGoogle(credentialRes.credential);
         
         if (result.success) {
-            setFormMessage(result.message || "Đăng nhập Google thành công!");
+            toast.update(loadingToast, {
+                render: result.message || "Đăng nhập Google thành công!",
+                type: "success",
+                isLoading: false,
+                autoClose: 2000,
+            });
+            
             setTimeout(() => {
                 resetForm();
                 closeModalAndReload("loginForm");
             }, 1000);
         } else {
-            setFormError(result.error || "Đăng nhập Google thất bại");
+            toast.update(loadingToast, {
+                render: result.error || "Đăng nhập Google thất bại",
+                type: "error",
+                isLoading: false,
+                autoClose: 3000,
+            });
         }
     };
 

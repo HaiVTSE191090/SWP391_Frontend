@@ -6,6 +6,7 @@ import LoginForm from "../auth/LoginForm";
 import { FormProvider } from "../../context/FormContext";
 import { useAuth } from "../../hooks/useAuth";
 import OTPVerificationModal from "../auth/OtpVerificationForm";
+import { toast } from "react-toastify";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
@@ -98,8 +99,13 @@ const Navbar: React.FC = () => {
                         className="btn btn-link text-danger text-decoration-none"
                         onClick={() => {
                           logout();
-                          alert("Đăng xuất thành công!");
-                          navigate("/");
+                          toast.success("Đăng xuất thành công!", {
+                            position: "top-center",
+                            autoClose: 2000,
+                          });
+                          setTimeout(() => {
+                            navigate("/");
+                          }, 500);
                         }}
                       >
                         Đăng xuất

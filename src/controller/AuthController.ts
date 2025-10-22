@@ -15,10 +15,7 @@ export class AuthController {
   constructor(private authService: IAuthService = authServiceModule) {}
 
   async login(data: model.LoginRequest) {
-    /**
-     * @param data nhập vào email với password
-     * @returns Kết quả đăng nhập, bao gồm success(boolean), token, user, message, error, fieldErrors
-     */
+
     try {
       const res = await this.authService.loginApi(data);
       const successData = res.data;
@@ -96,21 +93,40 @@ export class AuthController {
 
       const successData = res.data;
       const token = successData.data.token;
+      const googleEmail = successData.data.email;
+      const kycStatus = successData.data.kycStatus;
+
+      let nextStep: 'EMAIL_OTP' | 'KYC_UPLOAD' | 'DASHBOARD';
+      switch (kycStatus) {
+        case 'NEED_UPLOAD':
+        case 'REJECTED':
+        case 'UNKNOWN':
+        case 'NO_DOCUMENT':
+          nextStep = 'KYC_UPLOAD';
+          break;
+        case 'WAITING_APPROVAL':
+        case 'VERIFIED':
+          nextStep = 'DASHBOARD';
+          break;
+        default:
+          nextStep = 'KYC_UPLOAD';
+          break;
+      }
 
       const userRes = await this.authService.getProfile(token);
 
-      console.log(" đây:", userRes);
+      console.log("Google Response:", successData);
+      console.log(" Profile Response:", userRes);
+      
       const userObj = {
-        email: successData.data.email,
+        email: googleEmail,
         fullName: userRes.data.data.fullName,
-        kycStatus: successData.data.kycStatus,
-        nextStep: successData.data.nextStep, 
+        kycStatus: kycStatus,
+        nextStep: nextStep, 
         renterId: userRes.data.data.renterId,
         status: userRes.data.data.status,
       };
-
-      console.log(" và đây:", userObj);
-
+      
       return {
         success: true,
         token,

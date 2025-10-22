@@ -2,11 +2,13 @@ import React, { useState, useRef } from "react";
 import { useModal } from "../../hooks/useModal";
 import { useAuth } from "../../hooks/useAuth";
 import { useForm } from "../../hooks/useForm";
+import { toast } from "react-toastify";
+import { getToken } from "../../utils/authHelpers";
 
 const OTPVerificationModal: React.FC = () => {
     const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-    const { switchModal } = useModal();
+    const { switchModal, closeModal } = useModal();
     const { verifyOTP, sendOTP, loading } = useAuth();
     const { error: formError,
         formData,
@@ -89,22 +91,46 @@ const OTPVerificationModal: React.FC = () => {
         const otpCode = otp.join("");
 
         if (otpCode.length !== 6) {
-            setFormError("Vui lòng nhập đầy đủ 6 chữ số OTP");
+            toast.error("Vui lòng nhập đầy đủ 6 chữ số OTP", {
+                position: "top-center",
+                autoClose: 3000,
+            });
             return;
         }
 
+        const loadingToast = toast.loading("Đang xác thực OTP...", {
+            position: "top-center"
+        });
+
         const result = await verifyOTP(formData.email, otpCode);
 
-
         if (result.success) {
-            setFormMessage(result.message || "Xác thực OTP thành công!");
+            toast.update(loadingToast, {
+                render: result.message || "Xác thực OTP thành công!",
+                type: "success",
+                isLoading: false,
+                autoClose: 2000,
+            });
 
             setTimeout(() => {
-                switchModal("otpVerificationModal", "loginForm");
+                // Kiểm tra xem user đã có token chưa
+                const token = getToken();
+                
+                if (token) {
+                    closeModal("otpVerificationModal");
+                } else {
+                    switchModal("otpVerificationModal", "loginForm");
+                }
+                
                 resetForm();
             }, 1000);
         } else {
-            setFormError(result.error || "Xác thực OTP thất bại");
+            toast.update(loadingToast, {
+                render: result.error || "Xác thực OTP thất bại",
+                type: "error",
+                isLoading: false,
+                autoClose: 3000,
+            });
         }
     };
 
@@ -114,10 +140,36 @@ const OTPVerificationModal: React.FC = () => {
         inputRefs.current[0]?.focus();
 
         const email = formData?.email;
+        if (!email) {
+            toast.error("Không tìm thấy email. Vui lòng đăng ký lại.", {
+                position: "top-center",
+                autoClose: 3000,
+            });
+            return;
+        }
+        
         console.log("Resending OTP to email:", email);
-        const ok = await sendOTP(email);
-        if (ok) {
-            alert("Đã gửi lại mã OTP về email của bạn");
+        
+        const loadingToast = toast.loading("Đang gửi lại mã OTP...", {
+            position: "top-center"
+        });
+        
+        const result = await sendOTP(email);
+        
+        if (result.success) {
+            toast.update(loadingToast, {
+                render: "Đã gửi lại mã OTP! Vui lòng kiểm tra email.",
+                type: "success",
+                isLoading: false,
+                autoClose: 3000,
+            });
+        } else {
+            toast.update(loadingToast, {
+                render: result.error || "Gửi lại OTP thất bại",
+                type: "error",
+                isLoading: false,
+                autoClose: 3000,
+            });
         }
     };
 
@@ -166,20 +218,6 @@ const OTPVerificationModal: React.FC = () => {
                                     />
                                 ))}
                             </div>
-
-                            {formError && (
-                                <div className="alert alert-danger text-center" role="alert">
-                                    <i className="bi bi-exclamation-triangle me-2"></i>
-                                    {formError}
-                                </div>
-                            )}
-
-                            {formMessage && (
-                                <div className="alert alert-success text-center" role="alert">
-                                    <i className="bi bi-check-circle me-2"></i>
-                                    {formMessage}
-                                </div>
-                            )}
 
                             <button
                                 type="submit"

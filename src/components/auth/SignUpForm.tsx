@@ -7,6 +7,7 @@ import { validateSignUp } from "../../utils/validators";
 import { SignUpRequest } from "../../models/AuthModel";
 import { useAuth } from "../../hooks/useAuth";
 import FieldError from "../common/FieldError";
+import { toast } from "react-toastify";
 
 const SignUpForm: React.FC = () => {
     const { switchModal, closeModal } = useModal();
@@ -30,6 +31,13 @@ const SignUpForm: React.FC = () => {
         const { fieldErrors: errs } = validateSignUp(formData);
         if (Object.keys(errs).length > 0) {
             setFormFieldErrors(errs);
+            
+            // Hiển thị toast lỗi validation
+            const errorMessages = Object.values(errs).join('\n');
+            toast.error(errorMessages, {
+                position: "top-center",
+                autoClose: 3000,
+            });
             return;
         }
 
@@ -41,23 +49,57 @@ const SignUpForm: React.FC = () => {
             confirmPassword: formData.confirmPassword,
         };
 
+        const loadingToast = toast.loading("Đang đăng ký tài khoản...", {
+            position: "top-center"
+        });
+
         const result = await signUp(payload);
         if (result.success) {
+            // Update toast to sending OTP
+            toast.update(loadingToast, {
+                render: "Đang gửi mã OTP...",
+                isLoading: true,
+            });
             
             // Send OTP
             const otpResult = await sendOTP(formData.email);
             if (otpResult.success) {
-                setFormMessage(result.message || "Đăng ký thành công!");
+                toast.update(loadingToast, {
+                    render: "Đăng ký thành công! Vui lòng kiểm tra email.",
+                    type: "success",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+                
                 setTimeout(() => {
                     switchModal("signUpForm", "otpVerificationModal");
                     clearMessages();
                 }, 500);
             } else {
-                setFormError(otpResult.error || "Gửi OTP thất bại");
+                toast.update(loadingToast, {
+                    render: otpResult.error || "Gửi OTP thất bại",
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 3000,
+                });
             }
         } else {
-            if (result.error) setFormError(result.error);
-            if (result.fieldErrors) setFormFieldErrors(result.fieldErrors);
+            // Hiển thị lỗi từ backend
+            let errorMessage = "Đăng ký thất bại!";
+            
+            if (result.error) {
+                errorMessage = result.error;
+            } else if (result.fieldErrors) {
+                errorMessage = Object.values(result.fieldErrors).join('\n');
+                setFormFieldErrors(result.fieldErrors);
+            }
+            
+            toast.update(loadingToast, {
+                render: errorMessage,
+                type: "error",
+                isLoading: false,
+                autoClose: 4000,
+            });
         }
     };
 
@@ -134,19 +176,6 @@ const SignUpForm: React.FC = () => {
                                 required
                             />
                             <FieldError fieldName="confirmPassword" />
-
-                            {formMessage && (
-                                <div className="alert alert-success">
-                                    <i className="bi bi-check-circle me-2"></i>
-                                    {formMessage}
-                                </div>
-                            )}
-                            {formError && (
-                                <div className="alert alert-danger">
-                                    <i className="bi bi-exclamation-triangle me-2"></i>
-                                    {formError}
-                                </div>
-                            )}
 
                             <button
                                 type="submit"
