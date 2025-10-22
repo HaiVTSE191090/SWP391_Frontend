@@ -29,7 +29,7 @@ export default function HomeHero() {
   ];
   return (
     <section className="container my-4">
-      <HeroCarousel slides={slides} intervalMs={3500} /* fade={true} để chuyển kiểu mờ */ />
+      <HeroCarousel slides={slides} intervalMs={3500} fade={true} />
     </section>
   );
 }

@@ -1,32 +1,50 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 type Slide = {
-  src: string;       // link ảnh (bạn thay sau)
-  title?: string;    // tiêu đề overlay
-  subtitle?: string; // mô tả overlay
+  src: string;       
+  title?: string;    
+  subtitle?: string; 
 };
 
 type Props = {
-  id?: string;           // id duy nhất cho carousel
+  id?: string;           
   slides: Slide[];
-  intervalMs?: number;   // thời gian giữa mỗi slide
-  fade?: boolean;        // true = hiệu ứng fade, false = trượt trái→phải
+  intervalMs?: number;   
+  fade?: boolean;       
 };
 
 export const HeroCarousel: React.FC<Props> = ({
   id = "heroCarousel",
   slides,
-  intervalMs = 3500,
-  fade = false,
+  intervalMs = 2000,
+  fade = true,
 }) => {
+  useEffect(() => {
+    const carouselElement = document.getElementById(id);
+    if (carouselElement && (window as any).bootstrap) {
+      const carousel = new (window as any).bootstrap.Carousel(carouselElement, {
+        interval: intervalMs,
+        ride: 'carousel',
+        pause: false,  // Không pause khi hover
+        wrap: true,
+        touch: true
+      });
+      
+      // Force start cycling
+      carousel.cycle();
+      
+      return () => {
+        carousel.dispose();
+      };
+    }
+  }, [id, intervalMs]);
+
   return (
     <div
       id={id}
-      className="carousel slide"
+      className={`carousel slide ${fade ? "carousel-fade" : ""}`}
       data-bs-ride="carousel"
-      data-bs-interval="2000"
-      data-bs-pause="false"
-      data-bs-touch="true"
+      data-bs-interval={intervalMs}
     >
       {/* Indicators */}
       <div className="carousel-indicators">
@@ -51,7 +69,6 @@ export const HeroCarousel: React.FC<Props> = ({
             className={`carousel-item ${i === 0 ? "active" : ""}`}
             data-bs-interval={intervalMs}
           >
-            {/* Giữ tỷ lệ cao 21:9, ảnh cover toàn khung */}
             <div className="ratio ratio-21x9">
               <img
                 src={s.src || "https://via.placeholder.com/1600x700?text=Hero"}
@@ -59,7 +76,6 @@ export const HeroCarousel: React.FC<Props> = ({
                 style={{ objectFit: "cover" }}
                 alt={s.title || `Slide ${i + 1}`}
               />
-              {/* Gradient + text overlay */}
               <div
                 className="position-absolute top-0 start-0 w-100 h-100"
                 style={{
@@ -76,7 +92,6 @@ export const HeroCarousel: React.FC<Props> = ({
         ))}
       </div>
 
-      {/* Controls */}
       <button
         className="carousel-control-prev"
         type="button"
