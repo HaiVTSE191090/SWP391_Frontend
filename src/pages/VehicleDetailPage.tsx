@@ -39,7 +39,6 @@ const VehicleDetailPage: React.FC = () => {
 
     if (authCheck.action === 'VERIFY_EMAIL_OTP') {
       if (authCheck.email) {
-        // Hiển thị loading toast
         const loadingToast = toast.loading("Đang gửi mã OTP...", {
           position: "top-center"
         });
@@ -47,15 +46,13 @@ const VehicleDetailPage: React.FC = () => {
         try {
           await sendOTP(authCheck.email);
           
-          // Cập nhật thành success
           toast.update(loadingToast, {
             render: "Đã gửi mã OTP! Vui lòng kiểm tra email.",
             type: "success",
             isLoading: false,
             autoClose: 3000,
           });
-          
-          // Mở modal OTP sau khi gửi xong
+
           setTimeout(() => {
             openModal('otpVerificationModal');
           }, 500);

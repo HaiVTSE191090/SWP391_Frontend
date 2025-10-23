@@ -12,6 +12,7 @@ import ContractPreviewPage from "../components/ContractPage/ContractPage";
 import VehicleDetailPage from "../pages/VehicleDetailPage";
 import VehiclesPage from "../pages/VehiclesPage";
 import NotFoundPage from "../components/404/NotFoundPage";
+import UserProfilePage from "../pages/UserProfilePage";
 
 
 // Lazy load các trang (tối ưu bundle)
@@ -34,6 +35,7 @@ const router = createBrowserRouter([
             { path: "/contract-preview", element: <ContractPreviewPage /> },
             { path: "/vehicles", element: <VehiclesPage /> },
             { path: "/vehicles/:id", element: <VehicleDetailPage /> },
+            { path: "/profile", element: <UserProfilePage /> },
             // 404 bắt mọi thứ còn lại
             { path: "*", element: <NotFoundPage /> },
         ],
