@@ -30,7 +30,7 @@ const router = createBrowserRouter([
              //cho trang xác nhận & thanh toán
             { path: "/xac-nhan-dat-xe", element: <DepositPage /> },
             { path: "/rental-history", element: <RentalHistoryPage /> },
-            { path: "/contract-preview", element: <ContractPreviewPage /> },
+            { path: "/contract-preview", element: <ContractPreviewPage /> }
             // // 404 bắt mọi thứ còn lại
             // { path: "*", element: <NotFoundPage /> },
         ],

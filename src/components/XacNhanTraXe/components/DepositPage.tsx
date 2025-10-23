@@ -5,11 +5,10 @@ import "./DepositPage.css";
 import { Vehicle } from "../../../models/VehicleModel";
 import { Booking } from "../../../models/BookingModel";
 
-
-
 export default function DepositPage() {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [invoiceId, setInvoiceId] = useState<number | null>(null);
   const [loadingBooking, setLoadingBooking] = useState(true);
   const [loadingVehicle, setLoadingVehicle] = useState(true);
   const [showConfirmBox, setShowConfirmBox] = useState(false);
@@ -18,27 +17,28 @@ export default function DepositPage() {
 
   // 🛰️ Lấy dữ liệu đặt xe
   useEffect(() => {
-    const fetchBooking = async () => {
+    const fetchBooking = async (bookingId: number) => {
       try {
-        const res = await axios.get("http://localhost:8080/api/bookings/101");
-        const data = res.data;
+        const res = await axios.get(`http://localhost:8080/api/bookings/2`);
+        const data = res.data.data;
         setBooking(data);
         setLoadingBooking(false);
 
         if (data.vehicleId) {
           fetchVehicle(data.vehicleId);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("❌ Lỗi khi tải thông tin đặt xe:", err);
-        setLoadingBooking(false);
         setErrorMsg("Không thể tải thông tin đặt xe.");
+        setLoadingBooking(false);
       }
     };
 
     const fetchVehicle = async (vehicleId: number) => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/vehicles/${vehicleId}`);
-        setVehicle(res.data);
+        const res = await axios.get(`http://localhost:8080/api/vehicle/detail/${vehicleId}`);
+        const data: Vehicle = res.data.data;
+        setVehicle(data);
       } catch (err) {
         console.error("❌ Lỗi khi tải thông tin xe:", err);
         setErrorMsg("Không thể tải thông tin xe.");
@@ -47,23 +47,61 @@ export default function DepositPage() {
       }
     };
 
-    fetchBooking();
+    fetchBooking(1); // 🧩 Tạm thời test bookingId = 1
   }, []);
 
+  // 🧾 Bước 1: Cập nhật trạng thái booking + tạo invoice
+  const handleConfirmBooking = async () => {
+    if (!booking) return;
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      // 1️⃣ PUT booking → reserved
+      await axios.put(`http://localhost:8080/api/bookings/${booking.bookingId}/status/reserved`);
+      console.log("✅ Booking đã cập nhật sang RESERVED");
+
+      // 2️⃣ POST tạo invoice deposit
+      const depositAmount = booking.totalAmount * 0.1;
+      const resInvoice = await axios.post(
+        `http://localhost:8080/api/invoices/bookings/${booking.bookingId}/invoices/deposit`,
+        {
+          depositAmount,
+          notes: "Deposit",
+        }
+      );
+
+      const createdInvoice = resInvoice.data.data;
+      console.log("🧾 Invoice tạo thành công:", createdInvoice);
+      setInvoiceId(createdInvoice.invoiceId);
+      setShowConfirmBox(true);
+    } catch (err: any) {
+      console.error("❌ Lỗi khi xác nhận đặt xe:", err);
+      setErrorMsg("Không thể xác nhận đặt xe.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 💸 Bước 2: Gọi API MoMo và redirect
   const handleRedirectToMomo = async () => {
+    if (!invoiceId || !booking) {
+      setErrorMsg("Thiếu thông tin hóa đơn hoặc đặt xe.");
+      return;
+    }
+
     try {
       setLoading(true);
-      const res = await axios.post("http://localhost:8080/api/bookings/deposit", {
-        bookingId: booking?.id,
-        paymentMethod: "momo",
-        amount: booking?.deposit,
+      const amount = booking.totalAmount * 0.1;
+      const res = await axios.post(`http://localhost:8080/api/payments/invoice/${invoiceId}/momo`, {
+        amount,
       });
 
-      const data = res.data;
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
+      const payUrl = res.data.data.payUrl;
+      if (payUrl) {
+        window.location.href = payUrl; // 🔁 Redirect đến trang test-payment.momo.vn
       } else {
-        setErrorMsg("Không thể tạo liên kết thanh toán.");
+        setErrorMsg("Không thể tạo liên kết thanh toán MoMo.");
       }
     } catch (err) {
       console.error("❌ Lỗi khi redirect sang MoMo:", err);
@@ -86,10 +124,10 @@ export default function DepositPage() {
           <p>Đang tải thông tin đặt xe...</p>
         ) : booking ? (
           <ul className="info-list">
-            <li><strong>Mã đặt xe:</strong> {booking.id}</li>
-            <li><strong>Thời gian thuê:</strong> {booking.startTime} - {booking.endTime}</li>
-            <li><strong>Giá ước tính:</strong> {booking.estimatedPrice.toLocaleString()} VND</li>
-            <li><strong>Tiền cọc:</strong> {booking.deposit.toLocaleString()} VND</li>
+            <li><strong>Mã đặt xe:</strong> {booking.bookingId}</li>
+            <li><strong>Thời gian thuê:</strong> {booking.startDateTime} - {booking.endDateTime}</li>
+            <li><strong>Giá ước tính:</strong> {booking.totalAmount.toLocaleString()} VND</li>
+            <li><strong>Tiền cọc:</strong> {(booking.totalAmount * 0.1).toLocaleString()} VND</li>
           </ul>
         ) : (
           <p className="text-muted">Không tìm thấy thông tin đặt xe.</p>
@@ -103,13 +141,17 @@ export default function DepositPage() {
           <p>Đang tải thông tin xe...</p>
         ) : vehicle ? (
           <div className="car-info d-flex align-items-center flex-wrap gap-4">
-            <img src={vehicle.imageUrl} alt={vehicle.name} className="car-image shadow-sm" />
+            <img
+              src="https://storage.googleapis.com/vinfast-images/vf3.jpg"
+              alt={vehicle.vehicleName}
+              className="car-image shadow-sm"
+            />
             <div className="car-details">
-              <p><strong>Tên xe:</strong> {vehicle.name}</p>
-              <p><strong>Hãng:</strong> {vehicle.brand}</p>
+              <p><strong>Tên xe:</strong> {vehicle.vehicleName}</p>
+              <p><strong>Hãng:</strong> {vehicle.modelName}</p>
               <p><strong>Biển số:</strong> {vehicle.plateNumber}</p>
-              <p><strong>Pin:</strong> {vehicle.battery}</p>
-              <p><strong>Quãng đường:</strong> {vehicle.range}</p>
+              <p><strong>Pin:</strong> {vehicle.batteryLevel}</p>
+              <p><strong>Quãng đường:</strong> {vehicle.mileage}</p>
             </div>
           </div>
         ) : (
@@ -117,7 +159,7 @@ export default function DepositPage() {
         )}
       </section>
 
-      {/* THANH TOÁN QUA MOMO */}
+      {/* NÚT THANH TOÁN */}
       <section className="card-custom fade-in text-center">
         <h5 className="fw-bold mb-3">Thanh toán qua MoMo</h5>
         <img
@@ -132,17 +174,25 @@ export default function DepositPage() {
           <Button
             variant="success"
             size="lg"
-            onClick={() => setShowConfirmBox(true)}
+            onClick={handleConfirmBooking}
+            disabled={loading}
             className="rounded-pill px-4"
           >
-            Xác nhận thanh toán
+            {loading ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...
+              </>
+            ) : (
+              "Xác nhận thanh toán"
+            )}
           </Button>
         ) : (
           <div className="confirm-box mt-4 p-3 fade-in">
             <h6 className="fw-bold mb-2">Xác nhận thanh toán</h6>
             <p>
               Bạn sắp được chuyển hướng đến trang <strong>MoMo</strong> để thanh toán{" "}
-              <strong>{booking?.deposit?.toLocaleString()} VND</strong>.
+              <strong>{((booking?.totalAmount ?? 0) * 0.1).toLocaleString()} VND</strong>
+
             </p>
             <p className="text-muted small">
               ⚠️ Vui lòng không tắt trình duyệt trong quá trình xử lý.

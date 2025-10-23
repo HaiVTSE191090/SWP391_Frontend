@@ -1,9 +1,13 @@
 export interface Vehicle {
-  id: number;
-  name: string;
-  brand: string;
+  vehicleId: number;
+  vehicleName: string;
   plateNumber: string;
-  battery: string;
-  range: string;
-  imageUrl: string;
+  status: string;
+  description: string;
+  modelName: string;
+  stationName: string;
+  pricePerHour: number;
+  pricePerDay: number;
+  batteryLevel: number;
+  mileage: number;
 }
