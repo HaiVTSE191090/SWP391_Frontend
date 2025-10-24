@@ -2,9 +2,9 @@
 export interface Vehicle {
   vehicleId: number;
   plateNumber: string;
-  batteryLevel: number; // % pin (0-100)
-  status: "AVAILABLE" | "IN_USE" | "MAINTENANCE";
-  mileage: number; // km đã đi
+  batteryLevel: number;
+  status: "AVAILABLE" | "IN_USE" | "IN_REPAIR";
+  mileage: number;  
   lastServiceDate: string | null;
   modelName: string | null;
 }
@@ -13,7 +13,7 @@ export interface VehicleDetail {
   vehicleId: number;
   vehicleName: string;
   plateNumber: string;
-  status: "AVAILABLE" | "IN_USE" | "MAINTENANCE";
+  status: "AVAILABLE" | "IN_USE" | "IN_REPAIR";
   description: string;
   modelName: string;
   stationName: string;
@@ -63,7 +63,7 @@ export const getVehicleStatusText = (status: Vehicle["status"]): string => {
   const statusMap = {
     AVAILABLE: "Có sẵn",
     IN_USE: "Đang sử dụng",
-    MAINTENANCE: "Bảo trì",
+    IN_REPAIR: "Đang sửa chữa",
   };
   return statusMap[status] || status;
 };
@@ -72,7 +72,7 @@ export const getVehicleStatusColor = (status: Vehicle["status"]): string => {
   const colorMap = {
     AVAILABLE: "success",
     IN_USE: "warning",
-    MAINTENANCE: "secondary",
+    IN_REPAIR: "secondary",
   };
   return colorMap[status] || "secondary";
 };

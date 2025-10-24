@@ -1,11 +1,11 @@
 import React, { createContext, ReactNode, useState, useMemo, useCallback } from "react";
 import { vehicleController } from "../controller/VehicleController";
-import { VehicleWithStation, StationWithVehicles, VehicleDetail } from "../models/VehicleModel";
-
+import { VehicleWithStation, VehicleDetail } from "../models/VehicleModel";
+import { Station } from   "../models/StationModel";
 
 export interface VehicleContextType {
   vehicles: VehicleWithStation[];
-  stations: StationWithVehicles[];
+  stations: Station[];
   vehicleDetail: VehicleDetail | null;
   loading: boolean;
   error: string | null;
@@ -31,7 +31,7 @@ interface VehicleProviderProps {
 
 export const VehicleProvider = ({ children }: VehicleProviderProps) => {
   const [vehicles, setVehicles] = useState<VehicleWithStation[]>([]);
-  const [stations, setStations] = useState<StationWithVehicles[]>([]);
+  const [stations, setStations] = useState<Station[]>([]);
   const [vehicleDetail, setVehicleDetail] = useState<VehicleDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

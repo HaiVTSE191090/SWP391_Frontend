@@ -46,12 +46,10 @@ const getCurrentPosition = (): Promise<GeoPoint | null> => {
   });
 };
 
-// SEARCH CONTROLLER
 
 const processSearch = async (
   location: LocationSelection
 ): Promise<LocationSelection> => {
-  // Nếu người dùng nhập tay mà chưa có coords → convert
   if (location.coords === null && location.label) {
     try {
       const coords = await geocodeAddress(location.label);

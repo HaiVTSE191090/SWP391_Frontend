@@ -60,7 +60,7 @@ export default function Staff() {
         return <span className="badge bg-success">Có sẵn</span>;
       case 'IN_USE':
         return <span className="badge bg-warning">Đang thuê</span>;
-      case 'MAINTENANCE':
+      case 'IN_REPAIR':
         return <span className="badge bg-danger">Bảo trì</span>;
       default:
         return <span className="badge bg-secondary">Không xác định</span>;
@@ -74,7 +74,7 @@ export default function Staff() {
       case 'Xe đang cho thuê':
         return vehicles.filter((vehicle) => vehicle.status === 'IN_USE');
       case 'Xe bảo trì':
-        return vehicles.filter((vehicle) => vehicle.status === 'MAINTENANCE');
+        return vehicles.filter((vehicle) => vehicle.status === 'IN_REPAIR');
       default:
         return vehicles;
     }

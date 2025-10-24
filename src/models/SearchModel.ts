@@ -5,14 +5,14 @@ export type LocationSelection = {
   coords: GeoPoint;
 };
 
-export type RentalMode = "day" | "hour";
+export type RentalMode = "day";
 
 export type TimeSelection = {
   mode: RentalMode;
-  startDate: string;  // yyyy-mm-dd
-  endDate: string;    // yyyy-mm-dd
-  startTime: string;  // HH:mm
-  endTime: string;    // HH:mm
+  startDate: string;  
+  endDate: string;    
+  startTime: string;  
+  endTime: string;    
 };
 
 export type SearchParams = {
@@ -33,8 +33,14 @@ export const SUGGESTED_AIRPORTS = [
   "Bình Chánh",
   "Thủ Đức",
   "Quận 1",
-  //lấy API
 ];
+
+export interface NominatimResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+  place_id: number;
+}
 
 export const getTodayDate = (): string => {
   return new Date().toISOString().slice(0, 10);
@@ -48,9 +54,9 @@ export const getDefaultTimeSelection = (): TimeSelection => ({
   endTime: "20:00",
 });
 
-// ============= UTILITIES =============
+
 export const formatDateDisplay = (dateStr: string): string => {
-  return dateStr.split("-").reverse().join("/"); // dd/mm/yyyy
+  return dateStr.split("-").reverse().join("/");
 };
 
 export const formatTimeDisplay = (timeSel: TimeSelection): string => {

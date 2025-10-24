@@ -1,9 +1,6 @@
 import { useContext } from "react";
 import { VehicleContext, VehicleContextType } from "../context/VehicleContext";
 
-/**
- * Custom hook để sử dụng VehicleContext với type-safe
- */
 export const useVehicle = (): VehicleContextType => {
   const context = useContext(VehicleContext);
 

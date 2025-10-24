@@ -7,19 +7,23 @@ export default function SearchPage() {
   const [time, setTime] = useState<TimeSelection | null>(null);
 
   const handleSearch = (location: LocationSelection, timeSel: TimeSelection) => {
-    console.log("Search info:", location, timeSel);
     setLoc(location);
     setTime(timeSel);
   };
 
+  const handleLocationUpdate = (newLocation: LocationSelection) => {
+    setLoc(newLocation);
+  };
+
   return (
     <div className="container">
-      {/* Thanh tìm kiếm */}
       <SearchBar onSearch={handleSearch} />
 
-      {/* Bản đồ */}
       <div className="m-4" style={{ height: "50vh", width: "100%" }}>
-        <Mapbox selectedLocation={loc} />
+        <Mapbox 
+          selectedLocation={loc} 
+          onLocationChange={handleLocationUpdate}
+        />
       </div>
     </div>
   );

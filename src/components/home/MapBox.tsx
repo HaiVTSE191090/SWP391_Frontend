@@ -2,90 +2,61 @@ import React, { useEffect, useState } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { LocationSelection } from "../../models/SearchModel";
-import LocationModal from "../search/LocationModal"; // 👈 Thêm dòng này
-
-const markers = [
-  { name: "Quận 1 - TP.HCM", lat: 10.762622, lng: 106.660172, distance: 0 },
-  { name: "Gò Vấp", lat: 10.838, lng: 106.6653, distance: 0 },
-  { name: "Tân Vạn - Biên Hòa", lat: 10.902, lng: 106.823, distance: 0 },
-  { name: "Bảo Lộc", lat: 11.5475, lng: 107.807, distance: 0 },
-  { name: "Phan Thiết", lat: 10.9802, lng: 108.2615, distance: 0 },
-];
-
-function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+import { useStation } from "../../hooks/useStation";
+import LocationModal from "../search/LocationModal";
 
 type Props = {
   selectedLocation: LocationSelection | null;
+  onLocationChange?: (location: LocationSelection) => void;
 };
 
-function Mapbox({ selectedLocation }: Props) {
-  const [viewState, setViewState] = useState({
-    latitude: 10.762622,
-    longitude: 106.660172,
-    zoom: 7,
-  });
-
+function Mapbox({ selectedLocation, onLocationChange }: Props) {
+  const { sortedStations, loading, error, calculateDistance, resetDistance } = useStation();
+  const [viewState, setViewState] = useState({ latitude: 10.762622, longitude: 106.660172, zoom: 7 });
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [sortedMarkers, setSortedMarkers] = useState(markers);
-
-  // 🟢 State để quản lý popup nhập tay
-  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showLocationModal,   setShowLocationModal] = useState(false);
   const [manualLocation, setManualLocation] = useState<LocationSelection | null>(null);
 
-  // Khi chọn địa điểm mới từ SearchBar
   useEffect(() => {
     if (selectedLocation?.coords) {
-      setViewState({
-        latitude: selectedLocation.coords.lat,
-        longitude: selectedLocation.coords.lng,
-        zoom: 12,
-      });
+      setViewState({latitude: selectedLocation.coords.lat,longitude: selectedLocation.coords.lng,zoom: 12,});
       setUserLocation(selectedLocation.coords);
-
-      const sorted = [...markers]
-        .map((m) => ({
-          ...m,
-          distance: haversine(
-            selectedLocation.coords!.lat,
-            selectedLocation.coords!.lng,
-            m.lat,
-            m.lng
-          ),
-        }))
-        .sort((a, b) => (a.distance ?? 0) - (b.distance ?? 0));
-      setSortedMarkers(sorted);
+      calculateDistance(selectedLocation);
     }
-  }, [selectedLocation]);
+  }, [selectedLocation, calculateDistance]);
 
-  // 🟢 Khi user lưu địa điểm thủ công từ popup
   const handleManualSave = (loc: LocationSelection) => {
-    console.log("Địa điểm nhập tay:", loc);
     setManualLocation(loc);
     setShowLocationModal(false);
 
-    // Nếu có toạ độ, zoom map đến đó
+
+    if (onLocationChange) {
+      onLocationChange(loc);
+    }
+
     if (loc.coords) {
       setViewState({
         latitude: loc.coords.lat,
         longitude: loc.coords.lng,
         zoom: 12,
       });
+      setUserLocation(loc.coords);
+      calculateDistance(loc);
     }
+  };
+
+  const isStationAtUserLocation = (station: any) => {
+    const userLoc = manualLocation?.coords || selectedLocation?.coords;
+    if (!userLoc) return false;
+    
+    const latDiff = Math.abs(station.latitude - userLoc.lat);
+    const lngDiff = Math.abs(station.longitude - userLoc.lng);
+    
+    return latDiff < 0.001 && lngDiff < 0.001;
   };
 
   return (
     <div className="row h-100 shadow rounded overflow-hidden">
-      {/* Map bên trái */}
       <div className="col-lg-8 col-md-7 position-relative p-0 h-100">
         <Map
           {...viewState}
@@ -95,21 +66,25 @@ function Mapbox({ selectedLocation }: Props) {
         >
           <NavigationControl position="top-left" />
 
-          {/* Marker user */}
           {userLocation && (
             <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="bottom">
-              <div className="fs-2 text-primary">📍</div>
+              <div className="fs-2 text-primary">⭐</div>
             </Marker>
           )}
 
-          {/* Marker cố định */}
-          {markers.map((m, i) => (
-            <Marker key={i} longitude={m.lng} latitude={m.lat} anchor="bottom">
-              <div className="fs-2 text-danger">📍</div>
-            </Marker>
-          ))}
+          {sortedStations
+            .filter(station => !isStationAtUserLocation(station))
+            .map((station) => (
+              <Marker
+                key={station.stationId}
+                longitude={station.longitude}
+                latitude={station.latitude}
+                anchor="bottom"
+              >
+                <div className="fs-2 text-danger" title={station.name}>📍</div>
+              </Marker>
+            ))}
 
-          {/* Marker nhập tay (nếu có) */}
           {manualLocation?.coords && (
             <Marker
               longitude={manualLocation.coords.lng}
@@ -122,42 +97,79 @@ function Mapbox({ selectedLocation }: Props) {
         </Map>
       </div>
 
-      {/* Danh sách bên phải */}
       <div className="col-lg-4 col-md-5 bg-light p-3 overflow-auto h-100 border-start">
-        <h5 className="fw-bold mb-3">📌 Danh sách địa điểm</h5>
-        <div className="list-group mb-3">
-          {sortedMarkers.map((m, i) => (
-            <button
-              key={i}
-              className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-              onClick={() =>
-                setViewState({
-                  latitude: m.lat,
-                  longitude: m.lng,
-                  zoom: 12,
-                })
-              }
-            >
-              <span>{m.name}</span>
-              {m.distance && (
-                <span className="badge bg-primary rounded-pill">
-                  {m.distance.toFixed(1)} km
-                </span>
-              )}
-            </button>
-          ))}
+        <h5 className="fw-bold mb-3"> Danh sách trạm</h5>
 
-          {/* 🟢 Field “Nhập địa điểm khác” */}
+        {loading && <div className="text-center py-3">Đang tải...</div>}
+        {error && <div className="alert alert-danger">{error}</div>}
+
+        {(selectedLocation?.label || manualLocation?.label) && (
+          <div className="alert alert-info d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <strong>Vị trí của bạn:</strong>
+              <div className="mt-1">{manualLocation?.label || selectedLocation?.label}</div>
+            </div>
+            {(manualLocation || selectedLocation) && (
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => {
+                  setManualLocation(null);
+                  setUserLocation(null);
+                  resetDistance();
+                  onLocationChange!({ label: "", coords: null });
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="list-group mb-3">
           <button
             className="list-group-item list-group-item-action text-center text-success fw-semibold"
             onClick={() => setShowLocationModal(true)}
           >
             ➕ Nhập địa điểm của bạn
           </button>
+          {sortedStations
+            .filter(station => !isStationAtUserLocation(station))
+            .map((station) => (
+              <button
+                key={station.stationId}
+                className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                onClick={() =>
+                  setViewState({
+                    latitude: station.latitude,
+                    longitude: station.longitude,
+                    zoom: 14,
+                  })
+                }
+              >
+                <div>
+                  <div className="fw-semibold">{station.name}</div>
+                  <small className="text-muted">{station.location}</small>
+                  <div className="mt-1">
+                    <span className="badge bg-info me-1">
+                      {station.availableCount || 0} xe
+                    </span>
+                    <span className={`badge ${station.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}`}>
+                      {station.status}
+                    </span>
+                  </div>
+                </div>
+                {station.distance !== null && (
+                  <span className="badge bg-primary rounded-pill">
+                    {station.distance.toFixed(1)} km
+                  </span>
+                )}
+              </button>
+            ))}
+
+
         </div>
       </div>
 
-      {/* 🟢 Popup LocationModal (giống popup đầu tiên của bạn) */}
       {showLocationModal && (
         <LocationModal
           current={manualLocation || { label: "", coords: null }}
