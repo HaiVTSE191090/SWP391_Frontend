@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { LocationSelection } from "../../models/SearchModel";
 import { useStation } from "../../hooks/useStation";
 import LocationModal from "../search/LocationModal";
+import VehicleList from "../vehicle/VehicleList";
 
 type Props = {
   selectedLocation: LocationSelection | null;
@@ -14,12 +15,13 @@ function Mapbox({ selectedLocation, onLocationChange }: Props) {
   const { sortedStations, loading, error, calculateDistance, resetDistance } = useStation();
   const [viewState, setViewState] = useState({ latitude: 10.762622, longitude: 106.660172, zoom: 7 });
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [showLocationModal,   setShowLocationModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [manualLocation, setManualLocation] = useState<LocationSelection | null>(null);
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
 
   useEffect(() => {
     if (selectedLocation?.coords) {
-      setViewState({latitude: selectedLocation.coords.lat,longitude: selectedLocation.coords.lng,zoom: 12,});
+      setViewState({ latitude: selectedLocation.coords.lat, longitude: selectedLocation.coords.lng, zoom: 12, });
       setUserLocation(selectedLocation.coords);
       calculateDistance(selectedLocation);
     }
@@ -48,11 +50,15 @@ function Mapbox({ selectedLocation, onLocationChange }: Props) {
   const isStationAtUserLocation = (station: any) => {
     const userLoc = manualLocation?.coords || selectedLocation?.coords;
     if (!userLoc) return false;
-    
+
     const latDiff = Math.abs(station.latitude - userLoc.lat);
     const lngDiff = Math.abs(station.longitude - userLoc.lng);
-    
+
     return latDiff < 0.001 && lngDiff < 0.001;
+  };
+
+  const handleStationClick = (stationId: number) => {
+    setSelectedStationId(stationId);
   };
 
   return (
@@ -138,13 +144,14 @@ function Mapbox({ selectedLocation, onLocationChange }: Props) {
               <button
                 key={station.stationId}
                 className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                onClick={() =>
+                onClick={() => {
                   setViewState({
                     latitude: station.latitude,
                     longitude: station.longitude,
                     zoom: 14,
-                  })
-                }
+                  });
+                  handleStationClick(station.stationId);
+                }}
               >
                 <div>
                   <div className="fw-semibold">{station.name}</div>
@@ -165,10 +172,14 @@ function Mapbox({ selectedLocation, onLocationChange }: Props) {
                 )}
               </button>
             ))}
-
-
         </div>
       </div>
+
+      {selectedStationId && (
+        <div className="col-12">
+          <VehicleList stationId={selectedStationId} title={`Xe tại ${sortedStations.find(s => s.stationId === selectedStationId)?.name}`} />
+        </div>
+      )}
 
       {showLocationModal && (
         <LocationModal
