@@ -4,7 +4,7 @@ import { useVehicle } from "../hooks/useVehicle";
 import { useModal } from "../hooks/useModal";
 import { useAuth } from "../hooks/useAuth";
 import { getVehicleStatusText, getVehicleStatusColor } from "../models/VehicleModel";
-import { checkAuthAndKyc } from "../utils/authHelpers";
+import { checkAuthAndKyc, refreshUserFromBackend } from "../utils/authHelpers";
 import { toast } from 'react-toastify';
 
 const VehicleDetailPage: React.FC = () => {
@@ -30,6 +30,8 @@ const VehicleDetailPage: React.FC = () => {
   }, [id, loadVehicleDetail]);
 
   const handleBooking = async () => {
+    await refreshUserFromBackend();
+    
     const authCheck = checkAuthAndKyc();
 
     if (authCheck.action === 'LOGIN') {

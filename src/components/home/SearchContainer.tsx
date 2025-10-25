@@ -4,11 +4,9 @@ import Mapbox from "./MapBox";
 
 export default function SearchPage() {
   const [loc, setLoc] = useState<LocationSelection | null>(null);
-  const [time, setTime] = useState<TimeSelection | null>(null);
 
   const handleSearch = (location: LocationSelection, timeSel: TimeSelection) => {
     setLoc(location);
-    setTime(timeSel);
   };
 
   const handleLocationUpdate = (newLocation: LocationSelection) => {

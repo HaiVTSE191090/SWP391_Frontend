@@ -1,3 +1,5 @@
+import { getProfile } from '../services/renterService';
+
 export interface AuthCheckResult {
   isAuthenticated: boolean;
   isKycApproved: boolean;
@@ -10,10 +12,11 @@ export interface UserData {
   token?: string; 
   email: string;
   kycStatus: 'NO_DOCUMENT' | 'NEED_UPLOAD' | 'UNKNOWN' | 'REJECTED' | 'WAITING_APPROVAL' | 'VERIFIED'; 
-  nextStep: 'EMAIL_OTP' | 'KYC_UPLOAD' | 'DASHBOARD'; 
+  nextStep: 'EMAIL_OTP' | 'KYC_UPLOAD' | 'DASHBOARD' | null; 
   fullName?: string;
   renterId?: number;
   status?: string;
+  otpStatus?: string | null;
 }
 
 export const checkAuthAndKyc = (): AuthCheckResult => {
@@ -57,19 +60,28 @@ export const checkAuthAndKyc = (): AuthCheckResult => {
     };
   }
   
-
-  if (user.nextStep === "DASHBOARD") {
-    // VERIFIED hoặc WAITING_APPROVAL → đều cho đặt xe
-    // (Staff sẽ verify/reject khi khách tới trạm)
-    if (user.kycStatus === "VERIFIED" || user.kycStatus === "WAITING_APPROVAL") {
+  if (user.nextStep === "DASHBOARD" || user.nextStep === null) {
+    if (
+      user.kycStatus === "VERIFIED" ||
+      user.kycStatus === "WAITING_APPROVAL"
+    ) {
       return {
         isAuthenticated: true,
         isKycApproved: true,
-        action: 'PROCEED'
+        action: "PROCEED",
+      };
+    }
+
+    
+    if (user.kycStatus === "NO_DOCUMENT") {
+      return {
+        isAuthenticated: true,
+        isKycApproved: false,
+        message: "Vui lòng upload tài liệu KYC (CCCD + GPLX)",
+        action: 'UPLOAD_KYC'
       };
     }
     
-    // Các trạng thái khác (REJECTED, NO_DOCUMENT, etc.) → yêu cầu xử lý lại
     return {
       isAuthenticated: true,
       isKycApproved: false,
@@ -84,6 +96,33 @@ export const checkAuthAndKyc = (): AuthCheckResult => {
     message: "Trạng thái tài khoản không hợp lệ. Vui lòng liên hệ admin.",
     action: 'WAIT_APPROVAL'
   };
+};
+
+export const refreshUserFromBackend = async (): Promise<void> => {
+  try {
+    const response = await getProfile();
+    
+    if (response.data?.status === "success" && response.data?.data) {
+      const backendData = response.data.data;
+      
+      // Map backend data sang UserData format
+      const updatedUser: UserData = {
+        email: backendData.email,
+        fullName: backendData.fullName,
+        renterId: backendData.renterId,
+        status: backendData.status,
+        kycStatus: backendData.kycStatus,
+        nextStep: backendData.nextStep,
+        otpStatus: backendData.otpStatus
+      };
+      
+      // Cập nhật localStorage
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      console.log(' User data refreshed from backend:', updatedUser);
+    }
+  } catch (error) {
+    console.error(' Failed to refresh user data:', error);
+  }
 };
 
 export const getCurrentUser = (): UserData | null => {
