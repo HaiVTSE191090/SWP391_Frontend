@@ -105,7 +105,6 @@ export const refreshUserFromBackend = async (): Promise<void> => {
     if (response.data?.status === "success" && response.data?.data) {
       const backendData = response.data.data;
       
-      // Map backend data sang UserData format
       const updatedUser: UserData = {
         email: backendData.email,
         fullName: backendData.fullName,
@@ -116,7 +115,6 @@ export const refreshUserFromBackend = async (): Promise<void> => {
         otpStatus: backendData.otpStatus
       };
       
-      // Cập nhật localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
       console.log(' User data refreshed from backend:', updatedUser);
     }
