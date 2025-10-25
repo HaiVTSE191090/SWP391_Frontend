@@ -1,8 +1,9 @@
-  // Xóa logic render BookingDetail qua callback, khôi phục SPA truyền thống
+// Xóa logic render BookingDetail qua callback, khôi phục SPA truyền thống
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react-bootstrap';
 import ListRenter from './ListRenter';
 import ChooseCar from './ChooseCar';
+import { useNavigate } from 'react-router-dom';
 
 // Import ảnh xe trực tiếp từ thư mục
 import vf3Blue from '../../images/car-list/source/vf3-blue.jpg';
@@ -37,10 +38,11 @@ const mockCars: Car[] = [
 export default function Staff() {
   const [show, setShow] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả xe');
-  const [showListRenter, setShowListRenter] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<Car | null>(null);
   const [showBookingDetail, setShowBookingDetail] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -83,11 +85,8 @@ export default function Staff() {
 
   const handleMenuClick = (item: string) => {
     if (item === 'Danh sách người thuê') {
-      setShowListRenter(true);
-      setSelectedVehicleId(null);
-      setSelectedVehicle(null);
+       navigate('/staff/renters');
     } else {
-      setShowListRenter(false);
       setSelectedVehicleId(null);
       setSelectedVehicle(null);
       setSelectedCategory(item);
@@ -101,7 +100,7 @@ export default function Staff() {
       setSelectedVehicleId(car.id);
       setSelectedVehicle(car);
     }
-  } 
+  }
 
   // Callback for SPA navigation to BookingDetail
   const handleShowBookingDetail = () => {
@@ -119,8 +118,8 @@ export default function Staff() {
   // Nếu đang xem chi tiết xe
   if (selectedVehicleId !== null && selectedVehicle !== null) {
     return (
-      <ChooseCar 
-        vehicleId={selectedVehicleId} 
+      <ChooseCar
+        vehicleId={selectedVehicleId}
         onBack={() => {
           setSelectedVehicleId(null);
           setSelectedVehicle(null);
@@ -134,44 +133,6 @@ export default function Staff() {
     );
   }
 
-  // Nếu đang xem Danh sách người thuê
-  if (showListRenter) {
-    return (
-      <div className="staff-interface">
-        <Navbar bg="dark" variant="dark" className="px-3">
-          <Button variant="outline-light" onClick={handleShow} className="me-3">
-            ☰
-          </Button>
-          <Navbar.Brand>Staff Dashboard - Danh sách người thuê</Navbar.Brand>
-          <Nav className="ms-auto">
-            <Nav.Link>Đăng xuất</Nav.Link>
-          </Nav>
-        </Navbar>
-
-        <Offcanvas show={show} onHide={handleClose} placement="start">
-          <Offcanvas.Header closeButton>
-            <Offcanvas.Title>Menu Quản lý</Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            <Nav className="flex-column">
-              {menuItems.map((item, index) => (
-                <Nav.Link
-                  key={index}
-                  className={`py-3 border-bottom ${item === 'Danh sách người thuê' ? 'bg-light fw-bold' : ''}`}
-                  onClick={() => handleMenuClick(item)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {item}
-                </Nav.Link>
-              ))}
-            </Nav>
-          </Offcanvas.Body>
-        </Offcanvas>
-
-        <ListRenter />
-      </div>
-    );
-  }
 
   return (
     <div className="staff-interface">
@@ -220,7 +181,7 @@ export default function Staff() {
             <Row>
               {filteredCars().map((car) => (
                 <Col lg={4} md={6} sm={12} className="mb-4" key={car.id}>
-                  <Card 
+                  <Card
                     className="h-100 shadow-sm"
                     style={{ cursor: car.status === 'rented' ? 'pointer' : 'default' }}
                     onClick={() => handleCarClick(car)}
@@ -240,9 +201,9 @@ export default function Staff() {
                       <div className="mt-auto">
                         <Row>
                           <Col>
-                            <Button 
-                              variant="outline-primary" 
-                              size="sm" 
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
                               className="w-100 mb-2"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -255,15 +216,15 @@ export default function Staff() {
                         </Row>
                         <Row>
                           <Col>
-                            <Button 
-                              variant={car.status === 'available' ? 'success' : 'secondary'} 
-                              size="sm" 
+                            <Button
+                              variant={car.status === 'available' ? 'success' : 'secondary'}
+                              size="sm"
                               className="w-100"
                               disabled={car.status !== 'available'}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {car.status === 'available' ? 'Cho thuê' : 
-                               car.status === 'rented' ? 'Đang thuê' : 'Bảo trì'}
+                              {car.status === 'available' ? 'Cho thuê' :
+                                car.status === 'rented' ? 'Đang thuê' : 'Bảo trì'}
                             </Button>
                           </Col>
                         </Row>
