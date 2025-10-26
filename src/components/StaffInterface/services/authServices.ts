@@ -17,15 +17,41 @@ export const staffLogin = async (email: string, password: string) => {
 
 // Hàm lấy danh sách người thuê, gửi Token để xác thực
 export const getListRenter = async () => {
-    try{
+    try {
         const token = localStorage.getItem('authToken');
 
-        const response = await axios.get(`${baseURL}/api/staff/renters`, {
+        const resp = await axios.get(`${baseURL}/api/staff/renters`, {
             headers: {
                 Authorization: `Bearer ${token}` // Gửi Token
             }
         });
-        return response; 
+        return resp;
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+// Hàm kiểm tra nhân viên thuộc trạm nào
+export const getStaffStation = async () => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const resp = await axios.get(`${baseURL}/api/staff/my-station`, {
+            headers: {
+                Authorization: `Bearer ${token}` // Gửi Token
+            }
+        });
+        return resp;
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+
+// Hàm lấy CarDetails theo vehicleId
+export const getCarDetails = async (vehicleId: number) => {
+    try {
+        const resp = await axios.get(`${baseURL}/api/vehicle/detail/${vehicleId}`)
+        return resp;
     } catch (error) {
         console.error(error)
     }

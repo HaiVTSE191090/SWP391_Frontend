@@ -1,51 +1,102 @@
 // Xóa logic render BookingDetail qua callback, khôi phục SPA truyền thống
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react-bootstrap';
 import ListRenter from './ListRenter';
 import ChooseCar from './ChooseCar';
 import { useNavigate } from 'react-router-dom';
+import { getCarDetails, getStaffStation } from './services/authServices';
 
-// Import ảnh xe trực tiếp từ thư mục
-import vf3Blue from '../../images/car-list/source/vf3-blue.jpg';
-import vf3Red from '../../images/car-list/source/vf3-red.png';
-import vf3 from '../../images/car-list/source/vf3.png';
-import vf31 from '../../images/car-list/source/vf31.png';
-import vf5Grey from '../../images/car-list/source/vf5-grey.png';
-import vf5PlusRed from '../../images/car-list/source/vf5-plus-red.png';
-import vf7Black from '../../images/car-list/source/vf7-black.png';
-import vf8Grey from '../../images/car-list/source/vf8-grey.png';
 
-interface Car {
+interface StationVehicle {
   id: number;
+  plateNumber: string;
+  batteryLevel: number;
+  mileage: number;
+  modelName: string;
   name: string;
-  image: string;
   price: string;
-  status: 'available' | 'rented' | 'maintenance';
+  status: 'AVAILABLE' | 'IN-USE' | 'MAINTENANCE';
 }
 
-// Mock data - sử dụng ảnh xe thật từ thư mục local
-const mockCars: Car[] = [
-  { id: 1, name: 'VinFast VF3 Blue', image: vf3Blue, price: '500,000 VND/ngày', status: 'available' },
-  { id: 2, name: 'VinFast VF3 Red', image: vf3Red, price: '550,000 VND/ngày', status: 'rented' },
-  { id: 3, name: 'VinFast VF3', image: vf3, price: '520,000 VND/ngày', status: 'available' },
-  { id: 4, name: 'VinFast VF3.1', image: vf31, price: '600,000 VND/ngày', status: 'maintenance' },
-  { id: 5, name: 'VinFast VF5 Grey', image: vf5Grey, price: '650,000 VND/ngày', status: 'available' },
-  { id: 6, name: 'VinFast VF5 Plus Red', image: vf5PlusRed, price: '700,000 VND/ngày', status: 'available' },
-  { id: 7, name: 'VinFast VF7 Black', image: vf7Black, price: '850,000 VND/ngày', status: 'rented' },
-  { id: 8, name: 'VinFast VF8 Grey', image: vf8Grey, price: '950,000 VND/ngày', status: 'available' },
-];
+// Interface cho dữ liệu đã hợp nhất (sẽ lưu trong state 'mockCars')
+interface MergedVehicle extends StationVehicle {
+    // Thêm các trường lấy từ API detail
+    image: string;
+    pricePerDay: number; // Giá thuê/ngày (từ detail API)
+    // Cập nhật trường status để bao gồm IN-USE (nếu logic của bạn cần)
+    status: 'MAINTENANCE' | 'AVAILABLE' | 'IN-USE'; 
+}
+
+
 
 export default function Staff() {
   const [show, setShow] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả xe');
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
-  const [selectedVehicle, setSelectedVehicle] = useState<Car | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<MergedVehicle | null>(null);
   const [showBookingDetail, setShowBookingDetail] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [mockCars, setMockCars] = useState<MergedVehicle[]>([]);
 
   const navigate = useNavigate();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+
+  useEffect(() => {
+    fetchStationData();
+  }, []);
+
+
+
+  // Thay thế fetchCar và fetchCarImage bằng hàm này
+  const fetchStationData = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Lấy danh sách xe tại trạm
+      const stationResp = await getStaffStation();
+      const stationVehicles: StationVehicle[] = stationResp?.data?.data || [];
+
+      // Kiểm tra nếu không có xe nào
+      if (stationVehicles.length === 0) {
+        setMockCars([]);
+        setLoading(false);
+        return;
+      }
+
+      // Lặp qua danh sách để lấy ảnh chi tiết
+      // Sử dụng Promise.all để gọi tất cả API chi tiết đồng thời
+      const detailedVehicles = await Promise.all(
+        stationVehicles.map(async (vehicle) => {
+          // Gọi API chi tiết
+          const detailResp = await getCarDetails(vehicle.vehicleId);
+          const detailData = detailResp?.data?.data;
+
+          // Hợp nhất dữ liệu: lấy URL ảnh đầu tiên
+          return {
+            ...vehicle, // Dữ liệu từ /my-station
+            image: detailData?.imageUrls?.[0] || 'default-car-image-url',
+            pricePerDay: detailData?.pricePerDay // Thêm giá thuê/ngày
+            // Bạn có thể thêm các trường khác từ detailData vào đây
+          };
+        })
+      );
+
+      // Cập nhật state với danh sách xe đã có ảnh và chi tiết
+      setMockCars(detailedVehicles);
+
+    } catch (err) {
+      // Xử lý lỗi tập trung tại đây
+      console.error("Lỗi tải dữ liệu trạm:", err);
+      setError("Không thể tải dữ liệu xe. Vui lòng thử lại.");
+      // (Thêm logic logout nếu lỗi là 401 Unauthorized)
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const menuItems = [
     'Tất cả xe',
@@ -73,11 +124,11 @@ export default function Staff() {
   const filteredCars = () => {
     switch (selectedCategory) {
       case 'Xe có sẵn':
-        return mockCars.filter(car => car.status === 'available');
+        return mockCars.filter(car => car.status === 'AVAILABLE');
       case 'Xe đang cho thuê':
-        return mockCars.filter(car => car.status === 'rented');
+        return mockCars.filter(car => car.status === 'IN-USE');
       case 'Xe bảo trì':
-        return mockCars.filter(car => car.status === 'maintenance');
+        return mockCars.filter(car => car.status === 'MAINTENANCE');
       default:
         return mockCars;
     }
@@ -85,7 +136,7 @@ export default function Staff() {
 
   const handleMenuClick = (item: string) => {
     if (item === 'Danh sách người thuê') {
-       navigate('/staff/renters');
+      navigate('/staff/renters');
     } else {
       setSelectedVehicleId(null);
       setSelectedVehicle(null);
@@ -96,7 +147,7 @@ export default function Staff() {
 
   // Xử lý khi click vào xe
   const handleCarClick = (car: Car) => {
-    if (car.status === 'rented') {
+    if (car.status === 'IN-USE') {
       setSelectedVehicleId(car.id);
       setSelectedVehicle(car);
     }
@@ -124,7 +175,6 @@ export default function Staff() {
           setSelectedVehicleId(null);
           setSelectedVehicle(null);
         }}
-        vehicleImage={selectedVehicle.image}
         vehicleName={selectedVehicle.name}
         vehiclePrice={selectedVehicle.price}
         vehicleStatus={selectedVehicle.status}
@@ -183,7 +233,7 @@ export default function Staff() {
                 <Col lg={4} md={6} sm={12} className="mb-4" key={car.id}>
                   <Card
                     className="h-100 shadow-sm"
-                    style={{ cursor: car.status === 'rented' ? 'pointer' : 'default' }}
+                    style={{ cursor: car.status === 'IN-USE' ? 'pointer' : 'default' }}
                     onClick={() => handleCarClick(car)}
                   >
                     <Card.Img
@@ -217,14 +267,14 @@ export default function Staff() {
                         <Row>
                           <Col>
                             <Button
-                              variant={car.status === 'available' ? 'success' : 'secondary'}
+                              variant={car.status === 'AVAILABLE' ? 'success' : 'secondary'}
                               size="sm"
                               className="w-100"
-                              disabled={car.status !== 'available'}
+                              disabled={car.status !== 'AVAILABLE'}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {car.status === 'available' ? 'Cho thuê' :
-                                car.status === 'rented' ? 'Đang thuê' : 'Bảo trì'}
+                              {car.status === 'AVAILABLE' ? 'Cho thuê' :
+                                car.status === 'IN-USE' ? 'Đang thuê' : 'Bảo trì'}
                             </Button>
                           </Col>
                         </Row>

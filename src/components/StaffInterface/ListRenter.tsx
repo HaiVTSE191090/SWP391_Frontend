@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import UserDetail from './UserDetail';
 import OTPModal from './OTPModal';
-import { getListRenter } from '../StaffInterface/services/authServices'; // 👈 SỬ DỤNG HÀM API ĐÃ SỬA
+import { getListRenter } from '../StaffInterface/services/authServices';
 
 // Cập nhật Interface Renter để khớp với API data
 interface Renter {
-	renterId: string | number; // Đã sửa: dùng camelCase
-	fullName: string;          // Đã sửa: dùng camelCase
-	phoneNumber: string;       // Đã sửa: dùng camelCase
+	renterId: string | number;
+	fullName: string;
+	phoneNumber: string;
 	status: 'VERIFIED' | 'PENDING_VERIFICATION' | string;
 }
 
