@@ -4,10 +4,12 @@ import { Button, Spinner, Alert } from "react-bootstrap";
 import "./DepositPage.css";
 import { Vehicle } from "../../../models/VehicleModel";
 import { Booking } from "../../../models/BookingModel";
+import { useParams } from "react-router-dom";
 
 
 
 export default function DepositPage() {
+  const { bookingId } = useParams<{ bookingId: string }>();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loadingBooking, setLoadingBooking] = useState(true);
@@ -16,11 +18,10 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // 🛰️ Lấy dữ liệu đặt xe
   useEffect(() => {
     const fetchBooking = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/bookings/101");
+        const res = await axios.get(`http://localhost:8080/api/bookings/${bookingId}`);
         const data = res.data;
         setBooking(data);
         setLoadingBooking(false);
@@ -48,7 +49,7 @@ export default function DepositPage() {
     };
 
     fetchBooking();
-  }, []);
+  }, [bookingId]);
 
   const handleRedirectToMomo = async () => {
     try {

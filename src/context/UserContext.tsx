@@ -2,10 +2,6 @@ import React, { createContext, ReactNode, useEffect, useMemo, useState } from "r
 import { authController } from "../controller/AuthController";
 import * as model from "../models/AuthModel";
 
-/**
- * Interface cho UserContext - CHỈ quản lý auth logic & user state
- * KHÔNG quản lý error/message - để forms tự xử lý qua FormContext
- */
 export interface UserContextType {
   user: any | null;
   token: string | null;
@@ -115,9 +111,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     }
   };
 
-  /**
-   * Sign Up - CHỈ xử lý logic, return result
-   */
+
   const signUp = async (data: model.SignUpRequest): Promise<AuthResult> => {
     setLoading(true);
 
@@ -147,9 +141,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     }
   };
 
-  /**
-   * Verify OTP - CHỈ xử lý logic, return result
-   */
+
   const verifyOTP = async (email: string, otpCode: string): Promise<AuthResult> => {
     setLoading(true);
 
@@ -177,9 +169,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     }
   };
 
-  /**
-   * Send OTP - CHỈ xử lý logic, return result
-   */
+
   const sendOTP = async (email: string): Promise<AuthResult> => {
     setLoading(true);
 
@@ -207,9 +197,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     }
   };
 
-  /**
-   * Logout - CHỈ clear auth state
-   */
+
   const logout = () => {
     setToken(null);
     setUser(null);

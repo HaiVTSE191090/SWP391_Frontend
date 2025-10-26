@@ -36,6 +36,7 @@ const router = createBrowserRouter([
             { path: "/vehicles", element: <VehiclesPage /> },
             { path: "/vehicles/:id", element: <VehicleDetailPage /> },
             { path: "/profile", element: <UserProfilePage /> },
+            { path: "/xac-nhan-dat-xe/:bookingId", element: <DepositPage /> },
             // 404 bắt mọi thứ còn lại
             { path: "*", element: <NotFoundPage /> },
         ],

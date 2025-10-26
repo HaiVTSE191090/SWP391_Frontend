@@ -20,7 +20,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, showStation = false 
   const handleClick = () => {
     navigate(`/vehicles/${vehicle.vehicleId}`);
   };
-  //sửa thằng này
 
  
   const getVehicleImage = () => {

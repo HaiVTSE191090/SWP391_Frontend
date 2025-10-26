@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useVehicle } from "../hooks/useVehicle";
 import { useModal } from "../hooks/useModal";
 import { useAuth } from "../hooks/useAuth";
+import { useBooking } from "../hooks/useBooking";
 import { getVehicleStatusText, getVehicleStatusColor } from "../models/VehicleModel";
 import { checkAuthAndKyc, refreshUserFromBackend } from "../utils/authHelpers";
 import { toast } from 'react-toastify';
@@ -23,6 +24,7 @@ const VehicleDetailPage: React.FC = () => {
     formatPrice
   } = useVehicle();
 
+  const {handleCreateBooking, bookingId} = useBooking();
   useEffect(() => {
     if (id) {
       loadVehicleDetail(parseInt(id));
@@ -31,11 +33,11 @@ const VehicleDetailPage: React.FC = () => {
 
   const handleBooking = async () => {
     await refreshUserFromBackend();
-    
+
     const authCheck = checkAuthAndKyc();
 
     if (authCheck.action === 'LOGIN') {
-      openModal('loginForm'); 
+      openModal('loginForm');
       return;
     }
 
@@ -44,10 +46,10 @@ const VehicleDetailPage: React.FC = () => {
         const loadingToast = toast.loading("Đang gửi mã OTP...", {
           position: "top-center"
         });
-        
+
         try {
           await sendOTP(authCheck.email);
-          
+
           toast.update(loadingToast, {
             render: "Đã gửi mã OTP! Vui lòng kiểm tra email.",
             type: "success",
@@ -59,7 +61,6 @@ const VehicleDetailPage: React.FC = () => {
             openModal('otpVerificationModal');
           }, 500);
         } catch (error) {
-          // Nếu lỗi
           toast.update(loadingToast, {
             render: "Gửi OTP thất bại! Vui lòng thử lại.",
             type: "error",
@@ -76,7 +77,7 @@ const VehicleDetailPage: React.FC = () => {
         position: "top-center",
         autoClose: 3000,
       });
-      
+
       setTimeout(() => {
         navigate('/kyc-verification');
       }, 500);
@@ -92,15 +93,18 @@ const VehicleDetailPage: React.FC = () => {
     }
 
     if (authCheck.action === 'PROCEED') {
-      toast.success("Đặt xe thành công! Chức năng đang phát triển.", {
+      handleCreateBooking(parseInt(id!));
+      toast.success("Đặt xe thành công!", {
         position: "top-center",
         autoClose: 3000,
       });
-      return;
+
+      setTimeout(() => {
+        navigate(`/xac-nhan-dat-xe/${bookingId}`);
+      }, 500);
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="container py-5">
@@ -133,7 +137,6 @@ const VehicleDetailPage: React.FC = () => {
     );
   }
 
-  // No data
   if (!vehicleDetail) {
     return (
       <div className="container py-5">
@@ -214,7 +217,6 @@ const VehicleDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Km đã đi */}
                 <div className="col-6">
                   <div className="d-flex align-items-center">
                     <div>
@@ -224,7 +226,6 @@ const VehicleDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Trạm */}
                 <div className="col-6">
                   <div className="d-flex align-items-center">
                     <div>
@@ -237,7 +238,6 @@ const VehicleDetailPage: React.FC = () => {
 
               <hr />
 
-              {/* Description */}
               {vehicleDetail.description && (
                 <>
                   <h5 className="mb-3">Mô tả</h5>
@@ -246,7 +246,6 @@ const VehicleDetailPage: React.FC = () => {
                 </>
               )}
 
-              {/* Pricing */}
               <div className="mb-4">
                 <h5 className="mb-3">Giá thuê</h5>
                 <div className="row g-3">
@@ -275,7 +274,7 @@ const VehicleDetailPage: React.FC = () => {
 
               <div className="d-grid gap-2">
                 {isAvailable ? (
-                  <button 
+                  <button
                     className="btn btn-primary btn-lg"
                     onClick={handleBooking}
                   >
