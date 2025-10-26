@@ -6,10 +6,10 @@ import { getListRenter } from '../StaffInterface/services/authServices'; // 👈
 
 // Cập nhật Interface Renter để khớp với API data
 interface Renter {
-	renter_id: string | number; // Sử dụng tên cột DB
-	full_name: string;
-	phone_number: string;
-	status: 'VERIFIED' | 'PENDING_VERIFICATION' | 'BLACKLISTED'; // Sử dụng giá trị ENUM DB
+	renterId: string | number; // Đã sửa: dùng camelCase
+	fullName: string;          // Đã sửa: dùng camelCase
+	phoneNumber: string;       // Đã sửa: dùng camelCase
+	status: 'VERIFIED' | 'PENDING_VERIFICATION' | string;
 }
 
 const ListRenter: React.FC = () => {
@@ -20,35 +20,28 @@ const ListRenter: React.FC = () => {
 
 	// Fetch data từ API
 	useEffect(() => {
-		// 👈 KIỂM TRA TRƯỚC KHI GỌI FETCH
-		if (localStorage.getItem('staffToken')) {
-			fetchRenters();
-		} else {
-			// Xử lý khi không có token (chưa đăng nhập)
-			setError('Phiên đăng nhập đã hết hạn hoặc chưa đăng nhập. Vui lòng thử lại.');
-			setLoading(false);
-		}
+		fetchRenters()
 	}, []);
 
 	const fetchRenters = async () => {
-		try {
-			setLoading(true);
-			setError('');
+		setLoading(true);
+		setError('');
 
-			// Gọi hàm API thực tế đã có Token trong Header
-			const responseData = await getListRenter();
+		try { // Thêm try-catch vào đây cũng là một ý hay
+			const renterData = await getListRenter();
 
-			// Giả sử API trả về mảng người thuê
-			setRenters(responseData);
+			// getListRenter() trả về Axios Response => renterData là { data: { status: 'success', data: [ { renterId: 1, ... } ] } }
+			// cần truy cập 2 lần .data để lấy mảng người thuê
+			setRenters(renterData?.data?.data || []);
 
-			setLoading(false);
-		} catch (err: any) {
-			// Bắt lỗi từ API (có thể là Token hết hạn, 401, hoặc lỗi Back-end)
-			setError(err.message || 'Có lỗi xảy ra khi tải dữ liệu');
-			setLoading(false);
+		} catch (error) {
+			console.error('Lỗi khi lấy danh sách người thuê:', error);
+			setError('Không thể tải danh sách người thuê.');
+			setRenters([]); // Đặt lại về mảng rỗng khi có lỗi
+		} finally {
+			setLoading(false); // Đảm bảo luôn tắt loading
 		}
 	};
-
 	// Render badge theo trạng thái
 	const renderStatusBadge = (status?: string) => {
 		switch (status) {
@@ -56,8 +49,6 @@ const ListRenter: React.FC = () => {
 				return <Badge bg="success">Đã xác minh</Badge>;
 			case 'PENDING_VERIFICATION':
 				return <Badge bg="warning">Chờ xác minh</Badge>;
-			case 'BLACKLISTED':
-				return <Badge bg="danger">Blacklisted</Badge>;
 			default:
 				return <Badge bg="secondary">Chưa rõ</Badge>;
 		}
@@ -153,26 +144,28 @@ const ListRenter: React.FC = () => {
 					<tbody>
 						{renters.length > 0 ? (
 							renters.map((renter) => (
-								// key phải là ID duy nhất của người thuê
-								<tr key={renter.renter_id}>
-									{/* 1. Renter ID */}
-									<td>{renter.renter_id}</td>
-									{/* 2. Tên đầy đủ */}
-									<td>{renter.full_name}</td>
-									{/* 3. Số điện thoại */}
-									<td>{renter.phone_number}</td>
-									{/* 4. Trạng thái xác minh */}
+
+								<tr key={renter.renterId}>
+
+									<td>{renter.renterId}</td>
+
+									<td>{renter.fullName}</td>
+
+									<td>{renter.phoneNumber}</td>
+
 									<td>
-										{/* Nút kiểm tra trạng thái */}
+
 										<Button
 											variant="info"
 											size="sm"
-											onClick={() => handleVerificationStatus(renter.renter_id)}
+											// Dùng key chính xác là renterId, KHÔNG PHẢI renter_id
+											onClick={() => handleVerificationStatus(renter.renterId)}
 											className="me-2"
 										>
 											Kiểm tra
 										</Button>
 										{/* Badge hiển thị trạng thái đã xác minh/chờ */}
+										{/* Trạng thái trong BE là 'status' */}
 										{renderStatusBadge(renter.status)}
 									</td>
 									{/* 5. Nút Xác thực OTP */}
@@ -180,7 +173,8 @@ const ListRenter: React.FC = () => {
 										<Button
 											variant="warning"
 											size="sm"
-											onClick={() => handleVerifyOTP(renter.renter_id)}
+											// Dùng key chính xác là renterId, KHÔNG PHẢI renter_id
+											onClick={() => handleVerifyOTP(renter.renterId)}
 										>
 											Xác thực OTP
 										</Button>
@@ -190,7 +184,8 @@ const ListRenter: React.FC = () => {
 										<Button
 											variant="primary"
 											size="sm"
-											onClick={() => handleViewDetails(renter.renter_id)}
+											// Dùng key chính xác là renterId, KHÔNG PHẢI renter_id
+											onClick={() => handleViewDetails(renter.renterId)}
 										>
 											Xem chi tiết
 										</Button>

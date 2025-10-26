@@ -7,34 +7,30 @@ const StaffLogin: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false); // Thêm trạng thái loading
 
-    const navigate = useNavigate(); // Khởi tạo hook chuyển hướng
-    
+    const navigate = useNavigate();
+
+
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
-        // Minimal client-side validation
+
         if (!email.trim() || !password) {
             setError("Vui lòng nhập đầy đủ thông tin.");
             return;
         }
-        setLoading(true); // Bắt đầu loading
-        // TODO: wire up real auth (API call)
         try {
-            // 1. GỌI API THỰC TẾ
-            await staffLogin(email, password);
+            const resp = await staffLogin(email, password);
+            const token = resp?.data?.token;
+            if (token) {
+                localStorage.setItem('authToken', token);
 
-            // 2. Xử lý thành công và chuyển hướng
-            alert("Đăng nhập thành công!");
-            navigate("/staff"); // 👈 CHUYỂN HƯỚNG TỚI TRANG DASHBOARD
-
+            }
+            navigate("/staff");
         } catch (err: any) {
             // 3. Xử lý lỗi
             setError(err.message || "Lỗi đăng nhập không xác định.");
-        } finally {
-            // 4. Kết thúc loading
-            setLoading(false);
         }
     };
 
