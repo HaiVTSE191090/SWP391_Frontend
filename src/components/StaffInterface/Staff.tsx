@@ -15,7 +15,7 @@ interface StationVehicle {
   modelName: string;
   name: string;
   price: string;
-  status: 'AVAILABLE' | 'IN-USE' | 'MAINTENANCE';
+  status: 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE';
 }
 
 // Interface cho dữ liệu đã hợp nhất (sẽ lưu trong state 'mockCars')
@@ -24,7 +24,7 @@ interface MergedVehicle extends StationVehicle {
     image: string;
     pricePerDay: number; // Giá thuê/ngày (từ detail API)
     // Cập nhật trường status để bao gồm IN-USE (nếu logic của bạn cần)
-    status: 'MAINTENANCE' | 'AVAILABLE' | 'IN-USE'; 
+    status: 'MAINTENANCE' | 'AVAILABLE' | 'IN_USE';
 }
 
 
@@ -110,11 +110,11 @@ export default function Staff() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'available':
+      case 'AVAILABLE':
         return <span className="badge bg-success">Có sẵn</span>;
-      case 'rented':
+      case 'IN_USE':
         return <span className="badge bg-warning">Đang thuê</span>;
-      case 'maintenance':
+      case 'MAINTENANCE':
         return <span className="badge bg-danger">Bảo trì</span>;
       default:
         return <span className="badge bg-secondary">Không xác định</span>;
@@ -126,7 +126,7 @@ export default function Staff() {
       case 'Xe có sẵn':
         return mockCars.filter(car => car.status === 'AVAILABLE');
       case 'Xe đang cho thuê':
-        return mockCars.filter(car => car.status === 'IN-USE');
+        return mockCars.filter(car => car.status === 'IN_USE');
       case 'Xe bảo trì':
         return mockCars.filter(car => car.status === 'MAINTENANCE');
       default:
@@ -138,8 +138,6 @@ export default function Staff() {
     if (item === 'Danh sách người thuê') {
       navigate('/staff/renters');
     } else {
-      setSelectedVehicleId(null);
-      setSelectedVehicle(null);
       setSelectedCategory(item);
     }
     handleClose();
@@ -147,7 +145,7 @@ export default function Staff() {
 
   // Xử lý khi click vào xe
   const handleCarClick = (car: MergedVehicle) => {
-    if (car.status === 'IN-USE') {
+    if (car.status === 'IN_USE') {
       setSelectedVehicleId(car.vehicleId);
       setSelectedVehicle(car);
     }
@@ -164,23 +162,6 @@ export default function Staff() {
   if (showBookingDetail) {
     const BookingDetail = require('./BookingDetail').default;
     return <BookingDetail />;
-  }
-
-  // Nếu đang xem chi tiết xe
-  if (selectedVehicleId !== null && selectedVehicle !== null) {
-    return (
-      <ChooseCar
-        vehicleId={selectedVehicleId}
-        onBack={() => {
-          setSelectedVehicleId(null);
-          setSelectedVehicle(null);
-        }}
-        vehicleName={selectedVehicle.name}
-        vehiclePrice={selectedVehicle.price}
-        vehicleStatus={selectedVehicle.status}
-        onShowBookingDetail={handleShowBookingDetail}
-      />
-    );
   }
 
 
@@ -233,7 +214,7 @@ export default function Staff() {
                 <Col lg={4} md={6} sm={12} className="mb-4" key={car.vehicleId}>
                   <Card
                     className="h-100 shadow-sm"
-                    style={{ cursor: car.status === 'IN-USE' ? 'pointer' : 'default' }}
+                    style={{ cursor: car.status === 'IN_USE' ? 'pointer' : 'default' }}
                     onClick={() => handleCarClick(car)}
                   >
                     <Card.Img
@@ -255,9 +236,8 @@ export default function Staff() {
                               variant="outline-primary"
                               size="sm"
                               className="w-100 mb-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // TODO: Xem chi tiết xe
+                              onClick={() => {
+                                handleShowBookingDetail();
                               }}
                             >
                               Xem chi tiết
@@ -274,7 +254,8 @@ export default function Staff() {
                               onClick={(e) => e.stopPropagation()}
                             >
                               {car.status === 'AVAILABLE' ? 'Cho thuê' :
-                                car.status === 'IN-USE' ? 'Đang thuê' : 'Bảo trì'}
+                                car.status === 'IN_USE' ? 'Đang thuê' :
+                                car.status === 'MAINTENANCE' ? 'Bảo trì' : 'N/A'}
                             </Button>
                           </Col>
                         </Row>
