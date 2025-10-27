@@ -14,10 +14,8 @@ export default function SearchPage() {
 
   return (
     <div className="container">
-      {/* Thanh tìm kiếm */}
       <SearchBar onSearch={handleSearch} />
 
-      {/* Bản đồ */}
       <div className="m-4" style={{ height: "50vh", width: "100%" }}>
         <Mapbox selectedLocation={loc} />
       </div>

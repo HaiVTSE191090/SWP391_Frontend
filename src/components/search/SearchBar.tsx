@@ -48,7 +48,7 @@ export default function SearchBar({ onSearch, onLocationDenied }: Props) {
       (error) => {
         console.warn("Không thể truy cập vị trí người dùng:", error.message);
         alert("Không thể truy cập vị trí. Vui lòng nhập địa điểm thủ công ở bên dưới danh sách.");
-        onLocationDenied?.(); // 👈 báo cho MapBox biết
+        onLocationDenied?.();
       },
       { timeout: 5000 }
     );

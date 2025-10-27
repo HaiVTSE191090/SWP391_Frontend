@@ -135,6 +135,7 @@ function Mapbox({ selectedLocation }: Props) {
                   latitude: m.lat,
                   longitude: m.lng,
                   zoom: 12,
+                  
                 })
               }
             >
