@@ -8,7 +8,7 @@ import { getCarDetails, getStaffStation } from './services/authServices';
 
 
 interface StationVehicle {
-  id: number;
+  vehicleId: number;
   plateNumber: string;
   batteryLevel: number;
   mileage: number;
@@ -146,9 +146,9 @@ export default function Staff() {
   };
 
   // Xử lý khi click vào xe
-  const handleCarClick = (car: Car) => {
+  const handleCarClick = (car: MergedVehicle) => {
     if (car.status === 'IN-USE') {
-      setSelectedVehicleId(car.id);
+      setSelectedVehicleId(car.vehicleId);
       setSelectedVehicle(car);
     }
   }
@@ -230,7 +230,7 @@ export default function Staff() {
             {/* Car Grid */}
             <Row>
               {filteredCars().map((car) => (
-                <Col lg={4} md={6} sm={12} className="mb-4" key={car.id}>
+                <Col lg={4} md={6} sm={12} className="mb-4" key={car.vehicleId}>
                   <Card
                     className="h-100 shadow-sm"
                     style={{ cursor: car.status === 'IN-USE' ? 'pointer' : 'default' }}

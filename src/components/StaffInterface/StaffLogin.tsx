@@ -23,6 +23,7 @@ const StaffLogin: React.FC = () => {
         try {
             const resp = await staffLogin(email, password);
             const token = resp?.data?.token;
+            alert("Đăng nhập thành công!");
             if (token) {
                 localStorage.setItem('authToken', token);
 
