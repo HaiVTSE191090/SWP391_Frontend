@@ -79,11 +79,6 @@ export default function RentalHistoryPage() {
             key={b.id}
             className="booking-card d-flex align-items-center shadow-sm p-3 rounded mb-3"
           >
-            <img
-              src={b.imageUrl}
-              alt={b.vehicleName}
-              className="car-thumb"
-            />
             <div className="flex-grow-1 px-3">
               <h5 className="fw-bold mb-1">{b.vehicleName}</h5>
               <p className="mb-1">
@@ -94,15 +89,15 @@ export default function RentalHistoryPage() {
                   b.status === "PENDING"
                     ? "warning"
                     : b.status === "IN_USE"
-                    ? "success"
-                    : "secondary"
+                      ? "success"
+                      : "secondary"
                 }
               >
                 {b.status === "PENDING"
                   ? "Đang chờ nhận xe"
                   : b.status === "IN_USE"
-                  ? "Đang sử dụng"
-                  : "Hoàn tất"}
+                    ? "Đang sử dụng"
+                    : "Hoàn tất"}
               </Badge>
             </div>
             <div className="d-flex gap-2">

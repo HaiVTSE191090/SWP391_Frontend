@@ -30,7 +30,7 @@ const router = createBrowserRouter([
             { path: "/sign-up", element: <SignUpForm /> },
             { path: "/manualIdentity", element: <ManualIdentityPage /> },
             { path: "/kyc-verification", element: <KycVerificationPage /> },
-            { path: "/xac-nhan-dat-xe", element: <DepositPage /> },
+            { path: "/xac-nhan-dat-xe/:bookingId", element: <DepositPage /> },
             { path: "/rental-history", element: <RentalHistoryPage /> },
             { path: "/contract-preview", element: <ContractPreviewPage /> },
             { path: "/vehicles", element: <VehiclesPage /> },
