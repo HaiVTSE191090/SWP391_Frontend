@@ -46,13 +46,23 @@ export const getTodayDate = (): string => {
   return new Date().toISOString().slice(0, 10);
 };
 
-export const getDefaultTimeSelection = (): TimeSelection => ({
-  mode: "day",
-  startDate: getTodayDate(),
-  endDate: getTodayDate(),
-  startTime: "09:00",
-  endTime: "20:00",
-});
+export const getDateAfterDays = (days: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
+export const getDefaultTimeSelection = (): TimeSelection => {
+  const sevenDaysLater = getDateAfterDays(7);
+  const eightDaysLater = getDateAfterDays(8);
+  return {
+    mode: "day",
+    startDate: sevenDaysLater,
+    endDate: eightDaysLater,
+    startTime: "09:00",
+    endTime: "20:00",
+  };
+};
 
 
 export const formatDateDisplay = (dateStr: string): string => {

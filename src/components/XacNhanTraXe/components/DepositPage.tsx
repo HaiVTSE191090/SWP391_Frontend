@@ -5,6 +5,7 @@ import "./DepositPage.css";
 import { Vehicle } from "../../../models/VehicleModel";
 import { Booking } from "../../../models/BookingModel";
 import { data, useParams } from "react-router-dom";
+import { set } from "react-datepicker/dist/date_utils";
 
 
 
@@ -61,14 +62,16 @@ export default function DepositPage() {
       const res = await axios.post(`http://localhost:8080/api/invoices/bookings/${bookingId}/invoices/deposit`, {
         depositAmount: depositNumber,
       });
+      await axios.put(`http://localhost:8080/api/bookings/${bookingId}/status/reserved`);
 
       const res2 = await axios.get(`http://localhost:8080/api/invoices/bookings/${bookingId}/invoices`);
       const data2 = res2.data.data;
       setInvoiceId(data2[0].invoiceId);
       setDepositNumber(data2[0].depositAmount);
       console.log("✅ Tạo hóa đơn tiền cọc thành công:", res.data.data);
-    } catch (error) {
-      console.error("❌ Lỗi khi tạo hóa đơn tiền cọc:", error);
+    } catch (error: any) {
+      console.error( error);
+      setErrorMsg(error.response?.data?.data || "Đã xảy ra lỗi khi tạo hóa đơn tiền cọc.");
     }
 
   }
@@ -87,9 +90,8 @@ export default function DepositPage() {
       } else {
         setErrorMsg("Không thể tạo liên kết thanh toán.");
       }
-    } catch (err) {
-      console.error("❌ Lỗi khi redirect sang MoMo:", err);
-      setErrorMsg("Có lỗi xảy ra khi redirect sang MoMo.");
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.data || "Đã xảy ra lỗi khi tạo liên kết thanh toán.");
     } finally {
       setLoading(false);
     }

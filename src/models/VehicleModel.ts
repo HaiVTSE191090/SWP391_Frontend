@@ -21,6 +21,7 @@ export interface VehicleDetail {
   pricePerDay: number;
   batteryLevel: number;
   mileage: number;
+  imageUrls: string;
 }
 
 export interface VehicleDetailResponse {

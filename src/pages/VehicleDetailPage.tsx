@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useVehicle } from "../hooks/useVehicle";
 import { useModal } from "../hooks/useModal";
@@ -7,12 +7,15 @@ import { useBooking } from "../hooks/useBooking";
 import { getVehicleStatusText, getVehicleStatusColor } from "../models/VehicleModel";
 import { checkAuthAndKyc, refreshUserFromBackend } from "../utils/authHelpers";
 import { toast } from 'react-toastify';
+import SearchBar, { LocationSelection, TimeSelection } from "../components/search/SearchBar";
 
 const VehicleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { openModal } = useModal();
   const { sendOTP } = useAuth();
+  const [loc, setLoc] = useState<LocationSelection | null>(null);
+  const [timeSel, setTimeSel] = useState<TimeSelection | null>(null);
 
   const {
     vehicleDetail,
@@ -24,7 +27,7 @@ const VehicleDetailPage: React.FC = () => {
     formatPrice
   } = useVehicle();
 
-  const {handleCreateBooking, bookingId} = useBooking();
+  const { handleCreateBooking, bookingId } = useBooking();
   useEffect(() => {
     if (id) {
       loadVehicleDetail(parseInt(id));
@@ -32,6 +35,14 @@ const VehicleDetailPage: React.FC = () => {
   }, [id, loadVehicleDetail]);
 
   const handleBooking = async () => {
+    if (!timeSel) {
+      toast.warning("Vui lòng chọn thời gian thuê xe", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     await refreshUserFromBackend();
 
     const authCheck = checkAuthAndKyc();
@@ -93,16 +104,40 @@ const VehicleDetailPage: React.FC = () => {
     }
 
     if (authCheck.action === 'PROCEED') {
-      handleCreateBooking(parseInt(id!));
-      toast.success("Đặt xe thành công!", {
-        position: "top-center",
-        autoClose: 3000,
-      });
+      const startDateTime = `${timeSel.startDate}T${timeSel.startTime}:00`;
+      const endDateTime = `${timeSel.endDate}T${timeSel.endTime}:00`;
 
-      setTimeout(() => {
-        navigate(`/xac-nhan-dat-xe/${bookingId}`);
-      }, 500);
+      try {
+        const res = await handleCreateBooking(parseInt(id!), startDateTime, endDateTime);
+        if(res.error || !res === undefined){
+          toast.error(res.error, {
+            position: "top-center",
+            autoClose: 3000,
+          });
+          return;
+        }
+        toast.success("Đặt xe thành công!", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+
+        setTimeout(() => {
+          navigate(`/xac-nhan-dat-xe/${res.bookingId}`);
+        }, 500);
+
+      } catch (error: any) {
+        toast.error(error.response?.data?.message, {
+          position: "top-center",
+          autoClose: 3000,
+        });
+        return;
+      }
     }
+  };
+
+  const handleSearch = (location: LocationSelection, time: TimeSelection) => {
+    setLoc(location);
+    setTimeSel(time);
   };
 
   if (loading) {
@@ -167,9 +202,8 @@ const VehicleDetailPage: React.FC = () => {
       <div className="row">
         <div className="col-lg-6 mb-4">
           <div className="card shadow-sm">
-            {/* khúc này giải quyết ảnh nè, lấy field ảnh như nào? */}
             <img
-              src={require(`../images/car-list/Car-${((vehicleDetail.vehicleId - 1) % 9) + 1}.png`)}
+              src={vehicleDetail.imageUrls}
               className="card-img-top"
               alt={vehicleDetail.vehicleName}
               style={{ height: "300px", objectFit: "cover" }}
@@ -183,6 +217,7 @@ const VehicleDetailPage: React.FC = () => {
               </span>
             </div>
           </div>
+          <SearchBar onSearch={handleSearch} />
         </div>
 
         <div className="col-lg-6">

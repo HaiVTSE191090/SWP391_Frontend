@@ -1,6 +1,5 @@
-// src/components/search/TimeModal.tsx
-import React, { useMemo, useState } from "react";
-import { TimeSelection, RentalMode, getTodayDate } from "../../models/SearchModel";
+import React, { useEffect, useMemo, useState } from "react";
+import { TimeSelection, getDateAfterDays } from "../../models/SearchModel";
 import { closeModal } from "../../controller/SearchController";
 
 type Props = {
@@ -9,19 +8,56 @@ type Props = {
 };
 
 export default function TimeModal({ current, onSave }: Props) {
-  const [mode, setMode] = useState<RentalMode>(current.mode);
   const [startDate, setStartDate] = useState(current.startDate);
   const [endDate, setEndDate] = useState(current.endDate);
   const [startTime, setStartTime] = useState(current.startTime);
   const [endTime, setEndTime] = useState(current.endTime);
 
-  const today = useMemo(() => getTodayDate(), []);
+  useEffect(() => {
+    const nextDay = new Date(startDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    setEndDate(nextDay.toISOString().slice(0, 10));
+  }, [startDate]);
+
+  const minStartDate = useMemo(() => getDateAfterDays(7), []);
+  const maxStartDate = useMemo(() => getDateAfterDays(14), []);
+  
+  const minEndDate = useMemo(() => {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().slice(0, 10);
+  }, [startDate]);
+  
+  const handleStartTimeChange = (newStartTime: string) => {
+    setStartTime(newStartTime);
+    setEndTime(newStartTime); 
+  };
 
   const handleSave = () => {
+    if (startDate < minStartDate) {
+      alert(`Ngày nhận xe phải từ ${minStartDate} trở đi (7 ngày sau hôm nay)`);
+      return;
+    }
+
+    if (startDate > maxStartDate) {
+      alert(`Ngày nhận xe không được quá ${maxStartDate} (14 ngày kể từ hôm nay)`);
+      return;
+    }
+
+    if (endDate <= startDate) {
+      alert("Ngày trả xe phải sau ngày nhận xe");
+      return;
+    }
+
+    if (endDate > maxStartDate) {
+      alert(`Ngày trả xe không được quá ${maxStartDate} (14 ngày kể từ hôm nay)`);
+      return;
+    }
+
     const payload: TimeSelection = {
-      mode,
+      mode: "day",
       startDate,
-      endDate: mode === "day" ? endDate : startDate,
+      endDate,
       startTime,
       endTime,
     };
@@ -30,11 +66,8 @@ export default function TimeModal({ current, onSave }: Props) {
   };
 
   const displaySummary = useMemo(() => {
-    if (mode === "day") {
-      return `Khoảng: ${startDate} ${startTime} → ${endDate} ${endTime}`;
-    }
-    return `Khoảng: ${startDate} ${startTime} → ${endTime}`;
-  }, [mode, startDate, endDate, startTime, endTime]);
+    return `Khoảng: ${startDate} ${startTime} → ${endDate} ${endTime}`;
+  }, [startDate, endDate, startTime, endTime]);
 
   return (
     <div className="modal fade" id="timeModal" tabIndex={-1} aria-hidden="true">
@@ -52,42 +85,19 @@ export default function TimeModal({ current, onSave }: Props) {
           </div>
 
           <div className="modal-body">
-            {/* Tabs chọn chế độ */}
-            <ul className="nav nav-pills gap-2 mb-3">
-              <li className="nav-item">
-                <button
-                  className={`nav-link ${mode === "day" ? "active" : ""}`}
-                  onClick={() => setMode("day")}
-                >
-                  Thuê theo ngày
-                </button>
-              </li>             
-            </ul>
-
-            {/* Bộ chọn ngày/giờ */}
-            {mode === "day" ? (
-              <DayModeForm
-                startDate={startDate}
-                endDate={endDate}
-                startTime={startTime}
-                endTime={endTime}
-                today={today}
-                onStartDateChange={setStartDate}
-                onEndDateChange={setEndDate}
-                onStartTimeChange={setStartTime}
-                onEndTimeChange={setEndTime}
-              />
-            ) : (
-              <HourModeForm
-                startDate={startDate}
-                startTime={startTime}
-                endTime={endTime}
-                today={today}
-                onStartDateChange={setStartDate}
-                onStartTimeChange={setStartTime}
-                onEndTimeChange={setEndTime}
-              />
-            )}
+            <DayModeForm
+              startDate={startDate}
+              endDate={endDate}
+              startTime={startTime}
+              endTime={endTime}
+              minStartDate={minStartDate}
+              maxStartDate={maxStartDate}
+              minEndDate={minEndDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+              onStartTimeChange={handleStartTimeChange}
+              onEndTimeChange={setEndTime}
+            />
           </div>
 
           <div className="modal-footer">
@@ -112,7 +122,9 @@ type DayModeFormProps = {
   endDate: string;
   startTime: string;
   endTime: string;
-  today: string;
+  minStartDate: string;
+  maxStartDate: string;
+  minEndDate: string;
   onStartDateChange: (val: string) => void;
   onEndDateChange: (val: string) => void;
   onStartTimeChange: (val: string) => void;
@@ -124,7 +136,9 @@ function DayModeForm({
   endDate,
   startTime,
   endTime,
-  today,
+  minStartDate,
+  maxStartDate,
+  minEndDate,
   onStartDateChange,
   onEndDateChange,
   onStartTimeChange,
@@ -138,20 +152,24 @@ function DayModeForm({
           <input
             type="date"
             className="form-control"
-            min={today}
+            min={minStartDate}
+            max={maxStartDate}
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value)}
           />
+          <small className="text-muted">7-14 ngày kể từ hôm nay</small>
         </div>
         <div className="col-md-6">
           <label className="form-label small">Ngày trả</label>
           <input
             type="date"
             className="form-control"
-            min={startDate || today}
+            min={minEndDate}
+            max={maxStartDate}
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
           />
+          <small className="text-muted">Tối thiểu 1 ngày sau ngày nhận</small>
         </div>
       </div>
       <div className="row g-3 mt-2">
@@ -171,62 +189,10 @@ function DayModeForm({
             className="form-control"
             value={endTime}
             onChange={(e) => onEndTimeChange(e.target.value)}
+            disabled
           />
         </div>
       </div>
     </>
-  );
-}
-
-type HourModeFormProps = {
-  startDate: string;
-  startTime: string;
-  endTime: string;
-  today: string;
-  onStartDateChange: (val: string) => void;
-  onStartTimeChange: (val: string) => void;
-  onEndTimeChange: (val: string) => void;
-};
-
-function HourModeForm({
-  startDate,
-  startTime,
-  endTime,
-  today,
-  onStartDateChange,
-  onStartTimeChange,
-  onEndTimeChange,
-}: HourModeFormProps) {
-  return (
-    <div className="row g-3">
-      <div className="col-md-6">
-        <label className="form-label small">Ngày thuê</label>
-        <input
-          type="date"
-          className="form-control"
-          min={today}
-          value={startDate}
-          onChange={(e) => onStartDateChange(e.target.value)}
-        />
-      </div>
-      <div className="col-md-6">
-        <label className="form-label small">Khung giờ</label>
-        <div className="d-flex gap-2">
-          <input
-            type="time"
-            className="form-control"
-            value={startTime}
-            onChange={(e) => onStartTimeChange(e.target.value)}
-          />
-          <span className="align-self-center">→</span>
-          <input
-            type="time"
-            className="form-control"
-            value={endTime}
-            onChange={(e) => onEndTimeChange(e.target.value)}
-          />
-        </div>
-      </div>
-    </div>
   );
 }

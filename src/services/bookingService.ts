@@ -1,11 +1,12 @@
 import api from "./apiClient";
 
+export interface CreateBookingRequest {
+  vehicleId: number;
+  startDateTime: string;
+  endDateTime: string;
+}
 
-export const createBooking = async (vehicleId: number): Promise<any> => {
-    try {
-        const response = await api.post(`/api/bookings`, { vehicleId });
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
+export const createBooking = async (bookingData: CreateBookingRequest): Promise<any> => {
+  const response = await api.post(`/api/bookings`, bookingData);
+  return response.data;
 };
