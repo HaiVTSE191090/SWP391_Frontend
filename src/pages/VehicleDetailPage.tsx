@@ -8,6 +8,7 @@ import { getVehicleStatusText, getVehicleStatusColor } from "../models/VehicleMo
 import { checkAuthAndKyc, refreshUserFromBackend } from "../utils/authHelpers";
 import { toast } from 'react-toastify';
 import SearchBar, { LocationSelection, TimeSelection } from "../components/search/SearchBar";
+import axios from "axios";
 
 const VehicleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -109,6 +110,8 @@ const VehicleDetailPage: React.FC = () => {
 
       try {
         const res = await handleCreateBooking(parseInt(id!), startDateTime, endDateTime);
+        const res2 = await axios.put(`http://localhost:8080/api/bookings/${res.bookingId}/status/reserved`)
+        console.log("đây: ", res2)
         if(res.error || !res === undefined){
           toast.error(res.error, {
             position: "top-center",
@@ -116,17 +119,18 @@ const VehicleDetailPage: React.FC = () => {
           });
           return;
         }
+
         toast.success("Đặt xe thành công!", {
           position: "top-center",
           autoClose: 3000,
         });
-
+        
         setTimeout(() => {
           navigate(`/xac-nhan-dat-xe/${res.bookingId}`);
         }, 500);
 
       } catch (error: any) {
-        toast.error(error.response?.data?.message, {
+        toast.error(error.response?.data?.data, {
           position: "top-center",
           autoClose: 3000,
         });

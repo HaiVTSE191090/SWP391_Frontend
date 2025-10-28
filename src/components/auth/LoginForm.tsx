@@ -54,7 +54,6 @@ const LoginFormContent: React.FC = () => {
             position: "top-center"
         });
         
-        // ✅ Call login và manually set LOCAL form state
         const result = await login(loginData);
         
         if (result.success) {
