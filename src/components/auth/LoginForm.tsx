@@ -70,8 +70,16 @@ const LoginFormContent: React.FC = () => {
                 resetForm();
             }, 1000);
         } else {
-            // Hiển thị lỗi bằng toast
             if (result.error) {
+                if (result.error === 'Cannot invoke "String.equals(Object)" because the return value of "com.example.ev_rental_backend.entity.Renter.getPassword()" is null'){
+                    toast.update(loadingToast, {
+                        render: "Tài khoản được đăng nhập bởi Google, vui lòng đăng nhập bằng Google",
+                        type: "error",
+                        isLoading: false,
+                        autoClose: 3000,
+                    });
+                    return;
+                }
                 toast.update(loadingToast, {
                     render: result.error,
                     type: "error",

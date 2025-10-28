@@ -45,9 +45,6 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     }
   }, []);
 
-  /**
-   * Login - CHỈ xử lý logic, return result cho form tự xử lý
-   */
   const login = async (data: model.LoginRequest): Promise<AuthResult> => {
     setLoading(true);
 
