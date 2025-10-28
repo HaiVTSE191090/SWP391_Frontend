@@ -13,6 +13,8 @@ import VehicleDetailPage from "../pages/VehicleDetailPage";
 import VehiclesPage from "../pages/VehiclesPage";
 import NotFoundPage from "../components/404/NotFoundPage";
 import UserProfilePage from "../pages/UserProfilePage";
+import PaymentResult from "../pages/PaymentResultPage";
+import PaymentResultPage from "../pages/PaymentResultPage";
 
 
 // Lazy load các trang (tối ưu bundle)
@@ -37,6 +39,7 @@ const router = createBrowserRouter([
             { path: "/vehicles/:id", element: <VehicleDetailPage /> },
             { path: "/profile", element: <UserProfilePage /> },
             { path: "/xac-nhan-dat-xe/:bookingId", element: <DepositPage /> },
+            { path: "/payment-result", element: <PaymentResultPage/>},
             // 404 bắt mọi thứ còn lại
             { path: "*", element: <NotFoundPage /> },
         ],
