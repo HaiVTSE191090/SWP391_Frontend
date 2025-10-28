@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { VehicleContext, VehicleContextType } from "../context/VehicleContext";
+import api from "../services/apiClient";
 
 export const useVehicle = (): VehicleContextType => {
   const context = useContext(VehicleContext);
@@ -13,3 +14,15 @@ export const useVehicle = (): VehicleContextType => {
 
   return context;
 };
+
+export const getImgUrl = async (vehicleId: number) => {
+  try {
+    const res = await api.get(`api/vehicle/detail/${vehicleId}`);
+    return res.data.data.imageUrls[0];
+  } catch (error:any) {
+    return {
+      error: "Lỗi khi tải ảnh xe: ",
+    }
+  }
+
+}

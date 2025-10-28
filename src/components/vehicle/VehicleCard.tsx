@@ -1,7 +1,8 @@
-import React from "react";
+import React, { use, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VehicleWithStation, getVehicleStatusText, getVehicleStatusColor } from "../../models/VehicleModel";
-import { useVehicle } from "../../hooks/useVehicle";
+import { useVehicle, getImgUrl } from "../../hooks/useVehicle";
+import { set } from "react-datepicker/dist/date_utils";
 
 interface VehicleCardProps {
   vehicle: VehicleWithStation;
@@ -12,6 +13,8 @@ interface VehicleCardProps {
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, showStation = false }) => {
   const navigate = useNavigate();
   const { formatBattery, formatMileage, isVehicleAvailable } = useVehicle();
+  const [imgSrc, setImgSrc] = useState<string>("");
+
 
   const available = isVehicleAvailable(vehicle);
   const statusText = getVehicleStatusText(vehicle.status);
@@ -21,22 +24,20 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, showStation = false 
     navigate(`/vehicles/${vehicle.vehicleId}`);
   };
 
- 
-  const getVehicleImage = () => {
-    try {
-      const imageNumber = ((vehicle.vehicleId - 1) % 9) + 1;
-      return require(`../../images/car-list/Car-${imageNumber}.png`);
-    } catch (error) {
-      console.warn(`Image not found for vehicleId ${vehicle.vehicleId}, using default`);
-      return require(`../../images/car-list/Car.png`);
-    }
-  };
+  useEffect(() => {
+    const fetchImg =async () => {
+      const img = await getImgUrl(vehicle.vehicleId)
+      setImgSrc(img);
+    } 
+    fetchImg();
+  }, [vehicle.vehicleId])
+
 
   return (
     <div
       className="card h-100 shadow-sm"
-      style={{ 
-        cursor: available ? "pointer" : "not-allowed", 
+      style={{
+        cursor: available ? "pointer" : "not-allowed",
         transition: "all 0.3s",
         opacity: available ? 1 : 0.7
       }}
@@ -56,7 +57,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, showStation = false 
     >
       <div className="position-relative">
         <img
-          src={getVehicleImage()}
+          src={imgSrc}
           className="card-img-top"
           alt={vehicle.plateNumber}
           style={{ height: "200px", objectFit: "cover" }}
@@ -116,11 +117,11 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, showStation = false 
         >
           {available ? (
             <>
-               Xem chi tiết
+              Xem chi tiết
             </>
           ) : (
             <>
-               Không khả dụng
+              Không khả dụng
             </>
           )}
         </button>

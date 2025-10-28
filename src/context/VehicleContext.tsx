@@ -13,7 +13,7 @@ export interface VehicleContextType {
   loadAllVehicles: () => Promise<boolean>;
   loadAvailableVehicles: () => Promise<boolean>;
   loadVehiclesByStation: (stationId: number) => Promise<boolean>;
-  loadVehicleDetail: (vehicleId: number) => Promise<boolean>;
+  loadVehicleDetail: (vehicleId: number) => Promise<any>;
   loadAllStations: () => Promise<boolean>;
   clearError: () => void;
 
@@ -130,7 +130,7 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
     }
   }, []);
 
-  const loadVehicleDetail = useCallback(async (vehicleId: number): Promise<boolean> => {
+  const loadVehicleDetail = useCallback(async (vehicleId: number): Promise<any> => {
     setLoading(true);
     setError(null);
 
@@ -139,7 +139,11 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
 
       if (result.success && result.data) {
         setVehicleDetail(result.data);
-        return true;
+        return {
+          success: true,
+          data: result.data,
+          img: result.data.imageUrls[0]
+        };
       } else {
         setError(result.error!);
         return false;
