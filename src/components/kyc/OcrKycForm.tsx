@@ -7,6 +7,7 @@ import { ocrCCCD, ocrGPLX, submitKycVerification } from "../../services/kycServi
 import { OcrCCCDData, OcrGPLXData, KycVerificationRequest } from "../../models/KycModel";
 import { authController } from "../../controller/AuthController";
 import { parseDateSafe, convertToDateInput } from "../../utils/dateHelpers";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   onSwitchToManual: () => void;
@@ -25,6 +26,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
   const [gplxImage, setGplxImage] = useState<File | null>(null);
   const [gplxData, setGplxData] = useState<OcrGPLXData | null>(null);
   const [isEditingGplx, setIsEditingGplx] = useState(false);
+  const navigate = useNavigate();
 
   const handleCccdImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -124,16 +126,14 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
               const updatedUser = profileRes.data.data;
               authController.saveAuthData(token, updatedUser);
             });
+            navigate(-1)
           }
-        }, 2000);
+        }, 500);
       } else {
-        // Hiển thị lỗi từ backend
         if (result.data) {
           if (typeof result.data === 'string') {
-            // Trường hợp data là string đơn giản
             setMessage({ type: "error", text: result.data });
           } else if (typeof result.data === 'object') {
-            // Trường hợp data là object chứa validation errors
             const errors = Object.entries(result.data)
               .map(([field, msg]) => `• ${msg}`)
               .join('\n');
@@ -164,13 +164,10 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
         confidenceScore: "Điểm tin cậy"
       };
       
-      // Xử lý lỗi từ backend
       if (error.response?.data?.data) {
         if (typeof error.response.data.data === 'string') {
-          // Trường hợp data là string đơn giản
           setMessage({ type: "error", text: error.response.data.data });
         } else if (typeof error.response.data.data === 'object') {
-          // Trường hợp data là object chứa validation errors
           const errors = Object.entries(error.response.data.data)
             .map(([field, msg]) => {
               const displayName = fieldNames[field] || field;
