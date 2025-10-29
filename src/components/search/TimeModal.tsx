@@ -66,8 +66,8 @@ export default function TimeModal({ current, onSave }: Props) {
   };
 
   const displaySummary = useMemo(() => {
-    return `Khoảng: ${startDate} ${startTime} → ${endDate} ${endTime}`;
-  }, [startDate, endDate, startTime, endTime]);
+    return `Khoảng: ${startDate} ${startTime} → ${endDate} ${startTime}`;
+  }, [startDate, endDate, startTime]);
 
   return (
     <div className="modal fade" id="timeModal" tabIndex={-1} aria-hidden="true">
@@ -187,7 +187,7 @@ function DayModeForm({
           <input
             type="time"
             className="form-control"
-            value={endTime}
+            value={startTime}
             onChange={(e) => onEndTimeChange(e.target.value)}
             disabled
           />
