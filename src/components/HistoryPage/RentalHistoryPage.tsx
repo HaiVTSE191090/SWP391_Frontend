@@ -1,57 +1,47 @@
 import React, { useEffect, useState } from "react";
 import { Button, Spinner, Badge } from "react-bootstrap";
 import "./RentalHistoryPage.css";
+import {Booking} from "../../models/BookingModel";
+import axios from "axios";
 
-interface Booking {
-  id: number;
-  vehicleName: string;
-  imageUrl: string;
-  startTime: string;
-  endTime: string;
-  status: string;
-}
+const formatDateTime = (isoString: string) => {
+  const date = new Date(isoString);
+  return date.toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
 
 export default function RentalHistoryPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  //giả lập API call
   useEffect(() => {
-    const mockData: Booking[] = [
+    const fetchData = async () => 
       {
-        id: 1,
-        vehicleName: "VinFast Vf5",
-        imageUrl:
-          "https://storage.googleapis.com/vinfast-images/evo200.jpg",
-        startTime: "10:00 30/09/2025",
-        endTime: "14:00 30/09/2025",
-        status: "PENDING",
-      },
-      {
-        id: 2,
-        vehicleName: "VinFast Vf5 plus",
-        imageUrl:
-          "https://storage.googleapis.com/vinfast-images/feliz-s.jpg",
-        startTime: "08:00 01/10/2025",
-        endTime: "16:00 01/10/2025",
-        status: "IN_USE",
-      },
-      {
-        id: 3,
-        vehicleName: "VinFast Vf8",
-        imageUrl:
-          "https://storage.googleapis.com/vinfast-images/klara-a2.jpg",
-        startTime: "12:00 28/09/2025",
-        endTime: "18:00 28/09/2025",
-        status: "COMPLETED",
-      },
-    ];
+        try {
+          const token = localStorage.getItem("token"); 
+          const res = await axios.get("http://localhost:8080/api/renter/bookings",{
+            headers: {
+               Authorization: `Bearer ${token}`,
+        },
+          });
+          const data = res.data.data;
+          setBookings(data);
+          setLoading(false);
+        } catch (error) {
+          console.error("❌ Lỗi khi tải thông tin đơn đặt xe:", error);
+          setErrorMsg("Không thể tải thông tin đặt xe.");
+        }
+      };
 
-    // Mô phỏng độ trễ API
-    setTimeout(() => {
-      setBookings(mockData);
-      setLoading(false);
-    }, 600);
+    setLoading(true);
+
+    fetchData();
   }, []);
 
   // Hiển thị loading
@@ -76,13 +66,14 @@ export default function RentalHistoryPage() {
       ) : (
         bookings.map((b) => (
           <div
-            key={b.id}
+            key={b.bookingId}
             className="booking-card d-flex align-items-center shadow-sm p-3 rounded mb-3"
           >
             <div className="flex-grow-1 px-3">
               <h5 className="fw-bold mb-1">{b.vehicleName}</h5>
               <p className="mb-1">
-                <strong>Thời gian:</strong> {b.startTime} - {b.endTime}
+                <strong>Thời gian:</strong> {formatDateTime(b.startDateTime)} -{" "}
+                {formatDateTime(b.endDateTime)}
               </p>
               <Badge
                 bg={
@@ -100,7 +91,7 @@ export default function RentalHistoryPage() {
                     : "Hoàn tất"}
               </Badge>
             </div>
-            <div className="d-flex gap-2">
+            <div className="d-flex gap-3">
               <Button
                 variant={
                   b.status === "PENDING" ? "success" : "secondary"
@@ -117,6 +108,10 @@ export default function RentalHistoryPage() {
               >
                 Trả xe
               </Button>
+              
+               {b.status === "PENDING" && (
+                <Button variant="danger">Hủy đơn đặt xe</Button>
+              )}
             </div>
           </div>
         ))

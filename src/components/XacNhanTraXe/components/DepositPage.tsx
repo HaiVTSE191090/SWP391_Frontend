@@ -112,7 +112,7 @@ export default function DepositPage() {
           <ul className="info-list">
             <li><strong>Mã đặt xe:</strong> {booking.bookingId}</li>
             <li><strong>Thời gian thuê:</strong> {booking.startDateTime} - {booking.endDateTime}</li>
-            <li><strong>Giá ước tính:</strong> {booking.totalAmount} VND</li>
+            <li><strong>Giá ước tính:</strong> {booking.totalAmount.toLocaleString('vi-VN')} VND</li>
             <li><strong>Tiền cọc:</strong> {depositNumber.toLocaleString('vi-VN')} VND</li>
           </ul>
         ) : (
