@@ -13,34 +13,46 @@ type Props = {
   onSwitchToManual: () => void;
 };
 
-const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
+const OcrKycForm = ({ onSwitchToManual }: Props) => {
   const { user, token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
-  const [cccdImage, setCccdImage] = useState<File | null>(null);
+  const [cccdFrontImage, setCccdFrontImage] = useState<File | null>(null);
+  const [cccdBackImage, setCccdBackImage] = useState<File | null>(null);
   const [cccdData, setCccdData] = useState<OcrCCCDData | null>(null);
   const [isEditingCccd, setIsEditingCccd] = useState(false);
 
-  const [gplxImage, setGplxImage] = useState<File | null>(null);
+  const [gplxFrontImage, setGplxFrontImage] = useState<File | null>(null);
+  const [gplxBackImage, setGplxBackImage] = useState<File | null>(null);
   const [gplxData, setGplxData] = useState<OcrGPLXData | null>(null);
   const [isEditingGplx, setIsEditingGplx] = useState(false);
   const navigate = useNavigate();
 
-  const handleCccdImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCccdFrontImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setCccdImage(file);
+    if (file) setCccdFrontImage(file);
   };
 
-  const handleGplxImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCccdBackImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setGplxImage(file);
+    if (file) setCccdBackImage(file);
+  };
+
+  const handleGplxFrontImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setGplxFrontImage(file);
+  };
+
+  const handleGplxBackImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setGplxBackImage(file);
   };
 
   const handleScanCCCD = async () => {
-    if (!cccdImage) {
-      setMessage({ type: "error", text: "Vui lòng chọn ảnh CCCD!" });
+    if (!cccdFrontImage || !cccdBackImage) {
+      setMessage({ type: "error", text: "Vui lòng chọn đầy đủ ảnh CCCD mặt trước và mặt sau!" });
       return;
     }
 
@@ -48,12 +60,38 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
     setMessage(null);
 
     try {
-      const result = await ocrCCCD(cccdImage);
-      if (result.data && result.data.length > 0) {
-        setCccdData(result.data[0]);
-        setMessage({ type: "success", text: "Quét CCCD thành công!" });
+      const resultFront = await ocrCCCD(cccdFrontImage);
+      const resultBack = await ocrCCCD(cccdBackImage);
+
+      if (resultFront.data && resultFront.data.length > 0 &&
+        resultBack.data && resultBack.data.length > 0) {
+
+        const frontData = resultFront.data[0];
+        const backData = resultBack.data[0];
+
+        const mergedData: OcrCCCDData = {
+          id: frontData.id || backData.id || "",
+          name: frontData.name || backData.name || "",
+          dob: frontData.dob || backData.dob || "",
+          sex: frontData.sex || backData.sex || "",
+          nationality: frontData.nationality || backData.nationality || "",
+          home: frontData.home || backData.home || "",
+          address: frontData.address || backData.address || "",
+          doe: backData.doe || frontData.doe || "",
+          issue_date: backData.issue_date || frontData.issue_date || "",
+          issue_loc: backData.issue_loc || frontData.issue_loc || "",
+          overall_score: Math.max(frontData.overall_score || 0, backData.overall_score || 0),
+          id_prob: Math.max(frontData.id_prob || 0, backData.id_prob || 0),
+          name_prob: Math.max(frontData.name_prob || 0, backData.name_prob || 0),
+          dob_prob: Math.max(frontData.dob_prob || 0, backData.dob_prob || 0),
+          sex_prob: Math.max(frontData.sex_prob || 0, backData.sex_prob || 0),
+          nationality_prob: Math.max(frontData.nationality_prob || 0, backData.nationality_prob || 0),
+        };
+
+        setCccdData(mergedData);
+        setMessage({ type: "success", text: "Quét CCCD (cả 2 mặt) thành công!" });
       } else {
-        setMessage({ type: "error", text: "Không thể đọc thông tin từ ảnh CCCD." });
+        setMessage({ type: "error", text: "Không thể đọc thông tin từ một hoặc cả hai ảnh CCCD." });
       }
     } catch (error: any) {
       console.error("OCR CCCD error:", error);
@@ -64,8 +102,8 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
   };
 
   const handleScanGPLX = async () => {
-    if (!gplxImage) {
-      setMessage({ type: "error", text: "Vui lòng chọn ảnh GPLX!" });
+    if (!gplxFrontImage || !gplxBackImage) {
+      setMessage({ type: "error", text: "Vui lòng chọn đầy đủ ảnh GPLX mặt trước và mặt sau!" });
       return;
     }
 
@@ -73,12 +111,30 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
     setMessage(null);
 
     try {
-      const result = await ocrGPLX(gplxImage);
-      if (result.data && result.data.length > 0) {
-        setGplxData(result.data[0]);
-        setMessage({ type: "success", text: "Quét GPLX thành công!" });
+      const resultFront = await ocrGPLX(gplxFrontImage);
+      const resultBack = await ocrGPLX(gplxBackImage);
+
+      if (resultFront.data && resultFront.data.length > 0 &&
+        resultBack.data && resultBack.data.length > 0) {
+
+        const frontData = resultFront.data[0];
+        const backData = resultBack.data[0];
+
+        const mergedData: OcrGPLXData = {
+          id: frontData.id || backData.id || "",
+          name: frontData.name || backData.name || "",
+          dob: frontData.dob || backData.dob || "",
+          address: frontData.address || backData.address || "",
+          class: frontData.class || backData.class || "",
+          issue_date: backData.issue_date || frontData.issue_date || "",
+          doe: backData.doe || frontData.doe || "",
+          overall_score: Math.max(frontData.overall_score || 0, backData.overall_score || 0),
+        };
+
+        setGplxData(mergedData);
+        setMessage({ type: "success", text: "Quét GPLX (cả 2 mặt) thành công!" });
       } else {
-        setMessage({ type: "error", text: "Không thể đọc thông tin từ ảnh GPLX." });
+        setMessage({ type: "error", text: " Không thể đọc thông tin từ một hoặc cả hai ảnh GPLX." });
       }
     } catch (error: any) {
       console.error("OCR GPLX error:", error);
@@ -102,14 +158,16 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
         renterId: user?.renterId || 0,
         nationalId: cccdData.id,
         nationalName: cccdData.name,
-        nationalDob: convertToDateInput(cccdData.dob), // Convert to YYYY-MM-DD
+        nationalDob: convertToDateInput(cccdData.dob),
         nationalAddress: cccdData.address || cccdData.home,
-        nationalExpireDate: convertToDateInput(cccdData.doe), // Convert to YYYY-MM-DD
+        nationalIssueDate: convertToDateInput(cccdData.issue_date),
+        nationalExpireDate: convertToDateInput(cccdData.doe),
         driverLicense: gplxData.id,
         driverName: gplxData.name,
         driverAddress: gplxData.address,
         driverClass: gplxData.class,
-        driverExpireDate: convertToDateInput(gplxData.doe), // Convert to YYYY-MM-DD
+        driverIssueDate: convertToDateInput(gplxData.issue_date),
+        driverExpireDate: convertToDateInput(gplxData.doe),
         confidenceScore: Math.min(cccdData.overall_score, gplxData.overall_score),
       };
 
@@ -144,9 +202,8 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
         }
       }
     } catch (error: any) {
-      console.error("KYC submission error:", error);
-      
-      // Field name mapping để hiển thị thân thiện hơn
+      console.error("OcrKycForm handleSubmitKyc:", error);
+
       const fieldNames: Record<string, string> = {
         renterId: "Mã người thuê",
         nationalId: "Số CCCD",
@@ -163,7 +220,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
         driverExpireDate: "Ngày hết hạn GPLX",
         confidenceScore: "Điểm tin cậy"
       };
-      
+
       if (error.response?.data?.data) {
         if (typeof error.response.data.data === 'string') {
           setMessage({ type: "error", text: error.response.data.data });
@@ -198,34 +255,32 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
         </button>
       </div>
 
-      {/* Modal thông báo */}
       {message && (
         <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className={`modal-header ${
-                message.type === 'success' ? 'bg-success' : 
-                message.type === 'error' ? 'bg-danger' : 
-                'bg-info'
-              } text-white`}>
+              <div className={`modal-header ${message.type === 'success' ? 'bg-success' :
+                message.type === 'error' ? 'bg-danger' :
+                  'bg-info'
+                } text-white`}>
                 <h5 className="modal-title">
-                  {message.type === 'success' ? 'Thành công' : 
-                   message.type === 'error' ? 'Lỗi' : 
-                   'ℹ Thông báo'}
+                  {message.type === 'success' ? 'Thành công' :
+                    message.type === 'error' ? 'Lỗi' :
+                      'Thông báo'}
                 </h5>
-                <button 
-                  type="button" 
-                  className="btn-close btn-close-white" 
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
                   onClick={() => setMessage(null)}
                 ></button>
               </div>
               <div className="modal-body">
-                <p className="mb-0">{message.text}</p>
+                <p className="mb-0 white-space-pre-line">{message.text}</p>
               </div>
               <div className="modal-footer">
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
+                <button
+                  type="button"
+                  className="btn btn-secondary"
                   onClick={() => setMessage(null)}
                 >
                   Đóng
@@ -236,6 +291,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
         </div>
       )}
 
+      {/* CCCD Section */}
       <div className="card mb-4 shadow-sm">
         <div className="card-header bg-primary text-white">
           <h5 className="mb-0">
@@ -243,43 +299,75 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
           </h5>
         </div>
         <div className="card-body">
-          <div className="mb-3">
-            <label className="form-label fw-bold">Chọn ảnh CCCD</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleCccdImageChange}
-              className="form-control"
-            />
+          <div className="row g-3">
+            {/* Mặt trước CCCD */}
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ảnh mặt trước</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCccdFrontImageChange}
+                className="form-control"
+              />
+              {cccdFrontImage && (
+                <div className="text-center mt-3">
+                  <img
+                    src={URL.createObjectURL(cccdFrontImage)}
+                    alt="CCCD Mặt trước"
+                    className="img-fluid rounded border"
+                    style={{ maxHeight: "200px" }}
+                  />
+                  <p className="text-success small mt-2 mb-0">Đã chọn mặt trước</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mặt sau CCCD */}
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ảnh mặt sau</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCccdBackImageChange}
+                className="form-control"
+              />
+              {cccdBackImage && (
+                <div className="text-center mt-3">
+                  <img
+                    src={URL.createObjectURL(cccdBackImage)}
+                    alt="CCCD Mặt sau"
+                    className="img-fluid rounded border"
+                    style={{ maxHeight: "200px" }}
+                  />
+                  <p className="text-success small mt-2 mb-0">Đã chọn mặt sau</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {cccdImage && (
-            <div className="text-center mb-3">
-              <img
-                src={URL.createObjectURL(cccdImage)}
-                alt="CCCD Preview"
-                className="img-fluid rounded"
-                style={{ maxHeight: "250px" }}
-              />
-            </div>
-          )}
-
-          <button
-            className="btn btn-primary w-100"
-            onClick={handleScanCCCD}
-            disabled={loading || !cccdImage}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2"></span>
-                Đang quét...
-              </>
-            ) : (
-              <>
-                Quét CCCD
-              </>
+          <div className="mt-3">
+            <button
+              className="btn btn-primary w-100"
+              onClick={handleScanCCCD}
+              disabled={loading || !cccdFrontImage || !cccdBackImage}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Đang quét...
+                </>
+              ) : (
+                <>
+                  Quét CCCD
+                </>
+              )}
+            </button>
+            {(!cccdFrontImage || !cccdBackImage) && (
+              <small className="text-muted d-block mt-2 text-center">
+                Vui lòng chọn đầy đủ ảnh mặt trước và mặt sau
+              </small>
             )}
-          </button>
+          </div>
 
           {cccdData && (
             <div className="mt-4 border-top pt-3">
@@ -287,7 +375,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                 <h6 className="fw-bold text-success mb-0">
                   Thông tin đã quét
                 </h6>
-                <button 
+                <button
                   className="btn btn-sm btn-outline-primary"
                   onClick={() => setIsEditingCccd(!isEditingCccd)}
                 >
@@ -302,7 +390,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       type="text"
                       className="form-control"
                       value={cccdData.id}
-                      onChange={(e) => setCccdData({...cccdData, id: e.target.value})}
+                      onChange={(e) => setCccdData({ ...cccdData, id: e.target.value })}
                       maxLength={12}
                     />
                   ) : (
@@ -316,7 +404,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       type="text"
                       className="form-control"
                       value={cccdData.name}
-                      onChange={(e) => setCccdData({...cccdData, name: e.target.value})}
+                      onChange={(e) => setCccdData({ ...cccdData, name: e.target.value })}
                     />
                   ) : (
                     <div className="fw-bold">{cccdData.name}</div>
@@ -330,7 +418,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       onChange={(date) => {
                         if (date) {
                           const formatted = date.toLocaleDateString('en-GB');
-                          setCccdData({...cccdData, dob: formatted});
+                          setCccdData({ ...cccdData, dob: formatted });
                         }
                       }}
                       dateFormat="dd/MM/yyyy"
@@ -353,7 +441,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       onChange={(date) => {
                         if (date) {
                           const formatted = date.toLocaleDateString('en-GB');
-                          setCccdData({...cccdData, issue_date: formatted});
+                          setCccdData({ ...cccdData, issue_date: formatted });
                         }
                       }}
                       dateFormat="dd/MM/yyyy"
@@ -376,7 +464,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       onChange={(date) => {
                         if (date) {
                           const formatted = date.toLocaleDateString('en-GB');
-                          setCccdData({...cccdData, doe: formatted});
+                          setCccdData({ ...cccdData, doe: formatted });
                         }
                       }}
                       dateFormat="dd/MM/yyyy"
@@ -397,7 +485,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                     <textarea
                       className="form-control"
                       value={cccdData.address || cccdData.home}
-                      onChange={(e) => setCccdData({...cccdData, address: e.target.value})}
+                      onChange={(e) => setCccdData({ ...cccdData, address: e.target.value })}
                       rows={2}
                     />
                   ) : (
@@ -405,7 +493,9 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                   )}
                 </div>
                 <div className="col-12">
-                  <small className="text-success">Độ tin cậy OCR: {cccdData.overall_score}%</small>
+                  <div className="alert alert-success mb-0 py-2">
+                    <small>Độ tin cậy OCR: <strong>{cccdData.overall_score}%</strong></small>
+                  </div>
                 </div>
               </div>
             </div>
@@ -421,43 +511,75 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
           </h5>
         </div>
         <div className="card-body">
-          <div className="mb-3">
-            <label className="form-label fw-bold">Chọn ảnh GPLX</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleGplxImageChange}
-              className="form-control"
-            />
+          <div className="row g-3">
+            {/* Mặt trước GPLX */}
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ảnh mặt trước</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleGplxFrontImageChange}
+                className="form-control"
+              />
+              {gplxFrontImage && (
+                <div className="text-center mt-3">
+                  <img
+                    src={URL.createObjectURL(gplxFrontImage)}
+                    alt="GPLX Mặt trước"
+                    className="img-fluid rounded border"
+                    style={{ maxHeight: "200px" }}
+                  />
+                  <p className="text-success small mt-2 mb-0">Đã chọn mặt trước</p>
+                </div>
+              )}
+            </div>
+
+            {/* Mặt sau GPLX */}
+            <div className="col-md-6">
+              <label className="form-label fw-bold">Ảnh mặt sau</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleGplxBackImageChange}
+                className="form-control"
+              />
+              {gplxBackImage && (
+                <div className="text-center mt-3">
+                  <img
+                    src={URL.createObjectURL(gplxBackImage)}
+                    alt="GPLX Mặt sau"
+                    className="img-fluid rounded border"
+                    style={{ maxHeight: "200px" }}
+                  />
+                  <p className="text-success small mt-2 mb-0">Đã chọn mặt sau</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {gplxImage && (
-            <div className="text-center mb-3">
-              <img
-                src={URL.createObjectURL(gplxImage)}
-                alt="GPLX Preview"
-                className="img-fluid rounded"
-                style={{ maxHeight: "250px" }}
-              />
-            </div>
-          )}
-
-          <button
-            className="btn btn-success w-100"
-            onClick={handleScanGPLX}
-            disabled={loading || !gplxImage}
-          >
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2"></span>
-                Đang quét...
-              </>
-            ) : (
-              <>
-                Quét GPLX
-              </>
+          <div className="mt-3">
+            <button
+              className="btn btn-success w-100"
+              onClick={handleScanGPLX}
+              disabled={loading || !gplxFrontImage || !gplxBackImage}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Đang quét...
+                </>
+              ) : (
+                <>
+                  Quét GPLX
+                </>
+              )}
+            </button>
+            {(!gplxFrontImage || !gplxBackImage) && (
+              <small className="text-muted d-block mt-2 text-center">
+                Vui lòng chọn đầy đủ ảnh mặt trước và mặt sau
+              </small>
             )}
-          </button>
+          </div>
 
           {gplxData && (
             <div className="mt-4 border-top pt-3">
@@ -465,7 +587,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                 <h6 className="fw-bold text-success mb-0">
                   Thông tin đã quét
                 </h6>
-                <button 
+                <button
                   className="btn btn-sm btn-outline-primary"
                   onClick={() => setIsEditingGplx(!isEditingGplx)}
                 >
@@ -480,7 +602,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       type="text"
                       className="form-control"
                       value={gplxData.id}
-                      onChange={(e) => setGplxData({...gplxData, id: e.target.value})}
+                      onChange={(e) => setGplxData({ ...gplxData, id: e.target.value })}
                       maxLength={12}
                     />
                   ) : (
@@ -494,7 +616,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       type="text"
                       className="form-control"
                       value={gplxData.name}
-                      onChange={(e) => setGplxData({...gplxData, name: e.target.value})}
+                      onChange={(e) => setGplxData({ ...gplxData, name: e.target.value })}
                     />
                   ) : (
                     <div className="fw-bold">{gplxData.name}</div>
@@ -506,7 +628,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                     <select
                       className="form-select"
                       value={gplxData.class}
-                      onChange={(e) => setGplxData({...gplxData, class: e.target.value})}
+                      onChange={(e) => setGplxData({ ...gplxData, class: e.target.value })}
                     >
                       <option value="">-- Chọn hạng --</option>
                       <option value="A1">A1</option>
@@ -531,7 +653,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       onChange={(date) => {
                         if (date) {
                           const formatted = date.toLocaleDateString('en-GB');
-                          setGplxData({...gplxData, issue_date: formatted});
+                          setGplxData({ ...gplxData, issue_date: formatted });
                         }
                       }}
                       dateFormat="dd/MM/yyyy"
@@ -554,7 +676,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       onChange={(date) => {
                         if (date) {
                           const formatted = date.toLocaleDateString('en-GB');
-                          setGplxData({...gplxData, doe: formatted});
+                          setGplxData({ ...gplxData, doe: formatted });
                         }
                       }}
                       dateFormat="dd/MM/yyyy"
@@ -577,7 +699,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                       onChange={(date) => {
                         if (date) {
                           const formatted = date.toLocaleDateString('en-GB');
-                          setGplxData({...gplxData, dob: formatted});
+                          setGplxData({ ...gplxData, dob: formatted });
                         }
                       }}
                       dateFormat="dd/MM/yyyy"
@@ -598,7 +720,7 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                     <textarea
                       className="form-control"
                       value={gplxData.address}
-                      onChange={(e) => setGplxData({...gplxData, address: e.target.value})}
+                      onChange={(e) => setGplxData({ ...gplxData, address: e.target.value })}
                       rows={2}
                     />
                   ) : (
@@ -606,7 +728,9 @@ const OcrKycForm: React.FC<Props> = ({ onSwitchToManual }) => {
                   )}
                 </div>
                 <div className="col-12">
-                  <small className="text-success">Độ tin cậy OCR: {gplxData.overall_score}%</small>
+                  <div className="alert alert-success mb-0 py-2">
+                    <small>Độ tin cậy OCR: <strong>{gplxData.overall_score}%</strong></small>
+                  </div>
                 </div>
               </div>
             </div>
