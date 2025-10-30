@@ -1,0 +1,25 @@
+/* Bootstrap Modal customizations */
+.modal-content {
+  border-radius: 15px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Alert styling */
+.alert-danger ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.alert-danger li {
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.alert-danger li:last-child {
+  margin-bottom: 0;
+}

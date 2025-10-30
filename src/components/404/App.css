@@ -1,0 +1,95 @@
+/* Global Styles */
+body {
+  background: #fff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Hero Section */
+.hero-section {
+  padding: 0 5%;
+}
+
+.hero {
+  padding: 2rem 0;
+}
+
+/* Hero Text Styling */
+.hero-text h1 {
+  font-size: 5rem !important;
+  color: #555 !important;
+}
+
+.hero-text h2 {
+  font-size: 2rem !important;
+  color: #666 !important;
+}
+
+.hero-text p {
+  color: #999 !important;
+  font-size: 1.1rem;
+}
+
+/* Custom Button Styling */
+.btn-custom {
+  border: 1px solid #ccc !important;
+  color: #666 !important;
+  text-decoration: none !important;
+  transition: all 0.3s ease !important;
+  background-color: transparent !important;
+}
+
+.btn-custom:hover {
+  background: linear-gradient(to right, #00c6ff, #0072ff) !important;
+  color: white !important;
+  border-color: transparent !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-custom:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0, 198, 255, 0.25) !important;
+}
+
+/* Astronaut Image Styling */
+.astronaut {
+  background: radial-gradient(circle, rgba(173, 216, 255, 0.4), transparent 70%);
+  border-radius: 50%;
+  padding: 20px;
+  transition: transform 0.3s ease;
+}
+
+.astronaut:hover {
+  transform: scale(1.05) rotate(5deg);
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+  .hero-text {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .hero-text h1 {
+    font-size: 4rem !important;
+  }
+  
+  .hero-text h2 {
+    font-size: 1.5rem !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hero-text h1 {
+    font-size: 3rem !important;
+  }
+  
+  .hero-text h2 {
+    font-size: 1.25rem !important;
+  }
+  
+  .hero-section {
+    padding: 0 3%;
+  }
+}

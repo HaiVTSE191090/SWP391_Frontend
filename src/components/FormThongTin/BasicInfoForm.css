@@ -1,0 +1,74 @@
+/* Background */
+.form-container {
+  min-height: 100vh;
+  background: url('../assets/image 13.png') center/cover;
+  position: relative;
+}
+
+/* Blur effect */
+.form-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../assets/image 13.png') center/cover;
+  filter: blur(8px);
+  z-index: -2;
+}
+
+.form-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
+/* Form styles */
+.form-wrapper {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.form-title {
+  color: #333 !important;
+  font-size: 24px !important;
+  letter-spacing: 1px;
+}
+
+/* Input styles */
+.form-control.rounded-pill {
+  padding: 1rem 1.5rem;
+  border: 2px solid #e1e5e9;
+  background: rgba(255, 255, 255, 0.95);
+  transition: all 0.3s ease;
+}
+
+.form-control.rounded-pill:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Button styles */
+.btn-primary.rounded-pill {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-primary.rounded-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .form-title {
+    font-size: 20px !important;
+  }
+  
+  .form-control.rounded-pill {
+    padding: 0.75rem 1rem;
+  }
+}
