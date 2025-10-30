@@ -20,6 +20,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import StaffLogin from "./components/StaffInterface/StaffLogin";
 import Staff from "./components/StaffInterface/Staff";
 import PaymentResultPage from "./pages/PaymentResultPage";
+import AdminLayout from "./components/AdminInterface/Admin";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -42,11 +43,17 @@ const App = () => {
                 <Route path="vehicles" element={<VehiclesPage />} />
                 <Route path="vehicles/:id" element={<VehicleDetailPage />} />
                 <Route path="profile" element={<UserProfilePage />} />
-                <Route path="payment-result" element={<PaymentResultPage/>}/>
+                <Route path="payment-result" element={<PaymentResultPage />} />
 
+                {/* staff */}
                 <Route path="staff/login" element={<StaffLogin />} />
                 <Route path="staff/" element={<RequireAuth />}>
                   <Route index element={<Staff />} />
+                </Route>
+
+                {/* admin */}
+                <Route path="admin/">
+                  <Route index element={<AdminLayout />} />
                 </Route>
 
                 <Route path="*" element={<NotFoundPage />} />
