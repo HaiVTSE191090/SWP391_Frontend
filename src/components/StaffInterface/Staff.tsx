@@ -109,7 +109,7 @@ export default function Staff() {
     'Xe đang cho thuê',
     'Xe bảo trì',
     'Danh sách người thuê',
-    'Quản lý đặt xe',
+    'Danh sách booking',
     'Báo cáo',
   ];
 
@@ -142,6 +142,8 @@ export default function Staff() {
   const handleMenuClick = (item: string) => {
     if (item === 'Danh sách người thuê') {
       navigate('/staff/renters');
+    } else if (item === 'Danh sách booking') {
+      navigate('/staff/bookings');
     } else {
       setSelectedCategory(item);
     }

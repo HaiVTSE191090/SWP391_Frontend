@@ -28,10 +28,9 @@ const ListRenter: React.FC = () => {
 		setLoading(true);
 		setError('');
 
-		try { // Thêm try-catch vào đây cũng là một ý hay
+		try { 
 			const renterData = await getListRenter();
 
-			// getListRenter() trả về Axios Response => renterData là { data: { status: 'success', data: [ { renterId: 1, ... } ] } }
 			// cần truy cập 2 lần .data để lấy mảng người thuê
 			setRenters(renterData?.data?.data || []);
 
