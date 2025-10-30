@@ -51,10 +51,6 @@ const App = () => {
                   <Route index element={<Staff />} />
                 </Route>
 
-                {/* admin */}
-                <Route path="admin/">
-                  <Route index element={<AdminLayout />} />
-                </Route>
 
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
