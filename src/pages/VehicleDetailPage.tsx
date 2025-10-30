@@ -110,8 +110,8 @@ const VehicleDetailPage: React.FC = () => {
 
       try {
         const res = await handleCreateBooking(parseInt(id!), startDateTime, endDateTime);
-        const res2 = await axios.put(`http://localhost:8080/api/bookings/${res.bookingId}/status/reserved`)
-        console.log("đây: ", res2)
+        // const res2 = await axios.put(`http://localhost:8080/api/bookings/${res.bookingId}/status/reserved`)
+        // console.log("đây: ", res2)
         if(res.error || !res === undefined){
           toast.error(res.error, {
             position: "top-center",

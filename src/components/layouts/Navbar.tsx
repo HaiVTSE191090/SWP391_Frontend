@@ -73,7 +73,9 @@ const Navbar: React.FC = () => {
                     </li>
 
                     <li className="nav-item">
-                      <button className="btn btn-link text-decoration-none">
+                      <button className="btn btn-link text-decoration-none"
+                        onClick={() => navigate("/rental-history")}
+                      >
                         Lịch sử thuê xe
                       </button>
                     </li>
