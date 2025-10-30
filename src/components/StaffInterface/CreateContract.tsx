@@ -28,47 +28,38 @@ interface BookingInfo {
     pricePerDay: number; 
     depositAmount: number; 
     contractId: number | null;
-    
-    // THÊM: Các trường giả định cho bên cho thuê (Staff) và người thuê
-    staffName: string; 
-    staffCCCD: string;
-    staffBirthYear: number;
-    renterBirthYear: number; 
-    // Thêm các ID quan trọng để gửi payload (GIẢ ĐỊNH có trong API)
-    renterId: number; 
-    vehicleId: number; 
+    // Thêm các trường khác cần thiết cho Hợp đồng
 }
 // --- Kết thúc Interfaces ---
 
 
+// Component chính
 const CreateContract: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
     const id = Number(bookingId);
     const navigate = useNavigate();
 
+    // Dữ liệu và trạng thái đã được typed
     const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null);
     const [terms, setTerms] = useState<TermCondition[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     
+    // Trạng thái Hợp đồng
     const [contractId, setContractId] = useState<number | null>(null);
     const [isSending, setIsSending] = useState<boolean>(false);
     const [isSent, setIsSent] = useState<boolean>(false);
     
+    // Form Inputs
     const [notes, setNotes] = useState<string>('');
     const [deposit, setDeposit] = useState<number>(0);
     const [totalPrice, setTotalPrice] = useState<number>(0);
 
+    // Modal
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // Lấy Ngày, Tháng, Năm và Địa điểm hiện tại để điền vào Hợp đồng
-    const today = new Date();
-    const date = today.getDate();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-    const location = bookingInfo?.stationName || 'TP. Hồ Chí Minh';
-    
-    //Fetch Dữ liệu (Booking Info & Template
+
+    // --- 1. Fetch Dữ liệu (Booking Info & Template) ---
     useEffect(() => {
         if (!id || isNaN(id)) {
             setError('ID Booking không hợp lệ.');
@@ -81,26 +72,19 @@ const CreateContract: React.FC = () => {
             setError('');
             
             try {
+                // 1a. Lấy thông tin Booking (getBookingInfoForContract)
                 const bookingResponse = await getBookingInfoForContract(id);
+                // Ép kiểu dữ liệu trả về từ API
+                const info: BookingInfo = bookingResponse?.data?.data; 
                 
-                // GIẢ LẬP DỮ LIỆU ĐỂ ĐẢM BẢO CÁC TRƯỜNG TRONG INTERFACE ĐƯỢC ĐIỀN ĐẦY ĐỦ
-                const info = {
-                    ...bookingResponse?.data?.data,
-                    // MOCKING: Thêm các ID quan trọng nếu API gốc thiếu
-                    renterId: 123, 
-                    vehicleId: 456, 
-                    // MOCKING: Thông tin Staff và Năm sinh (đã giả định)
-                    staffName: 'Lê Văn B', 
-                    staffCCCD: '001190000000',
-                    staffBirthYear: 1990, 
-                    renterBirthYear: 1995, 
-                } as BookingInfo; 
-                
-                if (info && info.bookingId) {
+                if (info) {
                     setBookingInfo(info);
+                    // Lấy contractId nếu đã tồn tại
                     setContractId(info.contractId || null); 
+                    // Set giá trị mặc định cho form
                     setDeposit(info.depositAmount || 0);
                     
+                    // Tính Tổng phí thuê dựa trên Booking Info
                     const start = new Date(info.startDateTime);
                     const end = new Date(info.endDateTime);
                     const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -110,10 +94,13 @@ const CreateContract: React.FC = () => {
                      throw new Error('Không tìm thấy thông tin Booking.');
                 }
                 
+                // 1b. Lấy Điều khoản mẫu (getContractTermsTemplate)
                 const termsResponse = await getContractTermsTemplate();
+                // Ép kiểu dữ liệu trả về từ API
                 setTerms(termsResponse?.data?.data || []);
                 
             } catch (err) {
+                // Xử lý lỗi Axios nếu có
                 const errorMessage = (err as any).response?.data?.message || 'Không thể tải dữ liệu để tạo hợp đồng.';
                 setError(errorMessage);
             } finally {
@@ -128,43 +115,31 @@ const CreateContract: React.FC = () => {
     const handleCreateContract = async () => {
         setIsSending(true);
         setError('');
-        
-        // Kiểm tra bookingInfo để đảm bảo các ID quan trọng có sẵn
-        if (!bookingInfo) {
-             setIsSending(false);
-             setError('Thiếu thông tin Booking cần thiết.');
-             return;
-        }
-
         try {
-            // PAYLOAD CHÍNH XÁC: Gửi các ID quan trọng và mảng terms
             const payload = {
                 bookingId: id,
-                renterId: bookingInfo.renterId, // Thêm Renter ID
-                vehicleId: bookingInfo.vehicleId, // Thêm Vehicle ID
                 depositAmount: deposit,
                 totalPrice: totalPrice,
                 notes: notes,
-                // THÊM: Gửi kèm danh sách các điều khoản (thường BE yêu cầu để lưu snapshot)
-                terms: terms.map(term => ({
-                    termNumber: term.termNumber,
-                    termTitle: term.termTitle,
-                    termContent: term.termContent
-                })),
+                // Thêm các trường khác cần thiết từ bookingInfo (nếu BE yêu cầu)
+                // Ví dụ: renterId: bookingInfo?.renterId,
             };
 
+            // Gọi API tạo Hợp đồng
             const response = await createContract(payload);
+            
+            // Giả định API trả về contractId trong response.data.data
             const newContractId = response.data?.data?.contractId; 
             
             if (newContractId) {
-                setContractId(newContractId);
-                alert(`Hợp đồng ID ${newContractId} đã được tạo thành công!`);
+                setContractId(newContractId); // Cập nhật ID để hiển thị nút Gửi Admin
+                alert(`✅ Hợp đồng ID ${newContractId} đã được tạo thành công!`);
             } else {
                 setError('Tạo hợp đồng thành công nhưng không nhận được Contract ID.');
             }
 
         } catch (err) {
-            const errorMessage = (err as any).response?.data?.message || 'Lỗi khi thực hiện tạo Hợp đồng (400 Bad Request). Kiểm tra Payload!';
+            const errorMessage = (err as any).response?.data?.message || 'Lỗi khi thực hiện tạo Hợp đồng.';
             setError(errorMessage);
         } finally {
             setIsSending(false);
@@ -181,6 +156,7 @@ const CreateContract: React.FC = () => {
         setIsSending(true);
         setError('');
         try {
+            // Gọi API gửi Admin
             await sendContractToAdmin(contractId);
             
             setIsSent(true); 
@@ -194,27 +170,7 @@ const CreateContract: React.FC = () => {
         }
     };
 
-    // Nút Hành động chính
-    const handleAction = contractId ? handleSendToAdmin : handleCreateContract;
-
-
     // --- UI Renders ---
-
-    // Modal thông báo thành công
-    const SuccessModal = () => (
-        <Modal show={showSuccessModal} onHide={() => { setShowSuccessModal(false); navigate('/staff/bookings'); }}>
-            <Modal.Header closeButton className='bg-success text-white'>
-                <Modal.Title>Gửi Thành Công!</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <p>Hợp đồng ID **{contractId}** đã được gửi thành công đến Admin để ký duyệt.</p>
-                <p className='text-muted small'>Bạn sẽ được chuyển về trang danh sách Booking.</p>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="success" onClick={() => { setShowSuccessModal(false); navigate('/staff/bookings'); }}>Hoàn tất</Button>
-            </Modal.Footer>
-        </Modal>
-    );
 
     if (loading) {
         return (
@@ -225,106 +181,156 @@ const CreateContract: React.FC = () => {
         );
     }
 
+    // Modal thông báo thành công
+    const SuccessModal = () => (
+        <Modal show={showSuccessModal} onHide={() => { setShowSuccessModal(false); navigate('/staff/bookings'); }}>
+            <Modal.Header closeButton className='bg-success text-white'>
+                <Modal.Title>🚀 Gửi Thành Công!</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>Hợp đồng ID **{contractId}** đã được gửi thành công đến Admin để ký duyệt.</p>
+                <p className='text-muted small'>Bạn sẽ được chuyển về trang danh sách Booking.</p>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="success" onClick={() => { setShowSuccessModal(false); navigate('/staff/bookings'); }}>
+                    Hoàn tất
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
+
+    // Nút Hành động chính
+    const renderActionButton = () => {
+        if (isSent) {
+            return (
+                <Button variant="success" size="lg" disabled>
+                    ✅ Đã gửi Admin
+                </Button>
+            );
+        }
+        if (contractId) {
+            return (
+                <Button 
+                    variant="warning" 
+                    size="lg" 
+                    onClick={handleSendToAdmin}
+                    disabled={isSending}
+                >
+                    {isSending ? <Spinner size="sm" animation="border" /> : '✉️ Gửi Hợp đồng cho Admin'}
+                </Button>
+            );
+        }
+        return (
+            <Button 
+                variant="primary" 
+                size="lg" 
+                onClick={handleCreateContract}
+                disabled={isSending || !bookingInfo || terms.length === 0}
+            >
+                {isSending ? <Spinner size="sm" animation="border" /> : '📝 Lập & Lưu Hợp đồng'}
+            </Button>
+        );
+    };
+
+
     return (
-        <Container className="py-4">
+        <Container fluid className="py-4" style={{ backgroundColor: '#f8f9fa' }}>
             <SuccessModal />
-            <h2 className="mb-4 text-primary text-center">Tạo Hợp đồng Thuê Xe (Booking ID: {id})</h2>
-
+            <h2 className="mb-4 text-primary">📝 Tạo Hợp đồng Thuê Xe (Booking ID: {id})</h2>
+            
             {error && <Alert variant="danger" className="shadow-sm">{error}</Alert>}
-            
-            <Card className="shadow-lg p-5 mx-auto border-0" style={{ maxWidth: '800px', border: '1px solid #ccc' }}>
-                {/* Contract Content */}
-                <div className="text-center mb-4">
-                    <h4 className="mb-0">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h4>
-                    <p className="fw-bold mb-5">Độc Lập - Tự Do - Hạnh Phúc</p>
-                    <h2 className="text-uppercase fw-bold text-primary">HỢP ĐỒNG THUÊ XE</h2>
-                </div>
-                
-                {/* 1. Phần Giới thiệu và thông tin bên A, B */}
-                <div className="fs-6 mb-4">
-                    Hôm nay, ngày <span className="underline-text fw-bold">{date}</span> tháng <span className="underline-text fw-bold">{month}</span> năm <span className="underline-text fw-bold">{year}</span>, tại <span className="underline-text fw-bold">{location}</span>, chúng tôi gồm:
-                </div>
-                
-                <div className="ms-4 mb-4 contract-parties">
-                    <h6 className="fw-bold text-uppercase mb-2">BÊN CHO THUÊ (Bên A):</h6>
-                    <Row className="mb-1">
-                        <Col xs={6}>Ông/Bà: <span className="underline-text">{bookingInfo?.staffName || 'N/A'}</span></Col>
-                        <Col xs={6}>Sinh năm: <span className="underline-text">{bookingInfo?.staffBirthYear || 'N/A'}</span></Col>
-                    </Row>
-                    <Row className="mb-3">
-                        <Col xs={12}>CCCD: <span className="underline-text">{bookingInfo?.staffCCCD || 'N/A'}</span></Col>
-                    </Row>
-                    
-                    <h6 className="fw-bold text-uppercase mb-2">BÊN THUÊ (Bên B):</h6>
-                    <Row className="mb-1">
-                        <Col xs={6}>Ông/Bà: <span className="underline-text">{bookingInfo?.renterName || 'N/A'}</span></Col>
-                        <Col xs={6}>Sinh năm: <span className="underline-text">{bookingInfo?.renterBirthYear || 'N/A'}</span></Col>
-                    </Row>
-                    <Row className="mb-3">
-                        <Col xs={12}>CCCD: <span className="underline-text">{bookingInfo?.renterIdentityCard || 'N/A'}</span></Col>
-                    </Row>
-                </div>
 
-                <div className="mb-4">
-                    Hai bên đã thỏa thuận và thống nhất ký Hợp đồng thuê xe **{bookingInfo?.vehicleName || 'Ô tô điện'}** với những điều khoản cụ thể được trao đổi:
-                </div>
+            <Row>
+                {/* Cột trái: Thông tin Booking và Giá */}
+                <Col lg={5} className="mb-4">
+                    <Card className="shadow-sm border-0">
+                        <Card.Header as="h5" className="bg-primary text-white">
+                            Thông tin Booking {contractId && `(Hợp đồng ID: ${contractId})`}
+                        </Card.Header>
+                        <Card.Body>
+                            <ListGroup variant="flush">
+                                <ListGroup.Item>
+                                    <strong>Khách hàng:</strong> {bookingInfo?.renterName} (Tel: {bookingInfo?.renterPhoneNumber || 'N/A'})
+                                </ListGroup.Item>
+                                <ListGroup.Item>
+                                    <strong>CCCD/CMND:</strong> {bookingInfo?.renterIdentityCard || 'Chưa xác định'}
+                                </ListGroup.Item>
+                                <ListGroup.Item>
+                                    <strong>Xe thuê:</strong> {bookingInfo?.vehicleName}
+                                </ListGroup.Item>
+                                <ListGroup.Item>
+                                    <strong>Trạm nhận:</strong> {bookingInfo?.stationName}
+                                </ListGroup.Item>
+                                <ListGroup.Item>
+                                    <strong>Thời gian:</strong> {new Date(bookingInfo?.startDateTime || '').toLocaleString()} - {new Date(bookingInfo?.endDateTime || '').toLocaleString()}
+                                </ListGroup.Item>
+                            </ListGroup>
+                        </Card.Body>
+                        <Card.Footer>
+                            <h5 className="text-success mb-0">Tóm tắt Chi phí</h5>
+                            <hr className='mt-1 mb-2'/>
+                            <Form>
+                                <Form.Group as={Row} className="mb-2 align-items-center">
+                                    <Form.Label column sm="4" className='fw-bold'>Tiền cọc:</Form.Label>
+                                    <Col sm="8">
+                                        <InputGroup size="sm">
+                                            <Form.Control type="number" value={deposit} onChange={(e) => setDeposit(Number(e.target.value))} />
+                                            <InputGroup.Text>VNĐ</InputGroup.Text>
+                                        </InputGroup>
+                                    </Col>
+                                </Form.Group>
+                                <Form.Group as={Row} className="align-items-center">
+                                    <Form.Label column sm="4" className='fw-bold'>Tổng phí thuê:</Form.Label>
+                                    <Col sm="8">
+                                        <InputGroup size="sm">
+                                            <Form.Control type="number" value={totalPrice} onChange={(e) => setTotalPrice(Number(e.target.value))} />
+                                            <InputGroup.Text>VNĐ</InputGroup.Text>
+                                        </InputGroup>
+                                    </Col>
+                                </Form.Group>
+                            </Form>
+                        </Card.Footer>
+                    </Card>
+                </Col>
 
-                {/* 2. Phần Các Điều Khoản (Tích hợp Terms Template) */}
-                <h6 className="fw-bold text-uppercase mb-3 text-secondary">CHI TIẾT ĐIỀU KHOẢN HỢP ĐỒNG:</h6>
-                <ListGroup variant="flush" className="mb-4 contract-terms">
-                    {terms.map((term: TermCondition, index) => (
-                        <ListGroup.Item key={index} className="ps-0 border-0">
-                            <span className="fw-bold text-dark">{term.termNumber}. {term.termTitle}:</span>
-                            <span className="text-muted ms-2">{term.termContent}</span>
-                        </ListGroup.Item>
-                    ))}
-                    <ListGroup.Item className="ps-0 border-0">
-                        <span className="fw-bold text-dark">{terms.length + 1}. Chi phí và Tiền cọc:</span>
-                        <span className="text-muted ms-2">
-                            Tổng phí thuê: **{totalPrice.toLocaleString()} VNĐ**. Tiền cọc: **{deposit.toLocaleString()} VNĐ**.
-                        </span>
-                    </ListGroup.Item>
-                </ListGroup>
-                
-                {/* Ghi chú */}
-                <Form.Group className="mb-4">
-                    <Form.Label className="fw-bold text-secondary">Ghi chú Hợp đồng (Tùy chọn):</Form.Label>
-                    <Form.Control 
-                        as="textarea" 
-                        rows={3} 
-                        placeholder="Thêm ghi chú đặc biệt cho hợp đồng này..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                    />
-                </Form.Group>
+                {/* Cột phải: Các Điều khoản và Nút Hành động */}
+                <Col lg={7}>
+                    <Card className="shadow-sm border-0">
+                        <Card.Header as="h5" className="bg-secondary text-white">
+                            Điều khoản Hợp đồng Mẫu ({terms.length} Điều khoản)
+                        </Card.Header>
+                        <Card.Body style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                            <ListGroup variant="flush">
+                                {terms.map((term: TermCondition) => ( 
+                                    <ListGroup.Item key={term.termNumber} className="d-flex align-items-start">
+                                        <div className="me-3 fw-bold text-primary" style={{ minWidth: '30px' }}>
+                                            {term.termNumber}.
+                                        </div>
+                                        <div>
+                                            <h6 className="mb-1 text-dark">{term.termTitle}</h6>
+                                            <p className="mb-1 text-muted small">{term.termContent}</p>
+                                        </div>
+                                    </ListGroup.Item>
+                                ))}
+                                {terms.length === 0 && <p className="text-center text-muted">Không có điều khoản mẫu nào được tải.</p>}
+                            </ListGroup>
+                            
+                            <h5 className="mt-4 mb-3 text-secondary">Ghi chú (Tùy chọn)</h5>
+                            <Form.Control 
+                                as="textarea" 
+                                rows={3} 
+                                placeholder="Thêm ghi chú đặc biệt cho hợp đồng này..."
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                            />
+                        </Card.Body>
 
-                {/* 3. Phần Ký tên và Nút Hành động */}
-                <Row className="mt-5 text-center">
-                    <Col>
-                        <p className="fw-bold">Bên Cho Thuê</p>
-                        <p className="text-muted small">(Ký và ghi rõ họ tên)</p>
-                    </Col>
-                    <Col>
-                        <p className="fw-bold">Bên Thuê</p>
-                        <p className="text-muted small">(Ký và ghi rõ họ tên)</p>
-                    </Col>
-                </Row>
-
-                <div className="d-flex justify-content-center gap-3 mt-5">
-                    <Button variant="outline-secondary" size="lg" onClick={() => navigate(-1)} disabled={isSending}>
-                        Hủy
-                    </Button>
-                    <Button 
-                        variant={contractId ? "warning" : "primary"} 
-                        size="lg" 
-                        onClick={handleAction}
-                        disabled={isSending || !bookingInfo || terms.length === 0}
-                    >
-                        {isSending ? <Spinner size="sm" animation="border" /> : (contractId ? 'Gửi Admin' : 'Tạo Hợp đồng')}
-                    </Button>
-                </div>
-            </Card>
-            
+                        <Card.Footer className='d-flex justify-content-end'>
+                            {renderActionButton()}
+                        </Card.Footer>
+                    </Card>
+                </Col>
+            </Row>
         </Container>
     );
 };

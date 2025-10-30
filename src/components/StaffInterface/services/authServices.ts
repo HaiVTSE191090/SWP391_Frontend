@@ -112,3 +112,83 @@ export const deleteRenter = async (renterId: number) => {
         console.error(error)
     }
 }
+
+// Hàm lấy danh sách booking tại trạm của nhân viên
+export const getStaffStationBookings = async () => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const resp = await axios.get(`${baseURL}/api/bookings/station/contracts`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return resp;
+    } catch (error) {
+        console.error(error)
+    }
+}
+
+export const getContractTermsTemplate = async () => { 
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get(`${baseURL}/api/staff/contracts/template`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error("Lỗi khi lấy điều khoản hợp đồng mẫu:", error);
+        throw error;
+    }
+};
+
+
+// Lấy thông tin chi tiết Booking để tạo Hợp đồng.
+
+export const getBookingInfoForContract = async (bookingId: number) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.get(`${baseURL}/api/staff/contracts/booking-info/${bookingId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error(`Lỗi khi lấy thông tin booking ID ${bookingId}:`, error);
+        throw error;
+    }
+};
+
+
+//  * Tạo Hợp đồng mới từ Booking.
+export const createContract = async (payload: any) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.post(`${baseURL}/api/staff/contracts/create`, payload, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error("Lỗi khi tạo hợp đồng:", error);
+        throw error;
+    }
+};
+
+export const sendContractToAdmin = async (contractId: number) => {
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await axios.post(`${baseURL}/api/staff/contracts/${contractId}/send-to-admin`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response;
+    } catch (error) {
+        console.error(`Lỗi khi gửi hợp đồng ${contractId} cho Admin:`, error);
+        throw error;
+    }
+};
