@@ -1,9 +1,8 @@
 import { useLocation, Navigate, Outlet } from "react-router-dom"
-import { useAuth } from "../../hooks/useAuth"
 import { jwtDecode } from "jwt-decode";
 
 const RequireAuth = () => {
-    const { token } = useAuth();
+    const token = localStorage.getItem("staffToken")
     const location = useLocation();
     if (token) {
         try {
@@ -12,7 +11,7 @@ const RequireAuth = () => {
             const staffRole = decoded.role;
 
             return (
-                staffRole === "STAFF" ? <Outlet /> : <Navigate to={"/staff/login"} state={{ from: location }} replace />
+                staffRole === "STAFF" ? <Outlet /> : <Navigate to={"/"} state={{ from: location }} replace />
             )
         } catch (error: any) {
             console.warn("RequireAuth err")
@@ -20,7 +19,7 @@ const RequireAuth = () => {
     }
 
     return (
-        <Navigate to={"/"} />
+        <Navigate to={"/staff/login"} />
     );
 }
 

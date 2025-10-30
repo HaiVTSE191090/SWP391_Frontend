@@ -1,0 +1,11 @@
+.staff-login-main {
+  min-height: calc(100vh - 240px); 
+}
+
+.staff-login-main .card {
+  border: none;
+}
+
+.staff-login-main .card-title {
+  color: #0d6efd; 
+}
