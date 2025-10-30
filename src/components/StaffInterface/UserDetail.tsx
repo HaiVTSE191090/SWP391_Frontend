@@ -1,29 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert, Image } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ConfirmationPopup from './ConfirmationPopup';
-// import OTPModal from './OTPModal';
+import { deleteRenter, getRenterDetails, verifyRenter } from './services/authServices';
 
-// Thông tin chi tiết người thuê
+interface DocumentDetail {
+  documentNumber: string;
+  fullName: string;
+  type: 'NATIONAL_ID' | 'DRIVER_LICENSE' | string;
+  issueDate: string;
+  expiryDate: string;
+  verifiedAt: string | null;
+}
+
 interface RenterDetail {
-  id: string | number;
-  name: string;
-  birth: string;
-  phone: string;
+  renterId: number;
+  fullName: string;
+  dateOfBirth: string;
+  phoneNumber: string;
   email: string;
   address: string;
-  identityCard: string;
-  license: string;
-  avatarUrl: string;
+  status: 'VERIFIED' | 'PENDING_VERIFICATION' | string;
+  cccd: DocumentDetail;
+  gplx: DocumentDetail;
 }
 
-// Props của component
-interface UserDetailProps {
-  renterId: string | number;
-  onBack?: () => void;
-}
-
-const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
+const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+  const { id } = useParams(); //  lấy id từ URL
+  const renterId = Number(id);
   const [detail, setDetail] = useState<RenterDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,84 +36,53 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
   const [popupConfig, setPopupConfig] = useState({
     title: '',
     message: '',
-    type: 'success' as 'success' | 'danger' | 'warning' | 'info'
+    type: 'success' as 'success' | 'danger' | 'warning' | 'info',
   });
-  // const [showOTPModal, setShowOTPModal] = useState(false);
 
-  // Tự động load data khi vào trang
   useEffect(() => {
     fetchDetail();
-    // eslint-disable-next-line
-  }, [renterId]);
+  }, []); // chạy lại khi id đổi
 
-  // Hàm tải thông tin chi tiết
   const fetchDetail = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      // TODO: Thay bằng API thật
-      // const res = await axios.get(`/api/renters/${renterId}`);
-      // setDetail(res.data);
-      
-      // Mock data để test
-      setTimeout(() => {
-        setDetail({
-          id: renterId,
-          name: 'Nguyễn Văn A',
-          birth: '1999-01-01',
-          phone: '0912345678',
-          email: 'nguyenvana@gmail.com',
-          address: '123 Đường ABC, Quận 1, TP.HCM',
-          identityCard: '123456789',
-          license: 'B2-123456',
-          avatarUrl: 'https://i.pravatar.cc/120?u=' + renterId
-        });
-        setLoading(false);
-      }, 800);
-    } catch (err: any) {
-      setError('Không thể tải thông tin người dùng!');
-      setLoading(false);
-    }
+    setLoading(true);
+    setError('');
+    const userData = await getRenterDetails(renterId);
+    setDetail(userData?.data?.data || null);
+    setLoading(false);
   };
-
-  // Xử lý khi bấm Verify
 
   const handleVerify = async () => {
     try {
-      // TODO: Gọi API xác thực
-      // await axios.post(`/api/renters/${renterId}/verify`);
-      
-      setPopupConfig({
-        title: 'Success',
-        message: 'The account has been successfully verified',
-        type: 'success'
-      });
-      setShowPopup(true);
+      const resp = await verifyRenter(renterId);
+      if (resp?.data?.status === 'success') {
+        setPopupConfig({
+          title: 'Success',
+          message: 'The account has been successfully verified',
+          type: 'success',
+        });
+        setShowPopup(true)
+      }
     } catch (err) {
       setPopupConfig({
         title: 'Error',
         message: 'Failed to verify account',
-        type: 'danger'
+        type: 'danger',
       });
       setShowPopup(true);
     }
   };
 
-  // Xử lý khi bấm Delete
   const handleDelete = async () => {
     try {
-      // TODO: Gọi API xóa
-      // await axios.delete(`/api/renters/${renterId}`);
-      
-      setPopupConfig({
-        title: 'Success',
-        message: 'The account has been successfully deleted',
-        type: 'success'
-      });
+      const resp = await deleteRenter(renterId);
+      if (resp?.data?.status === 'success') {
+        setPopupConfig({
+          title: 'Success',
+          message: 'The account has been successfully deleted',
+          type: 'success',
+        });
+      }
       setShowPopup(true);
-      
-      // Sau 2 giây tự động quay lại
       setTimeout(() => {
         if (onBack) onBack();
       }, 2000);
@@ -116,13 +90,12 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
       setPopupConfig({
         title: 'Error',
         message: 'Failed to delete account',
-        type: 'danger'
+        type: 'danger',
       });
       setShowPopup(true);
     }
   };
 
-  // Đang loading
   if (loading) {
     return (
       <Container className="py-5 text-center">
@@ -132,7 +105,6 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
     );
   }
 
-  // Có lỗi
   if (error) {
     return (
       <Container className="py-5 text-center">
@@ -142,34 +114,20 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
     );
   }
 
-  // Hiển thị giao diện
   return (
     <Container className="py-4 d-flex flex-column align-items-center">
-      {/* Card thông tin */}
       <Card className="p-4 shadow" style={{ borderRadius: 24, minWidth: 400, maxWidth: 600, width: '100%' }}>
         <Row className="align-items-center">
-          {/* Avatar */}
-          <Col xs={4} className="d-flex justify-content-center">
-            <Image 
-              src={detail?.avatarUrl}
-              roundedCircle
-              width={90} 
-              height={90} 
-              alt="avatar" 
-            />
-          </Col>
-          
-          {/* Thông tin chi tiết */}
           <Col xs={8}>
             <Row>
               <Col xs={6} className="mb-2">
-                <strong>Name:</strong> {detail?.name}
+                <strong>Name:</strong> {detail?.fullName}
               </Col>
               <Col xs={6} className="mb-2">
-                <strong>Birth:</strong> {detail?.birth}
+                <strong>Birth:</strong> {detail?.dateOfBirth}
               </Col>
               <Col xs={6} className="mb-2">
-                <strong>Phone:</strong> {detail?.phone}
+                <strong>Phone:</strong> {detail?.phoneNumber}
               </Col>
               <Col xs={6} className="mb-2">
                 <strong>Email:</strong> {detail?.email}
@@ -178,36 +136,33 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
                 <strong>Address:</strong> {detail?.address}
               </Col>
               <Col xs={6} className="mb-2">
-                <strong>Identity Card:</strong> {detail?.identityCard}
+                <strong>Identity Card:</strong> {detail?.cccd.documentNumber}
               </Col>
               <Col xs={12} className="mb-2">
-                <strong>License:</strong> {detail?.license}
+                <strong>License:</strong> {detail?.gplx.documentNumber}
               </Col>
             </Row>
           </Col>
         </Row>
       </Card>
-      
 
-      {/* 2 nút Verify và Delete */}
-      <div className="d-flex justify-content-center gap-4 mt-4">
-        <Button variant="success" size="lg" onClick={handleVerify}>
-          Verify
-        </Button>
-        <Button variant="danger" size="lg" onClick={handleDelete}>
-          Delete
-        </Button>
-      </div>
-      
-      {/* Nút quay lại */}
+      {detail?.status === 'PENDING_VERIFICATION' && (
+        <div className="d-flex justify-content-center gap-4 mt-4">
+          <Button variant="success" size="lg" onClick={handleVerify}>
+            Verify
+          </Button>
+          <Button variant="danger" size="lg" onClick={handleDelete}>
+            Delete
+          </Button>
+        </div>
+      )}
+
       {onBack && (
         <Button variant="link" className="mt-3" onClick={onBack}>
           Quay lại danh sách
         </Button>
       )}
 
-      {/* Popup OTP đã chuyển sang ListRenter */}
-      {/* Popup thông báo */}
       <ConfirmationPopup
         show={showPopup}
         onHide={() => setShowPopup(false)}

@@ -26,7 +26,7 @@ const StaffLogin: React.FC = () => {
             alert("Đăng nhập thành công!");
             if (token) {
                 localStorage.setItem('authToken', token);
-
+                localStorage.setItem('name', resp?.data?.fullName);
             }
             navigate("/staff");
         } catch (err: any) {

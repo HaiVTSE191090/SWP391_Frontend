@@ -4,7 +4,7 @@ import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react
 import ListRenter from './ListRenter';
 import ChooseCar from './ChooseCar';
 import { useNavigate } from 'react-router-dom';
-import { getCarDetails, getStaffStation } from './services/authServices';
+import { getCarDetails, getStaffStation, getUserName, staffLogout } from './services/authServices';
 
 
 interface StationVehicle {
@@ -20,11 +20,11 @@ interface StationVehicle {
 
 // Interface cho dữ liệu đã hợp nhất (sẽ lưu trong state 'mockCars')
 interface MergedVehicle extends StationVehicle {
-    // Thêm các trường lấy từ API detail
-    image: string;
-    pricePerDay: number; // Giá thuê/ngày (từ detail API)
-    // Cập nhật trường status để bao gồm IN-USE (nếu logic của bạn cần)
-    status: 'MAINTENANCE' | 'AVAILABLE' | 'IN_USE';
+  // Thêm các trường lấy từ API detail
+  image: string;
+  pricePerDay: number; // Giá thuê/ngày (từ detail API)
+  // Cập nhật trường status để bao gồm IN-USE (nếu logic của bạn cần)
+  status: 'MAINTENANCE' | 'AVAILABLE' | 'IN_USE';
 }
 
 
@@ -38,6 +38,7 @@ export default function Staff() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [mockCars, setMockCars] = useState<MergedVehicle[]>([]);
+  const [staffName, setStaffName] = useState<string>(getUserName());
 
   const navigate = useNavigate();
 
@@ -49,6 +50,10 @@ export default function Staff() {
   }, []);
 
 
+  const handleLogout = () => {
+    staffLogout(); // 1. Xóa Token và tên khỏi localStorage
+    navigate("/"); // 2. Chuyển hướng người dùng về trang đăng nhập
+  };
 
   // Thay thế fetchCar và fetchCarImage bằng hàm này
   const fetchStationData = async () => {
@@ -168,14 +173,10 @@ export default function Staff() {
   return (
     <div className="staff-interface">
       {/* Navigation Bar với Hamburger Menu */}
-      <Navbar bg="dark" variant="dark" className="px-3">
-        <Button variant="outline-light" onClick={handleShow} className="me-3">
+      <Navbar className="px-3">
+        <Button variant="primary" onClick={handleShow} className="me-3">
           ☰
         </Button>
-        <Navbar.Brand>Staff Dashboard</Navbar.Brand>
-        <Nav className="ms-auto">
-          <Nav.Link>Đăng xuất</Nav.Link>
-        </Nav>
       </Navbar>
 
       {/* Hamburger Menu - Offcanvas */}
@@ -211,7 +212,7 @@ export default function Staff() {
             {/* Car Grid */}
             <Row>
               {filteredCars().map((car) => (
-                <Col lg={4} md={6} sm={12} className="mb-4" key={car.vehicleId}>
+                <Col lg={4} md={6} sm={12} className="mb-6" key={car.vehicleId}>
                   <Card
                     className="h-100 shadow-sm"
                     style={{ cursor: car.status === 'IN_USE' ? 'pointer' : 'default' }}
@@ -219,8 +220,16 @@ export default function Staff() {
                   >
                     <Card.Img
                       variant="top"
+
+                      className="card-img-top"
                       src={car.image}
-                      style={{ height: '200px', objectFit: 'cover' }}
+                      style={{
+                        height: '200px',
+                        objectFit: 'cover',
+                        width: '100%',
+
+
+                      }}
                       alt={car.name}
                     />
                     <Card.Body className="d-flex flex-column">
@@ -255,7 +264,7 @@ export default function Staff() {
                             >
                               {car.status === 'AVAILABLE' ? 'Cho thuê' :
                                 car.status === 'IN_USE' ? 'Đang thuê' :
-                                car.status === 'MAINTENANCE' ? 'Bảo trì' : 'N/A'}
+                                  car.status === 'MAINTENANCE' ? 'Bảo trì' : 'N/A'}
                             </Button>
                           </Col>
                         </Row>

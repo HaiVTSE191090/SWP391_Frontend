@@ -9,6 +9,8 @@ import { Routes, Route } from "react-router-dom";
 import AdminLogin from "./AdminInterface/AdminLogin";
 import Admin from "./AdminInterface/Admin";
 import ListRenter from "./components/StaffInterface/ListRenter";
+import UserDetail from "./components/StaffInterface/UserDetail";
+
 const App = () => {
   return (
     <>
@@ -19,6 +21,7 @@ const App = () => {
         <Route path="/" element={<StaffLogin />} />
         <Route path="/staff" element={<Staff />} />
         <Route path="/staff/renters" element={<ListRenter />} />
+        <Route path="/staff/renter/:id" element={<UserDetail />} />
         {/* <Route path="/" element={<AdminLogin />} />
         <Route path="/admin" element={<Admin />} /> */}
       </Routes>
