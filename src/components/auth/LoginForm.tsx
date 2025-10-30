@@ -16,10 +16,8 @@ const LoginFormContent: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showForgot, setShowForgot] = useState(false);
 
-    // ✅ Chỉ lấy login/loginWithGoogle từ UserContext (logic only)
     const { login, loginWithGoogle, loading } = useAuth();
     
-    // ✅ Local form state - error/message độc lập cho form này
     const formCtx = useContext(FormContext);
     const { closeModal } = useModal();
 

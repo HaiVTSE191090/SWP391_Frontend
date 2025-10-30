@@ -1,11 +1,10 @@
 // src/routes/AppRouter.tsx
 import React, { lazy, Suspense } from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, Route, RouterProvider } from "react-router-dom";
 import Layout from "../components/layouts/Layout";
 import SignUpForm from "../components/auth/SignUpForm";
 import ManualIdentityPage from "../pages/ManualIdentityPage";
 import KycVerificationPage from "../pages/KycVerificationPage";
-import Staff from "../components/StaffInterface/Staff";
 import DepositPage from "../components/XacNhanTraXe/components/DepositPage";
 import RentalHistoryPage from "../components/HistoryPage/RentalHistoryPage";
 import ContractPreviewPage from "../components/ContractPage/ContractPage";
@@ -43,12 +42,7 @@ const router = createBrowserRouter([
             // 404 bắt mọi thứ còn lại
             { path: "*", element: <NotFoundPage /> },
         ],
-    },
-    // Staff routes - Không dùng Layout (có navbar riêng)
-    {
-        path: "/staff",
-        element: <Staff />,
-    },
+    },    
 ]);
 
 export default function AppRouter() {

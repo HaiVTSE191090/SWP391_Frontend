@@ -1,48 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button, Spinner, Alert } from 'react-bootstrap';
+// Xóa logic render BookingDetail qua callback, khôi phục SPA truyền thống
+import React, { useEffect, useState } from 'react';
+import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react-bootstrap';
 import ListRenter from './ListRenter';
 import ChooseCar from './ChooseCar';
-import { useVehicle } from '../../hooks/useVehicle';
-import { Vehicle } from '../../models/VehicleModel';
+import { useNavigate } from 'react-router-dom';
+import { getCarDetails, getStaffStation } from './services/authServices';
 
-// Hàm lấy ảnh xe theo vehicleId (giống VehicleCard.tsx)
-const getVehicleImage = (vehicleId: number) => {
-  try {
-    const imageNumber = ((vehicleId - 1) % 9) + 1;
-    return require(`../../images/car-list/Car-${imageNumber}.png`);
-  } catch (error) {
-    console.warn(`Image not found for vehicleId ${vehicleId}, using default`);
-    return require(`../../images/car-list/Car.png`);
-  }
-};
+
+interface StationVehicle {
+  vehicleId: number;
+  plateNumber: string;
+  batteryLevel: number;
+  mileage: number;
+  modelName: string;
+  name: string;
+  price: string;
+  status: 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE';
+}
+
+// Interface cho dữ liệu đã hợp nhất (sẽ lưu trong state 'mockCars')
+interface MergedVehicle extends StationVehicle {
+    // Thêm các trường lấy từ API detail
+    image: string;
+    pricePerDay: number; // Giá thuê/ngày (từ detail API)
+    // Cập nhật trường status để bao gồm IN-USE (nếu logic của bạn cần)
+    status: 'MAINTENANCE' | 'AVAILABLE' | 'IN_USE';
+}
+
+
 
 export default function Staff() {
   const [show, setShow] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Tất cả xe');
-  const [showListRenter, setShowListRenter] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<MergedVehicle | null>(null);
   const [showBookingDetail, setShowBookingDetail] = useState(false);
-  
-  // Sử dụng VehicleContext thông qua useVehicle hook
-  const { 
-    vehicles, 
-    loading, 
-    error, 
-    loadVehiclesByStation,
-    formatBattery,
-    formatMileage
-  } = useVehicle();
-  
-  const [stationId] = useState<number>(1); // Mặc định station 1
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [mockCars, setMockCars] = useState<MergedVehicle[]>([]);
+
+  const navigate = useNavigate();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  // Fetch vehicles từ Context/Controller
   useEffect(() => {
-    loadVehiclesByStation(stationId);
-  }, [stationId, loadVehiclesByStation]);
+    fetchStationData();
+  }, []);
+
+
+
+  // Thay thế fetchCar và fetchCarImage bằng hàm này
+  const fetchStationData = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Lấy danh sách xe tại trạm
+      const stationResp = await getStaffStation();
+      const stationVehicles: StationVehicle[] = stationResp?.data?.data || [];
+
+      // Kiểm tra nếu không có xe nào
+      if (stationVehicles.length === 0) {
+        setMockCars([]);
+        setLoading(false);
+        return;
+      }
+
+      // Lặp qua danh sách để lấy ảnh chi tiết
+      // Sử dụng Promise.all để gọi tất cả API chi tiết đồng thời
+      const detailedVehicles = await Promise.all(
+        stationVehicles.map(async (vehicle) => {
+          // Gọi API chi tiết
+          const detailResp = await getCarDetails(vehicle.vehicleId);
+          const detailData = detailResp?.data?.data;
+
+          // Hợp nhất dữ liệu: lấy URL ảnh đầu tiên
+          return {
+            ...vehicle, // Dữ liệu từ /my-station
+            image: detailData?.imageUrls?.[0] || 'default-car-image-url',
+            pricePerDay: detailData?.pricePerDay // Thêm giá thuê/ngày
+            // Bạn có thể thêm các trường khác từ detailData vào đây
+          };
+        })
+      );
+
+      // Cập nhật state với danh sách xe đã có ảnh và chi tiết
+      setMockCars(detailedVehicles);
+
+    } catch (err) {
+      // Xử lý lỗi tập trung tại đây
+      console.error("Lỗi tải dữ liệu trạm:", err);
+      setError("Không thể tải dữ liệu xe. Vui lòng thử lại.");
+      // (Thêm logic logout nếu lỗi là 401 Unauthorized)
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const menuItems = [
     'Tất cả xe',
@@ -54,13 +108,13 @@ export default function Staff() {
     'Báo cáo',
   ];
 
-  const getStatusBadge = (status: Vehicle['status']) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'AVAILABLE':
         return <span className="badge bg-success">Có sẵn</span>;
       case 'IN_USE':
         return <span className="badge bg-warning">Đang thuê</span>;
-      case 'IN_REPAIR':
+      case 'MAINTENANCE':
         return <span className="badge bg-danger">Bảo trì</span>;
       default:
         return <span className="badge bg-secondary">Không xác định</span>;
@@ -70,42 +124,39 @@ export default function Staff() {
   const filteredCars = () => {
     switch (selectedCategory) {
       case 'Xe có sẵn':
-        return vehicles.filter((vehicle) => vehicle.status === 'AVAILABLE');
+        return mockCars.filter(car => car.status === 'AVAILABLE');
       case 'Xe đang cho thuê':
-        return vehicles.filter((vehicle) => vehicle.status === 'IN_USE');
+        return mockCars.filter(car => car.status === 'IN_USE');
       case 'Xe bảo trì':
-        return vehicles.filter((vehicle) => vehicle.status === 'IN_REPAIR');
+        return mockCars.filter(car => car.status === 'MAINTENANCE');
       default:
-        return vehicles;
+        return mockCars;
     }
   };
 
   const handleMenuClick = (item: string) => {
     if (item === 'Danh sách người thuê') {
-      setShowListRenter(true);
-      setSelectedVehicleId(null);
-      setSelectedVehicle(null);
+      navigate('/staff/renters');
     } else {
-      setShowListRenter(false);
-      setSelectedVehicleId(null);
-      setSelectedVehicle(null);
       setSelectedCategory(item);
     }
     handleClose();
   };
 
   // Xử lý khi click vào xe
-  const handleCarClick = (vehicle: Vehicle) => {
-    if (vehicle.status === 'IN_USE') {
-      setSelectedVehicleId(vehicle.vehicleId);
-      setSelectedVehicle(vehicle);
+  const handleCarClick = (car: MergedVehicle) => {
+    if (car.status === 'IN_USE') {
+      setSelectedVehicleId(car.vehicleId);
+      setSelectedVehicle(car);
     }
-  };
+  }
 
   // Callback for SPA navigation to BookingDetail
   const handleShowBookingDetail = () => {
     setShowBookingDetail(true);
   };
+
+
 
   // Nếu đang xem chi tiết booking
   if (showBookingDetail) {
@@ -113,62 +164,6 @@ export default function Staff() {
     return <BookingDetail />;
   }
 
-  // Nếu đang xem chi tiết xe
-  if (selectedVehicleId !== null && selectedVehicle !== null) {
-    return (
-      <ChooseCar 
-        vehicleId={selectedVehicleId} 
-        onBack={() => {
-          setSelectedVehicleId(null);
-          setSelectedVehicle(null);
-        }}
-        vehicleImage={getVehicleImage(selectedVehicle.vehicleId)}
-        vehicleName={selectedVehicle.modelName || 'Xe không rõ tên'}
-        vehiclePrice={`Biển số: ${selectedVehicle.plateNumber}`}
-        vehicleStatus={selectedVehicle.status}
-        onShowBookingDetail={handleShowBookingDetail}
-      />
-    );
-  }
-
-  // Nếu đang xem Danh sách người thuê
-  if (showListRenter) {
-    return (
-      <div className="staff-interface">
-        <Navbar bg="black" variant="dark" className="px-4">
-          <Button variant="outline-light" onClick={handleShow} className="me-3">
-            ☰
-          </Button>
-          <Navbar.Brand>Staff Dashboard - Danh sách người thuê</Navbar.Brand>
-          <Nav className="ms-auto">
-            <Nav.Link>Đăng xuất</Nav.Link>
-          </Nav>
-        </Navbar>
-
-        <Offcanvas show={show} onHide={handleClose} placement="start">
-          <Offcanvas.Header closeButton>
-            <Offcanvas.Title>Menu Quản lý</Offcanvas.Title>
-          </Offcanvas.Header>
-          <Offcanvas.Body>
-            <Nav className="flex-column">
-              {menuItems.map((item, index) => (
-                <Nav.Link
-                  key={index}
-                  className={`py-3 border-bottom ${item === 'Danh sách người thuê' ? 'bg-light fw-bold' : ''}`}
-                  onClick={() => handleMenuClick(item)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {item}
-                </Nav.Link>
-              ))}
-            </Nav>
-          </Offcanvas.Body>
-        </Offcanvas>
-
-        <ListRenter />
-      </div>
-    );
-  }
 
   return (
     <div className="staff-interface">
@@ -213,95 +208,68 @@ export default function Staff() {
               <Button variant="primary">Thêm xe mới</Button>
             </div>
 
-            {/* Loading State */}
-            {loading && (
-              <div className="text-center py-5">
-                <Spinner animation="border" variant="primary" />
-                <p className="mt-3">Đang tải danh sách xe...</p>
-              </div>
-            )}
-
-            {/* Error State */}
-            {error && !loading && (
-              <Alert variant="danger">
-                <Alert.Heading>Lỗi tải dữ liệu</Alert.Heading>
-                <p>{error}</p>
-                <Button variant="outline-danger" onClick={() => window.location.reload()}>
-                  Thử lại
-                </Button>
-              </Alert>
-            )}
-
             {/* Car Grid */}
-            {!loading && !error && (
-              <>
-                <Row>
-                  {filteredCars().map((vehicle) => (
-                    <Col lg={4} md={6} sm={12} className="mb-4" key={vehicle.vehicleId}>
-                      <Card 
-                        className="h-100 shadow-sm"
-                        style={{ cursor: vehicle.status === 'IN_USE' ? 'pointer' : 'default' }}
-                        onClick={() => handleCarClick(vehicle)}
-                      >
-                        <Card.Img
-                          variant="top"
-                          src={getVehicleImage(vehicle.vehicleId)}
-                          style={{ height: '200px', objectFit: 'cover' }}
-                          alt={vehicle.modelName || 'Vehicle'}
-                        />
-                        <Card.Body className="d-flex flex-column">
-                          <Card.Title>{vehicle.modelName || 'Xe không rõ tên'}</Card.Title>
-                          <Card.Text className="text-muted">
-                            <small>🚗 Biển số: {vehicle.plateNumber}</small><br />
-                            <small>🔋 Pin: {formatBattery(vehicle.batteryLevel)}</small><br />
-                            <small>📏 Km đã đi: {formatMileage(vehicle.mileage)}</small>
-                          </Card.Text>
-                          <div className="mb-3">
-                            {getStatusBadge(vehicle.status)}
-                          </div>
-                          <div className="mt-auto">
-                            <Row>
-                              <Col>
-                                <Button 
-                                  variant="outline-primary" 
-                                  size="sm" 
-                                  className="w-100 mb-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // TODO: Xem chi tiết xe
-                                  }}
-                                >
-                                  Xem chi tiết
-                                </Button>
-                              </Col>
-                            </Row>
-                            <Row>
-                              <Col>
-                                <Button 
-                                  variant={vehicle.status === 'AVAILABLE' ? 'success' : 'secondary'} 
-                                  size="sm" 
-                                  className="w-100"
-                                  disabled={vehicle.status !== 'AVAILABLE'}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {vehicle.status === 'AVAILABLE' ? 'Cho thuê' : 
-                                   vehicle.status === 'IN_USE' ? 'Đang thuê' : 'Bảo trì'}
-                                </Button>
-                              </Col>
-                            </Row>
-                          </div>
-                        </Card.Body>
-                      </Card>
-                    </Col>
-                  ))}
-                </Row>
+            <Row>
+              {filteredCars().map((car) => (
+                <Col lg={4} md={6} sm={12} className="mb-4" key={car.vehicleId}>
+                  <Card
+                    className="h-100 shadow-sm"
+                    style={{ cursor: car.status === 'IN_USE' ? 'pointer' : 'default' }}
+                    onClick={() => handleCarClick(car)}
+                  >
+                    <Card.Img
+                      variant="top"
+                      src={car.image}
+                      style={{ height: '200px', objectFit: 'cover' }}
+                      alt={car.name}
+                    />
+                    <Card.Body className="d-flex flex-column">
+                      <Card.Title>{car.name}</Card.Title>
+                      <Card.Text className="text-muted">{car.price}</Card.Text>
+                      <div className="mb-3">
+                        {getStatusBadge(car.status)}
+                      </div>
+                      <div className="mt-auto">
+                        <Row>
+                          <Col>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="w-100 mb-2"
+                              onClick={() => {
+                                handleShowBookingDetail();
+                              }}
+                            >
+                              Xem chi tiết
+                            </Button>
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col>
+                            <Button
+                              variant={car.status === 'AVAILABLE' ? 'success' : 'secondary'}
+                              size="sm"
+                              className="w-100"
+                              disabled={car.status !== 'AVAILABLE'}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {car.status === 'AVAILABLE' ? 'Cho thuê' :
+                                car.status === 'IN_USE' ? 'Đang thuê' :
+                                car.status === 'MAINTENANCE' ? 'Bảo trì' : 'N/A'}
+                            </Button>
+                          </Col>
+                        </Row>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
 
-                {filteredCars().length === 0 && (
-                  <div className="text-center py-5">
-                    <h4 className="text-muted">Không có xe nào trong danh mục này</h4>
-                  </div>
-                )}
-              </>
+            {filteredCars().length === 0 && (
+              <div className="text-center py-5">
+                <h4 className="text-muted">Không có xe nào trong danh mục này</h4>
+              </div>
             )}
           </Col>
         </Row>

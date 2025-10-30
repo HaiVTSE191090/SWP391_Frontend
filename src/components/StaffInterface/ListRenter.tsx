@@ -1,226 +1,187 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
-import axios from 'axios';
 import UserDetail from './UserDetail';
-import OTPModal from './OTPModal';
+import { getListRenter } from '../StaffInterface/services/authServices';
+import { useNavigate } from 'react-router-dom';
 
-// Interface cho dữ liệu Renter
+// Cập nhật Interface Renter để khớp với API data
 interface Renter {
-  id: string | number;
-  name: string;
-  phoneNumber: string;
-  verificationStatus?: 'pending' | 'verified' | 'rejected';
-  // Thêm các field khác từ API nếu cần
+	renterId: string | number;
+	fullName: string;
+	phoneNumber: string;
+	status: 'VERIFIED' | 'PENDING_VERIFICATION' | string;
 }
 
 const ListRenter: React.FC = () => {
-  const [renters, setRenters] = useState<Renter[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
-  const [selectedRenterId, setSelectedRenterId] = useState<string | number | null>(null);
+	const [renters, setRenters] = useState<Renter[]>([]);
+	const [loading, setLoading] = useState<boolean>(true);
+	const [error, setError] = useState<string>('');
+	const [selectedRenterId, setSelectedRenterId] = useState<string | number | null>(null);
+	
+	const navigate = useNavigate();
+	// Fetch data từ API
+	useEffect(() => {
+		fetchRenters()
+	}, []);
 
-  // Mock data để test giao diện - Xóa khi có API thật
-  const mockData: Renter[] = [
-    { id: 1, name: 'Nguyễn Văn A', phoneNumber: '0912345678', verificationStatus: 'pending' },
-    { id: 2, name: 'Trần Thị B', phoneNumber: '0987654321', verificationStatus: 'verified' },
-    { id: 3, name: 'Lê Văn C', phoneNumber: '0909123456', verificationStatus: 'pending' },
-  ];
+	const fetchRenters = async () => {
+		setLoading(true);
+		setError('');
 
-  // Fetch data từ API
-  useEffect(() => {
-    fetchRenters();
-  }, []);
+		try { // Thêm try-catch vào đây cũng là một ý hay
+			const renterData = await getListRenter();
 
-  const fetchRenters = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      
-      // TODO: Thay YOUR_API_ENDPOINT bằng endpoint thật từ Backend
-      // const response = await axios.get('YOUR_API_ENDPOINT/renters');
-      // setRenters(response.data);
-      
-      // Tạm thời dùng mock data
-      setTimeout(() => {
-        setRenters(mockData);
-        setLoading(false);
-      }, 1000);
-      
-    } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi tải dữ liệu');
-      setLoading(false);
-    }
-  };
+			// getListRenter() trả về Axios Response => renterData là { data: { status: 'success', data: [ { renterId: 1, ... } ] } }
+			// cần truy cập 2 lần .data để lấy mảng người thuê
+			setRenters(renterData?.data?.data || []);
 
-  // Handler cho nút Verification Status
-  const handleVerificationStatus = async (renterId: string | number) => {
-    try {
-      // TODO: Gọi API kiểm tra trạng thái xác minh
-      // const response = await axios.get(`YOUR_API_ENDPOINT/renters/${renterId}/verification-status`);
-      console.log('Check verification status for renter:', renterId);
-      alert(`Kiểm tra trạng thái xác minh cho Renter ID: ${renterId}`);
-    } catch (err: any) {
-      console.error('Error checking verification status:', err);
-      alert('Có lỗi xảy ra khi kiểm tra trạng thái');
-    }
-  };
+		} catch (error) {
+			console.error('Lỗi khi lấy danh sách người thuê:', error);
+			setError('Không thể tải danh sách người thuê.');
+			setRenters([]); // Đặt lại về mảng rỗng khi có lỗi
+		} finally {
+			setLoading(false); // Đảm bảo luôn tắt loading
+		}
+	};
+	// Render badge theo trạng thái
+	const renderStatusBadge = (status?: string) => {
+		switch (status) {
+			case 'VERIFIED':
+				return <Badge bg="success">Đã xác minh</Badge>;
+			case 'PENDING_VERIFICATION':
+				return <Badge bg="warning">Chờ xác minh</Badge>;
+			default:
+				return <Badge bg="secondary">Chưa rõ</Badge>;
+		}
+	};
 
-  // State cho OTP Modal
-  const [showOTPModal, setShowOTPModal] = useState(false);
-  const [otpRenterId, setOtpRenterId] = useState<string | number | null>(null);
+	// Handler cho nút Verification Status
+	const handleVerificationStatus = async (renterId: string | number) => {
+		// TODO: Thêm logic gọi API kiểm tra trạng thái xác minh
+		console.log('Check verification status for renter:', renterId);
+		alert(`Kiểm tra trạng thái xác minh cho Renter ID: ${renterId}`);
+	};
 
-  // Handler cho nút Verify OTP link
-  const handleVerifyOTP = (renterId: string | number) => {
-    setOtpRenterId(renterId);
-    setShowOTPModal(true);
-  };
+	// State cho OTP Modal
+	const [showOTPModal, setShowOTPModal] = useState(false);
+	const [otpRenterId, setOtpRenterId] = useState<string | number | null>(null);
 
-  // Xử lý submit OTP
-  const handleSubmitOTP = (otp: string) => {
-    // TODO: Gọi API xác thực OTP với otpRenterId và otp
-    setShowOTPModal(false);
-    setOtpRenterId(null);
-    alert(`OTP xác thực thành công cho Renter ID: ${otpRenterId}, mã OTP: ${otp}`);
-  };
+	// Handler cho nút Verify OTP link
+	const handleVerifyOTP = (renterId: string | number) => {
+		setOtpRenterId(renterId);
+		setShowOTPModal(true);
+	};
 
-  // Handler cho nút Details
-  const handleViewDetails = (renterId: string | number) => {
-    setSelectedRenterId(renterId);
-  };
 
-  // Handler để quay lại danh sách
-  const handleBack = () => {
-    setSelectedRenterId(null);
-    fetchRenters(); // Refresh lại danh sách
-  };
+	// Handler cho nút Details
+	const handleViewDetails = (renterId: string | number) => {
+		setSelectedRenterId(renterId);
+		navigate(`/staff/renterDetail/${renterId}`); // Chuyển hướng đến trang chi tiết với renterId
+	};
 
-  // Nếu đang xem chi tiết, hiển thị UserDetail
-  if (selectedRenterId !== null) {
-    return <UserDetail renterId={selectedRenterId} onBack={handleBack} />;
-  }
+	// Handler để quay lại danh sách
+	const handleBack = () => {
+		setSelectedRenterId(null);
+		fetchRenters(); // Refresh lại danh sách
+	};
 
-  // Render badge theo trạng thái
-  const renderStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'verified':
-        return <Badge bg="success">Đã xác minh</Badge>;
-      case 'pending':
-        return <Badge bg="warning">Chờ xác minh</Badge>;
-      case 'rejected':
-        return <Badge bg="danger">Từ chối</Badge>;
-      default:
-        return <Badge bg="secondary">Chưa rõ</Badge>;
-    }
-  };
+	// Nếu đang xem chi tiết, hiển thị UserDetail
+	if (selectedRenterId !== null) {
+		return <UserDetail renterId={selectedRenterId} onBack={handleBack} />;
+	}
 
-  if (loading) {
-    return (
-      <Container className="mt-4 text-center">
-        <Spinner animation="border" role="status" variant="primary">
-          <span className="visually-hidden">Đang tải...</span>
-        </Spinner>
-        <p className="mt-2">Đang tải danh sách người thuê...</p>
-      </Container>
-    );
-  }
+	if (loading) {
+		return (
+			<Container className="mt-4 text-center">
+				<Spinner animation="border" role="status" variant="primary">
+					<span className="visually-hidden">Đang tải...</span>
+				</Spinner>
+				<p className="mt-2">Đang tải danh sách người thuê...</p>
+			</Container>
+		);
+	}
 
-  if (error) {
-    return (
-      <Container className="mt-4">
-        <Alert variant="danger">
-          <Alert.Heading>Có lỗi xảy ra!</Alert.Heading>
-          <p>{error}</p>
-          <Button variant="outline-danger" onClick={fetchRenters}>
-            Thử lại
-          </Button>
-        </Alert>
-      </Container>
-    );
-  }
+	if (error) {
+		return (
+			<Container className="mt-4">
+				<Alert variant="danger">
+					<Alert.Heading>Có lỗi xảy ra!</Alert.Heading>
+					<p>{error}</p>
+					<Button variant="outline-danger" onClick={fetchRenters}>
+						Thử lại
+					</Button>
+				</Alert>
+			</Container>
+		);
+	}
 
-  return (
-    <Container fluid className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Danh Sách Người Thuê</h2>
-        <Button variant="primary" onClick={fetchRenters}>
-          <i className="bi bi-arrow-clockwise"></i> Làm mới
-        </Button>
-      </div>
+	return (
+		<Container fluid className="mt-4">
+			<div className="d-flex justify-content-between align-items-center mb-4">
+				<h2>Danh Sách Người Thuê</h2>
+				<Button variant="primary" onClick={fetchRenters}>
+					<i className="bi bi-arrow-clockwise"></i> Làm mới
+				</Button>
+			</div>
 
-      <div className="table-responsive">
-        <Table striped bordered hover>
-          <thead className="table-dark">
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Phone Number</th>
-              <th>Verification Status</th>
-              <th>Verify OTP Link</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {renters.length > 0 ? (
-              renters.map((renter) => (
-                <tr key={renter.id}>
-                  <td>{renter.id}</td>
-                  <td>{renter.name}</td>
-                  <td>{renter.phoneNumber}</td>
-                  <td>
-                    <Button
-                      variant="info"
-                      size="sm"
-                      onClick={() => handleVerificationStatus(renter.id)}
-                      className="me-2"
-                    >
-                      Kiểm tra
-                    </Button>
-                    {renderStatusBadge(renter.verificationStatus)}
-                  </td>
-                  <td>
-                    <Button
-                      variant="warning"
-                      size="sm"
-                      onClick={() => handleVerifyOTP(renter.id)}
-                    >
-                      Xác thực OTP
-                    </Button>
-                  </td>
-                  <td>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleViewDetails(renter.id)}
-                    >
-                      Xem chi tiết
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="text-center text-muted">
-                  Không có dữ liệu
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </Table>
-      </div>
+			<div className="table-responsive">
+				<Table striped bordered hover>
+					<thead className="table-dark">
+						<tr>
+							<th>ID</th>
+							<th>Name</th>
+							<th>Phone Number</th>
+							<th>Status</th>
+							<th>Details</th>
+						</tr>
+					</thead>
+					<tbody>
+						{renters.length > 0 ? (
+							renters.map((renter) => (
 
-      {renters.length > 0 && (
-        <div className="text-muted">
-          <small>Tổng số người thuê: {renters.length}</small>
-        </div>
-      )}
-      {/* Popup OTP nhập mã OTP */}
-      <OTPModal
-        show={showOTPModal}
-        onSubmit={handleSubmitOTP}
-        onCancel={() => { setShowOTPModal(false); setOtpRenterId(null); }}
-      />
-    </Container>
-  );
+								<tr key={renter.renterId}>
+
+									<td>{renter.renterId}</td>
+
+									<td>{renter.fullName}</td>
+
+									<td>{renter.phoneNumber}</td>
+
+									<td>
+										{/* Badge hiển thị trạng thái đã xác minh/chờ */}
+										{renderStatusBadge(renter.status)}
+									</td>
+									{/* 5. Nút Xem chi tiết */}
+									<td>
+										<Button
+											variant="primary"
+											size="sm"
+											// Dùng key chính xác là renterId, KHÔNG PHẢI renter_id
+											onClick={() => handleViewDetails(renter.renterId)}
+										>
+											Xem chi tiết
+										</Button>
+									</td>
+								</tr>
+							))
+						) : (
+							<tr>
+								<td colSpan={6} className="text-center text-muted">
+									Không có dữ liệu người thuê
+								</td>
+							</tr>
+						)}
+					</tbody>
+				</Table>
+			</div>
+
+			{renters.length > 0 && (
+				<div className="text-muted">
+					<small>Tổng số người thuê: {renters.length}</small>
+				</div>
+			)}
+		</Container>
+	);
 };
 
 export default ListRenter;

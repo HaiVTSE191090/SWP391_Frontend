@@ -1,14 +1,16 @@
 import React, { createContext, ReactNode, useEffect, useMemo, useState } from "react";
 import { authController } from "../controller/AuthController";
 import * as model from "../models/AuthModel";
+import { staffLogin } from "../components/StaffInterface/services/authServices";
 
 export interface UserContextType {
   user: any | null;
   token: string | null;
   loading: boolean;
-  
+
   login: (data: model.LoginRequest) => Promise<AuthResult>;
   loginWithGoogle: (credential: string) => Promise<AuthResult>;
+  loginStaff: (email: string, password: string) => Promise<any>;
   signUp: (data: model.SignUpRequest) => Promise<AuthResult>;
   verifyOTP: (email: string, otpCode: string) => Promise<AuthResult>;
   sendOTP: (email: string) => Promise<AuthResult>;
@@ -55,7 +57,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setToken(result.token!);
         setUser(result.user!);
         authController.saveAuthData(result.token!, result.user!);
-        
+
         return {
           success: true,
           message: result.message || "Đăng nhập thành công!",
@@ -77,6 +79,29 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     }
   };
 
+  const loginStaff = async (email: string, password: string): Promise<any> => {
+    setLoading(true);
+
+    try {
+      const resp = await staffLogin(email, password)
+      if (resp.status === "success") {
+        setToken(resp.data.token);
+      }
+      return {
+        success: true,
+        message: "Đăng nhập thành công!",
+      }
+
+
+    } catch (err: any) {
+      return {
+        error: err.response?.data?.data
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loginWithGoogle = async (credential: string): Promise<AuthResult> => {
     setLoading(true);
 
@@ -87,7 +112,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setToken(result.token!);
         setUser(result.user!);
         authController.saveAuthData(result.token!, result.user!);
-        
+
         return {
           success: true,
           message: result.message || "Đăng nhập Google thành công!",
@@ -199,6 +224,11 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setToken(null);
     setUser(null);
     authController.clearAuthData();
+
+    localStorage.removeItem('rememberedEmail');
+    localStorage.removeItem('rememberedPassword');
+    localStorage.removeItem('staffRememberedEmail');
+    localStorage.removeItem('staffRememberedPassword');
   };
 
   const value = useMemo(
@@ -212,6 +242,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       logout,
       verifyOTP,
       sendOTP,
+      loginStaff,
     }),
     [user, token, loading]
   );

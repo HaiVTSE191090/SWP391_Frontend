@@ -6,7 +6,7 @@ import ConfirmationPopup from './ConfirmationPopup';
 
 // Thông tin chi tiết người thuê
 interface RenterDetail {
-  id: string | number;
+  renterId: number;
   name: string;
   birth: string;
   phone: string;
@@ -54,7 +54,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
       // Mock data để test
       setTimeout(() => {
         setDetail({
-          id: renterId,
+          renterId: 1,
           name: 'Nguyễn Văn A',
           birth: '1999-01-01',
           phone: '0912345678',

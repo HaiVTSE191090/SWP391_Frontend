@@ -29,14 +29,12 @@ export default function PaymentResultPage() {
                     signature: searchParams.get("signature"),
                 };
 
-                console.log("📩 Gửi IPN đến backend:", ipnData);
 
                 const res = await axios.post(
                     "http://localhost:8080/api/payments/momo/ipn",
                     ipnData
                 );
 
-                console.log("✅ Backend phản hồi:", res.data);
                 setSuccess(ipnData.resultCode === 0);
                 setMessage(ipnData.resultCode === 0
                     ? "Thanh toán thành công!"

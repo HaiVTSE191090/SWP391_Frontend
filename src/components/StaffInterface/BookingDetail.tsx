@@ -39,6 +39,7 @@ interface Report {
     content: string;
 }
 
+// Mock data booking (giả lập dữ liệu booking)
 const mockBooking: Booking = {
     id: 1,
     renterName: 'Nguyễn Văn A',
