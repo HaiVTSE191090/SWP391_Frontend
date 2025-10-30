@@ -44,7 +44,7 @@ const App = () => {
                 <Route path="profile" element={<UserProfilePage />} />
                 <Route path="payment-result" element={<PaymentResultPage/>}/>
 
-                <Route path="/staff/login" element={<StaffLogin />} />
+                <Route path="staff/login" element={<StaffLogin />} />
                 <Route path="staff/" element={<RequireAuth />}>
                   <Route index element={<Staff />} />
                 </Route>

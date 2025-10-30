@@ -11,7 +11,7 @@ const StaffLogin = () => {
     const [rememberMe, setRememberMe] = useState(false);
     const navigate = useNavigate();
 
-    const {loginStaff, token} = useAuth();
+    const {loginStaff} = useAuth();
 
     useEffect(() => {
         const savedEmail = localStorage.getItem('staffRememberedEmail');
@@ -41,7 +41,7 @@ const StaffLogin = () => {
 
         const res = await loginStaff(email, password);
         
-        if (!token) {
+        if (!res.success) {
             toast.update(loadingToast, {
                 render: res.error,
                 type: "error",
