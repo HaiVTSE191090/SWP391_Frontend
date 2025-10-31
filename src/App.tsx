@@ -21,6 +21,10 @@ import StaffLogin from "./components/StaffInterface/StaffLogin";
 import Staff from "./components/StaffInterface/Staff";
 import PaymentResultPage from "./pages/PaymentResultPage";
 import AdminLayout from "./components/AdminInterface/Admin";
+import ListBooking from "./components/AdminInterface/ListBooking";
+import BookingDetail from "./components/AdminInterface/BookingDetails";
+import ListContract from "./components/AdminInterface/ListContract";
+import ContractDetail from "./components/AdminInterface/ContractDetail";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -54,6 +58,10 @@ const App = () => {
                 {/* admin */}
                 <Route path="admin/">
                   <Route index element={<AdminLayout />} />
+                  <Route path="/admin/booking" element={<ListBooking />} />
+                  <Route path="/admin/booking/:id" element={<BookingDetail />} />
+                  <Route path="/admin/contract" element={<ListContract />} />
+                  <Route path="/admin/contract/:id" element={<ContractDetail />} />
                 </Route>
 
                 <Route path="*" element={<NotFoundPage />} />
