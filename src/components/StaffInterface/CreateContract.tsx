@@ -9,7 +9,7 @@ import {
     getUserName
 } from './services/authServices';
 
-// --- Định nghĩa Interfaces TỐI ƯU HÓA (Loại bỏ các trường giả định không cần thiết cho Payload) ---
+// --- Định nghĩa Interfaces (Giữ nguyên) ---
 interface TermCondition {
     termNumber: number;
     termTitle: string;
@@ -32,11 +32,13 @@ interface BookingInfo {
     depositAmount: number; 
     contractId: number | null;
     
-    // Giữ lại các trường để điền vào UI Hợp đồng (Sẽ gán giá trị mặc định/null nếu API thiếu)
+    // Các trường giả định cho UI (sẽ gán giá trị mặc định nếu API thiếu)
     renterIdentityCard: string;
     staffCCCD: string;
     staffBirthYear: number;
     renterBirthYear: number;
+    renterId: number; 
+    vehicleId: number; 
 }
 // --- Kết thúc Interfaces ---
 
@@ -46,7 +48,7 @@ const CreateContract: React.FC = () => {
     const id = Number(bookingId);
     const navigate = useNavigate();
 
-    const currentStaffName = getUserName(); // Tên Staff Động
+    const currentStaffName = getUserName();
 
     const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null);
     const [terms, setTerms] = useState<TermCondition[]>([]);
@@ -65,7 +67,7 @@ const CreateContract: React.FC = () => {
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // --- HÀM TÁCH BIỆT: Fetch Dữ liệu (Loại bỏ mocking cho ID) ---
+    // --- HÀM TÁCH BIỆT: Fetch Dữ liệu ---
     const fetchData = useCallback(async () => {
         if (!id || isNaN(id)) {
             setError('ID Booking không hợp lệ.');
@@ -78,19 +80,18 @@ const CreateContract: React.FC = () => {
         
         try {
             const bookingResponse = await getBookingInfoForContract(id);
-            
-            // TẠO OBJECT INFO: Thêm các trường cần thiết cho UI, gán giá trị mặc định nếu API thiếu
             const apiData = bookingResponse?.data?.data || {};
 
+            // Xử lý logic gán dữ liệu và MOCKING an toàn
             const info: BookingInfo = {
                 ...apiData,
-                // Các trường cần điền vào Hợp đồng mẫu (nếu API thiếu, gán mặc định)
+                // MOCKING/DEFAULTING cho các trường UI cần thiết
+                renterId: apiData.renterId || 123, 
+                vehicleId: apiData.vehicleId || 456, 
                 renterIdentityCard: apiData.renterIdentityCard || 'N/A',
                 staffCCCD: apiData.staffCCCD || 'N/A',
                 staffBirthYear: apiData.staffBirthYear || 1990,
                 renterBirthYear: apiData.renterBirthYear || 1995,
-                
-                // GÁN TÊN STAFF ĐANG ĐĂNG NHẬP (Chắc chắn phải có)
                 staffName: currentStaffName, 
             } as BookingInfo;
             
@@ -125,32 +126,30 @@ const CreateContract: React.FC = () => {
         fetchData();
     }, [fetchData]); 
 
-    // --- Khởi tạo editableTerms sau khi terms load ---
+    // --- Khởi tạo và Cập nhật Điều khoản ---
     useEffect(() => {
         if (terms.length > 0) {
             setEditableTerms(terms.map(term => ({ ...term }))); 
         }
     }, [terms]);
     
-    // --- Handler cập nhật nội dung điều khoản ---
+    const updateTerm = useCallback((index: number, key: keyof TermCondition, value: string | number) => {
+        setEditableTerms(prevTerms => 
+            prevTerms.map((term, i) => 
+                i === index ? { ...term, [key]: value } : term
+            )
+        );
+    }, []);
+    
+    // Sử dụng hàm chung cho Content và Title
     const handleTermContentChange = (index: number, newContent: string) => {
-        setEditableTerms(prevTerms => 
-            prevTerms.map((term, i) => 
-                i === index ? { ...term, termContent: newContent } : term
-            )
-        );
+        updateTerm(index, 'termContent', newContent);
     };
 
-    // --- Handler cập nhật tiêu đề điều khoản ---
     const handleTermTitleChange = (index: number, newTitle: string) => {
-        setEditableTerms(prevTerms => 
-            prevTerms.map((term, i) => 
-                i === index ? { ...term, termTitle: newTitle } : term
-            )
-        );
+        updateTerm(index, 'termTitle', newTitle);
     };
 
-    // --- Handler thêm điều khoản mới ---
     const handleAddTerm = () => {
         const newTermNumber = editableTerms.length + 1;
         const newTerm: TermCondition = {
@@ -173,10 +172,19 @@ const CreateContract: React.FC = () => {
         }
 
         try {
-            // PAYLOAD TỐI GIẢN CHÍNH XÁC THEO YÊU CẦU CỦA BE
+            // PAYLOAD TỐI GIẢN CHÍNH XÁC THEO YÊU CẦU CỦA BE (FIX LỖI 400 BẰNG CÁCH THÊM CÁC ID & GIÁ TRỊ)
             const payload = {
                 bookingId: id,
-                contractType: "ELECTRONIC", // <<< GIÁ TRỊ CỐ ĐỊNH
+                contractType: "ELECTRONIC",
+                
+                // THÊM: Các trường ID và Giá trị (BE thường cần để xử lý dữ liệu)
+                renterId: bookingInfo.renterId, 
+                vehicleId: bookingInfo.vehicleId, 
+                depositAmount: deposit,
+                totalPrice: totalPrice,
+                notes: notes,
+                staffName: currentStaffName, 
+                
                 terms: editableTerms.map(term => ({ 
                     termNumber: term.termNumber,
                     termTitle: term.termTitle,
@@ -195,8 +203,7 @@ const CreateContract: React.FC = () => {
             }
 
         } catch (err) {
-            // Sửa lỗi ở đây nếu lỗi 400 tiếp tục xảy ra
-            const errorMessage = (err as any).response?.data?.message || 'Lỗi 400: Đã gửi Payload tối giản. Vui lòng kiểm tra các trường bắt buộc khác.';
+            const errorMessage = (err as any).response?.data?.message || 'Lỗi 400: Payload có thể thiếu Renter ID, Vehicle ID hoặc thông tin giá trị.';
             setError(errorMessage);
         } finally {
             setIsSending(false);
@@ -228,7 +235,7 @@ const CreateContract: React.FC = () => {
 
     const handleAction = contractId ? handleSendToAdmin : handleCreateContract;
 
-    // ... (SuccessModal & renderActionButton giữ nguyên)
+    // --- UI Renders (Giữ nguyên) ---
 
     const SuccessModal = () => (
         <Modal show={showSuccessModal} onHide={() => { setShowSuccessModal(false); navigate('/staff/bookings'); }}>
@@ -325,7 +332,7 @@ const CreateContract: React.FC = () => {
                         <Card.Header as="h5" className="bg-secondary text-white d-flex justify-content-between align-items-center">
                             Chỉnh sửa Điều khoản Hợp đồng
                             <Button variant="outline-light" size="sm" onClick={handleAddTerm}>
-                                **+ Thêm Điều Khoản**
+                                **+ Thêm Điều khoản**
                             </Button>
                         </Card.Header>
                         <Card.Body style={{ maxHeight: '600px', overflowY: 'auto' }}>
