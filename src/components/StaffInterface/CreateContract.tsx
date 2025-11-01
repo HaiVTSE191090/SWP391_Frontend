@@ -31,12 +31,7 @@ interface BookingInfo {
     pricePerDay: number; 
     depositAmount: number; 
     contractId: number | null;
-    
-    // Các trường giả định cho UI (sẽ gán giá trị mặc định nếu API thiếu)
-    renterIdentityCard: string;
-    staffCCCD: string;
-    staffBirthYear: number;
-    renterBirthYear: number;
+    // Thêm các trường ID cần thiết
     renterId: number; 
     vehicleId: number; 
 }
@@ -82,17 +77,17 @@ const CreateContract: React.FC = () => {
             const bookingResponse = await getBookingInfoForContract(id);
             const apiData = bookingResponse?.data?.data || {};
 
-            // Xử lý logic gán dữ liệu và MOCKING an toàn
+            // Xử lý logic gán dữ liệu
             const info: BookingInfo = {
                 ...apiData,
-                // MOCKING/DEFAULTING cho các trường UI cần thiết
-                renterId: apiData.renterId || 123, 
-                vehicleId: apiData.vehicleId || 456, 
-                renterIdentityCard: apiData.renterIdentityCard || 'N/A',
-                staffCCCD: apiData.staffCCCD || 'N/A',
-                staffBirthYear: apiData.staffBirthYear || 1990,
-                renterBirthYear: apiData.renterBirthYear || 1995,
-                staffName: currentStaffName, 
+                
+                renterId: apiData.renterId, 
+                vehicleId: apiData.vehicleId, 
+                renterIdentityCard: apiData.renterIdentityCard,
+                staffCCCD: apiData.staffCCCD,
+                staffBirthYear: apiData.staffBirthYear,
+                renterBirthYear: apiData.renterBirthYear,
+                staffName: currentStaffName,
             } as BookingInfo;
             
             if (info && info.bookingId) {

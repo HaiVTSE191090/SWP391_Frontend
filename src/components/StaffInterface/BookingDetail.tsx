@@ -1,206 +1,182 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Form, Table } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Table, Spinner, Alert } from 'react-bootstrap';
+import { useParams, useNavigate } from 'react-router-dom';
+// Giả định service này tồn tại (Bạn đã cung cấp đoạn code API này)
+// import { getBookingInfoForContract } from './services/authServices'; 
 
-// Component trang chi tiết booking, dùng mock data để phát triển UI khi chưa có API
-
-// Interface cho dữ liệu booking (thông tin chi tiết booking)
-interface Booking {
-    id: string | number;
+// Interface cho dữ liệu booking theo cấu trúc API mới
+interface BookingDetailResponse {
+    bookingId: number;
+    vehicleName: string;
+    vehiclePlate: string;
     renterName: string;
+    renterEmail: string;
+    renterPhone: string;
     staffName: string;
-    carName: string;
-    startDate: string;
-    endDate: string;
-    price: string;
-    status: string;
-    accessories: string[];
-    photoBefore: string;
-    photoAfter: string;
+    startDateTime: string;
+    endDateTime: string;
+    pricePerHour: number;
+    pricePerDay: number;
+    bookingStatus: 'RESERVED' | 'COMPLETED' | 'CANCELLED' | string;
+    // Thêm các trường cần thiết cho UI
+    photoBeforeUrl: string; 
+    photoAfterUrl: string; 
 }
 
-// Interface cho phụ tùng (accessory)
-interface Accessory {
-    id: string | number;
-    name: string;
-}
+// Mock data booking (giả lập dữ liệu API và các trường thiếu)
+const mockBookingDetail = (bookingId: number) => ({
+    bookingId: bookingId,
+    vehicleName: "VF e34 Xanh Biển",
+    vehiclePlate: "59A6-78901",
+    renterName: "Vũ Đình Hải",
+    renterEmail: "user13@email.com",
+    renterPhone: "0701111113",
+    staffName: "Lê Văn A",
+    startDateTime: "2025-11-01T18:11:27",
+    endDateTime: "2025-11-07T18:11:27",
+    pricePerHour: 150000,
+    pricePerDay: 15000000,
+    bookingStatus: "RESERVED",
+    photoBeforeUrl: 'https://via.placeholder.com/300x180?text=Chua+chup+truoc+thue',
+    photoAfterUrl: 'https://via.placeholder.com/300x180?text=Chua+chup+sau+tra',
+});
 
-// Interface cho hóa đơn (invoice)
-interface Invoice {
-    id: string | number;
-    bookingId: string | number;
-    total: string;
-    details: string;
-}
-
-// Interface cho báo cáo (report)
-interface Report {
-    id: string | number;
-    bookingId: string | number;
-    content: string;
-}
-
-// Mock data booking (giả lập dữ liệu booking)
-const mockBooking: Booking = {
-    id: 1,
-    renterName: 'Nguyễn Văn A',
-    staffName: 'Trần Thị B',
-    carName: 'VinFast VF7 Black',
-    startDate: '2025-10-18 09:00',
-    endDate: '2025-10-20 18:00',
-    price: '2,000,000 VND',
-    status: 'Đang thuê',
-    accessories: ['Bộ dụng cụ sửa xe', 'Bơm lốp'],
-    photoBefore: 'https://via.placeholder.com/200x120?text=Before',
-    photoAfter: 'https://via.placeholder.com/200x120?text=After',
-};
-
-// Mock data phụ tùng (giả lập danh sách phụ tùng)
-const mockAccessories: Accessory[] = [
-    { id: 1, name: 'Bộ dụng cụ sửa xe' },
-    { id: 2, name: 'Bơm lốp' },
-    { id: 3, name: 'Dây câu bình' },
-];
 
 function BookingDetail() {
-    const [booking, setBooking] = useState<Booking | null>(null);
-    const [accessories, setAccessories] = useState<Accessory[]>([]);
-    const [selectedAccessories, setSelectedAccessories] = useState<string[]>([]);
-    const [invoice, setInvoice] = useState<Invoice | null>(null);
-    const [report, setReport] = useState<Report | null>(null);
-    const [photoBefore, setPhotoBefore] = useState<string>('');
-    const [photoAfter, setPhotoAfter] = useState<string>('');
+    const { bookingId } = useParams<{ bookingId: string }>(); 
+    const bookingIdNumber = bookingId ? parseInt(bookingId) : 0;
+    
+    const [booking, setBooking] = useState<BookingDetailResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
 
+
+    // Fetch API để lấy chi tiết booking
     useEffect(() => {
-        setBooking(mockBooking);
-        setAccessories(mockAccessories);
-        setSelectedAccessories(mockBooking.accessories);
-        setPhotoBefore(mockBooking.photoBefore);
-        setPhotoAfter(mockBooking.photoAfter);
-    }, []);
+        const fetchDetail = async () => {
+            if (!bookingIdNumber) {
+                setError("Thiếu ID Booking.");
+                setLoading(false);
+                return;
+            }
 
-    const handleAccessoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = Array.from(e.target.selectedOptions, option => option.value);
-        setSelectedAccessories(value);
+            setLoading(true);
+            setError('');
+            try {
+                // Thay thế bằng logic gọi getBookingInfoForContract(bookingIdNumber) thực tế của bạn
+                // const response = await getBookingInfoForContract(bookingIdNumber);
+                // const apiData = response.data.data;
+
+                await new Promise(resolve => setTimeout(resolve, 500)); 
+                const completeBookingData = mockBookingDetail(bookingIdNumber);
+                
+                setBooking(completeBookingData as BookingDetailResponse);
+                setLoading(false);
+
+            } catch (err) {
+                console.error("Error fetching booking detail:", err);
+                setError("Không thể tải chi tiết Booking. Vui lòng thử lại.");
+                setLoading(false);
+            }
+        };
+
+        fetchDetail();
+    }, [bookingIdNumber]);
+
+    // HANDLER CHUYỂN HƯỚNG ĐẾN TRANG CHỤP ẢNH
+    const handleUploadPhoto = (type: 'before' | 'after') => {
+        if (booking) {
+            navigate(`/staff/booking/${booking.bookingId}/photo/${type}`);
+        }
     };
-
-    const handleUploadBefore = () => {
-        setPhotoBefore('https://via.placeholder.com/200x120?text=Uploaded+Before');
-    };
-
-    const handleUploadAfter = () => {
-        setPhotoAfter('https://via.placeholder.com/200x120?text=Uploaded+After');
-    };
-
-    const handleCreateInvoice = () => {
-        setInvoice({
-            id: 1,
-            bookingId: booking?.id || 0,
-            total: booking?.price || '0 VND',
-            details: 'Chi tiết hóa đơn: ...',
-        });
-    };
-
+    // Handler cho Report (vẫn giữ nguyên)
     const handleCreateReport = () => {
-        setReport({
-            id: 1,
-            bookingId: booking?.id || 0,
-            content: 'Nội dung báo cáo: ...',
-        });
+        alert("Chuyển hướng đến trang tạo Report hoặc mở Modal.");
     };
+    
+    // --- Hiển thị Loading/Error State ---
+    if (loading) return <Container className="py-5 text-center"><Spinner animation="border" /> Đang tải thông tin booking...</Container>;
+    if (error) return <Container className="py-5"><Alert variant="danger">{error}</Alert></Container>;
+    if (!booking) return <Container className="py-5 text-center">Không tìm thấy thông tin booking.</Container>;
 
-    if (!booking) return <Container className="py-5 text-center">Đang tải thông tin booking...</Container>;
 
+    // Format tiền tệ
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+    
     return (
-        <Container fluid className="py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        <Container className="py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
             <Row className="mb-4">
-                <Col><h2 className="text-center fw-bold">Thông tin Booking</h2></Col>
+                <Col><h2 className="text-center fw-bold text-primary">Chi Tiết Booking #{booking.bookingId}</h2></Col>
             </Row>
-            <Row>
-                <Col md={3} className="mb-3">
-                    <Card className="shadow-sm">
-                        <Card.Body>
-                            <h5 className="fw-bold mb-3">List Renter</h5>
-                            <div className="d-flex flex-column gap-2">
-                                <Button variant="outline-primary" size="sm">Vehicles available</Button>
-                                <Button variant="outline-primary" size="sm">Vehicles Renting</Button>
-                                <Button variant="outline-primary" size="sm">Vehicle Reserved</Button>
-                            </div>
-                        </Card.Body>
-                    </Card>
-                </Col>
-                <Col md={9}>
-                    <Card className="shadow-sm mb-4">
-                        <Card.Body>
-                            <div className="border rounded p-3 mb-4" style={{ backgroundColor: '#e9ecef' }}>
-                                <h5 className="fw-bold mb-3">Thông tin booking</h5>
-                                <Table bordered size="sm">
-                                    <tbody>
-                                        <tr><td>Renter Name</td><td>{booking.renterName}</td></tr>
-                                        <tr><td>Staff Name</td><td>{booking.staffName}</td></tr>
-                                        <tr><td>Car Name</td><td>{booking.carName}</td></tr>
-                                        <tr><td>Start Date</td><td>{booking.startDate}</td></tr>
-                                        <tr><td>End Date</td><td>{booking.endDate}</td></tr>
-                                        <tr><td>Price</td><td>{booking.price}</td></tr>
-                                        <tr><td>Status</td><td>{booking.status}</td></tr>
-                                        <tr><td>Accessories</td><td>{selectedAccessories.join(', ')}</td></tr>
-                                    </tbody>
-                                </Table>
-                            </div>
-                            <Row className="mb-3">
-                                <Col md={4} className="mb-2">
-                                    <Button variant="success" className="w-100" onClick={handleCreateInvoice}>Tạo hóa đơn</Button>
-                                </Col>
-                                <Col md={8} className="mb-2">
-                                    <Form.Select multiple value={selectedAccessories} onChange={handleAccessoryChange}>
-                                        {accessories.map(acc => (
-                                            <option key={acc.id} value={acc.name}>{acc.name}</option>
-                                        ))}
-                                    </Form.Select>
-                                </Col>
-                            </Row>
-                            <Row className="mb-3">
-                                <Col md={4} className="mb-2">
-                                    <Button variant="secondary" className="w-100" onClick={handleUploadBefore}>Click to upload car photo before rent</Button>
-                                </Col>
-                                <Col md={4} className="mb-2">
-                                    <Button variant="warning" className="w-100" onClick={handleCreateReport}>Report</Button>
-                                </Col>
-                                <Col md={4} className="mb-2">
-                                    <Button variant="secondary" className="w-100" onClick={handleUploadAfter}>Click to upload car photo after rent</Button>
-                                </Col>
-                            </Row>
-                            <Row className="mb-3">
-                                <Col md={6} className="text-center">
-                                    <div>Ảnh trước khi thuê:</div>
-                                    <img src={photoBefore} alt="before" style={{ maxWidth: '100%', borderRadius: 8 }} />
-                                </Col>
-                                <Col md={6} className="text-center">
-                                    <div>Ảnh sau khi trả:</div>
-                                    <img src={photoAfter} alt="after" style={{ maxWidth: '100%', borderRadius: 8 }} />
-                                </Col>
-                            </Row>
-                            {invoice && (
-                                <Card className="mb-3">
-                                    <Card.Body>
-                                        <h6>Hóa đơn</h6>
-                                        <div><strong>Tổng tiền:</strong> {invoice.total}</div>
-                                        <div>{invoice.details}</div>
-                                    </Card.Body>
-                                </Card>
-                            )}
-                            {report && (
-                                <Card className="mb-3">
-                                    <Card.Body>
-                                        <h6>Báo cáo</h6>
-                                        <div>{report.content}</div>
-                                    </Card.Body>
-                                </Card>
-                            )}
-                        </Card.Body>
-                        <Card.Footer className="text-center">footer</Card.Footer>
-                    </Card>
-                </Col>
-            </Row>
+            
+            <Card className="shadow-lg mb-5">
+                <Card.Body>
+                    <h4 className="fw-bold mb-4 border-bottom pb-2">Thông tin Hợp đồng và Xe</h4>
+                    <Row>
+                        <Col md={6}>
+                            <Table bordered hover size="sm" className="bg-white">
+                                <tbody>
+                                    <tr><td className="fw-medium">Tên Người Thuê</td><td>{booking.renterName}</td></tr>
+                                    <tr><td className="fw-medium">Email Người Thuê</td><td>{booking.renterEmail}</td></tr>
+                                    <tr><td className="fw-medium">SĐT Người Thuê</td><td>{booking.renterPhone}</td></tr>
+                                    <tr><td className="fw-medium">Tên Nhân viên</td><td>{booking.staffName}</td></tr>
+                                    <tr><td className="fw-medium">Trạng thái</td><td><span className="badge bg-info">{booking.bookingStatus}</span></td></tr>
+                                </tbody>
+                            </Table>
+                        </Col>
+                        <Col md={6}>
+                            <Table bordered hover size="sm" className="bg-white">
+                                <tbody>
+                                    <tr><td className="fw-medium">Tên Xe</td><td>{booking.vehicleName}</td></tr>
+                                    <tr><td className="fw-medium">Biển số Xe</td><td>{booking.vehiclePlate}</td></tr>
+                                    <tr><td className="fw-medium">Bắt đầu</td><td>{new Date(booking.startDateTime).toLocaleString()}</td></tr>
+                                    <tr><td className="fw-medium">Kết thúc</td><td>{new Date(booking.endDateTime).toLocaleString()}</td></tr>
+                                    <tr><td className="fw-medium">Giá/Giờ</td><td>{formatCurrency(booking.pricePerHour)}</td></tr>
+                                    <tr><td className="fw-medium">Giá/Ngày</td><td>{formatCurrency(booking.pricePerDay)}</td></tr>
+                                </tbody>
+                            </Table>
+                        </Col>
+                    </Row>
+                    
+                    <h4 className="fw-bold mt-4 mb-3 border-bottom pb-2">Thủ tục Check-in/Check-out</h4>
+                    
+                    {/* NÚT HÀNH ĐỘNG MỚI */}
+                    <Row className="mb-4 justify-content-center">
+                        <Col xs={12} md={4} className="mb-2">
+                            <Button variant="secondary" className="w-100" onClick={() => handleUploadPhoto('before')}>
+                                📸 Ảnh chụp **trước khi** thuê
+                            </Button>
+                        </Col>
+                        <Col xs={12} md={4} className="mb-2">
+                            <Button variant="warning" className="w-100" onClick={handleCreateReport}>
+                                ⚠️ **Report** (Báo cáo hư hỏng/sự cố)
+                            </Button>
+                        </Col>
+                        <Col xs={12} md={4} className="mb-2">
+                            <Button variant="secondary" className="w-100" onClick={() => handleUploadPhoto('after')}>
+                                📷 Ảnh chụp **sau khi** trả
+                            </Button>
+                        </Col>
+                    </Row>
+
+                    {/* HIỂN THỊ ẢNH (Chỉ để tham khảo, ảnh thực sẽ được hiển thị khi được cập nhật từ PhotoCapturePage) */}
+                    <Row className="mt-4">
+                        <Col md={6} className="text-center">
+                            <h6 className="fw-medium">Ảnh trước khi thuê</h6>
+                            <img src={booking.photoBeforeUrl} alt="Ảnh trước khi thuê" className="img-fluid border p-1" style={{ maxWidth: '400px', borderRadius: 8 }} />
+                        </Col>
+                        <Col md={6} className="text-center">
+                            <h6 className="fw-medium">Ảnh sau khi trả</h6>
+                            <img src={booking.photoAfterUrl} alt="Ảnh sau khi trả" className="img-fluid border p-1" style={{ maxWidth: '400px', borderRadius: 8 }} />
+                        </Col>
+                    </Row>
+
+                </Card.Body>
+                <Card.Footer className="text-center text-muted">Booking Management System</Card.Footer>
+            </Card>
         </Container>
     );
 }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Container, Table, Button, Spinner, Alert, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { getStaffStationBookings } from './services/authServices';
-import { Link } from 'react-router-dom'; // Thêm Link nếu muốn nút "Tạo HĐ" chuyển hướng đến trang tạo
+import { Link } from 'react-router-dom';
 
 // Cập nhật Interface để khớp với dữ liệu API
 interface BookingContract {
@@ -14,7 +14,7 @@ interface BookingContract {
     startDateTime: string;
     endDateTime: string;
     contractId: number | null;
-    contractStatus: 'NOT_CREATED' | 'PENDING' | 'APPROVED' | 'REJECTED' | string;
+    contractStatus: 'NOT_CREATED' | 'PENDING_ADMIN_SIGNATURE' | 'APPROVED' | 'REJECTED' | string;
     contractFileUrl: string | null;
     renterSignedAt: string | null;
     staffSignedAt: string | null;
@@ -37,15 +37,9 @@ const ListBookingStaff: React.FC = () => {
         setError('');
 
         try {
-            const response = await getStaffStationBookings();
-
-            // Giả lập dữ liệu nếu API bị lỗi, để hiển thị giao diện
-            // const mockData = [
-            //     { bookingId: 1, vehicleName: "VF5 Plus Đỏ", stationName: "Station Bến Thành", renterName: "Trần Văn Kiên", bookingStatus: "RESERVED", startDateTime: "2025-11-01T08:00:00", endDateTime: "2025-11-05T18:00:00", contractId: null, contractStatus: "NOT_CREATED", contractFileUrl: null, renterSignedAt: null, staffSignedAt: null },
-            //     { bookingId: 2, vehicleName: "Honda Civic", stationName: "Station Sân Bay", renterName: "Nguyễn Thị Hoa", bookingStatus: "COMPLETED", startDateTime: "2025-10-25T09:00:00", endDateTime: "2025-10-28T10:00:00", contractId: 101, contractStatus: "APPROVED", contractFileUrl: 'url_101', renterSignedAt: '2025-10-25', staffSignedAt: '2025-10-25' },
-            //     { bookingId: 3, vehicleName: "Toyota Vios", stationName: "Station Bến Thành", renterName: "Phạm Văn Lực", bookingStatus: "RESERVED", startDateTime: "2025-11-02T10:00:00", endDateTime: "2025-11-07T14:00:00", contractId: 102, contractStatus: "PENDING", contractFileUrl: null, renterSignedAt: '2025-11-01', staffSignedAt: null },
-            // ];
-            // setBookings(mockData);
+            // Giả định getStaffStationBookings trả về data có cấu trúc: { data: { data: BookingContract[] } }
+            // Lưu ý: Đảm bảo 'getStaffStationBookings' đã được import đúng từ './services/authServices'
+            const response = await getStaffStationBookings(); 
 
             setBookings(response?.data?.data || []);
 
@@ -77,8 +71,8 @@ const ListBookingStaff: React.FC = () => {
         switch (status) {
             case 'NOT_CREATED':
                 return <Badge bg="info">Chưa tạo</Badge>;
-            case 'PENDING':
-                return <Badge bg="warning">Chờ ký</Badge>;
+            case 'PENDING_ADMIN_SIGNATURE':
+                return <Badge bg="warning">Chờ Admin ký</Badge>;
             case 'APPROVED':
                 return <Badge bg="success">Đã duyệt</Badge>;
             case 'REJECTED':
@@ -90,12 +84,16 @@ const ListBookingStaff: React.FC = () => {
 
     // Handler cho nút "Tạo/Xem Chi tiết Hợp đồng"
     const handleContractAction = (booking: BookingContract) => {
+        // 1. Chưa tạo hợp đồng: Tạo hợp đồng
         if (booking.contractStatus === 'NOT_CREATED') {
-            // SỬA: Chuyển hướng đến trang tạo hợp đồng mới của Staff Interface
             navigate(`/staff/booking/${booking.bookingId}/create-contract`);
-        } else {
-            // Chuyển hướng đến trang chi tiết hợp đồng
-            // Giả định Staff cũng có route chi tiết hợp đồng riêng
+        } 
+        // 2. Chờ Admin ký hoặc Đã duyệt: Chuyển hướng đến trang Chi tiết Booking (Staff thực hiện Check-in/Check-out)
+        else if (booking.contractStatus === 'PENDING_ADMIN_SIGNATURE' || booking.contractStatus === 'APPROVED') {
+            navigate(`/staff/booking/${booking.bookingId}/detail`); 
+        }
+        // 3. Trường hợp khác (ví dụ: Rejected, Completed): Xem chi tiết Hợp đồng (nếu có contractId)
+        else if (booking.contractId) {
             navigate(`/staff/contract/${booking.contractId}`);
         }
     };
@@ -119,7 +117,6 @@ const ListBookingStaff: React.FC = () => {
                 <Alert variant="danger">
                     <Alert.Heading>Có lỗi xảy ra!</Alert.Heading>
                     <p>{error}</p>
-                    {/* Đổi fetchContracts thành fetchBooking */}
                     <Button variant="outline-danger" onClick={fetchBooking}>
                         Thử lại
                     </Button>
@@ -173,7 +170,10 @@ const ListBookingStaff: React.FC = () => {
                                             // Vô hiệu hóa nút nếu booking đã hủy
                                             disabled={b.bookingStatus === 'CANCELLED'}
                                         >
-                                            {b.contractStatus === 'NOT_CREATED' ? 'Tạo Hợp đồng' : 'Xem Chi tiết'}
+                                            {/* Logic hiển thị theo trạng thái */}
+                                            {b.contractStatus === 'PENDING_ADMIN_SIGNATURE' || b.contractStatus === 'APPROVED' 
+                                                ? 'Thực hiện/Xem chi tiết' 
+                                                : b.contractStatus === 'NOT_CREATED' ? 'Tạo Hợp đồng' : 'Xem Chi tiết'}
                                         </Button>
                                     </td>
                                 </tr>
