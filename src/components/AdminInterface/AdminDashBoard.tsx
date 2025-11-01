@@ -8,8 +8,7 @@ Chart.register(CategoryScale);
 const AdminDashBoard = () => {
     return (
         <div className='DashBoard'>
-            <div className='dataCard customerCard'>
-                {/* Khúc này gọi API doanh thu thống kê các số liệu. */}
+            <div>
                 <Bar
                     data={{
                         labels: ["A", "B", "C"],

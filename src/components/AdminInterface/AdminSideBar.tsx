@@ -32,7 +32,7 @@ export const AdminSideBar = () => {
             <nav className="sidebar-nav">
                 <div className="sidebar-header">
                     <h2 className="title">Admin</h2>
-                    <ChevronFirst/>
+                    <ChevronFirst />
                 </div>
 
                 <ul className="sidebar-menu">
@@ -51,7 +51,7 @@ export const AdminSideBar = () => {
                 <div className="sidebar-footer">
                     <img src={userImage} alt="user" className="user-img" />
                     <div className="user-info">
-                        <h4>Thanh Hải</h4>
+                        <h4>Admin</h4>
                         <span>admin@gmail.com</span>
                     </div>
                 </div>
@@ -64,8 +64,7 @@ const SidebarItem = ({ icon, text, active, alert, path }: any) => {
     return (
         <li className={`sidebar-item ${active ? "active" : ""}`}>
             <Link to={path} className="sidebar-link">
-                <span className="sidebar-icon">{icon}</span>
-                <span className="sidebar-text">{text}</span>
+                <span className="sidebar-icon">{icon}</span><span className="sidebar-text">{text}</span>
                 {alert && <AlertCircle size={14} className="alert-dot" />}
             </Link>
         </li>

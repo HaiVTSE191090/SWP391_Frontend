@@ -25,6 +25,7 @@ import ListBooking from "./components/AdminInterface/ListBooking";
 import BookingDetail from "./components/AdminInterface/BookingDetails";
 import ListContract from "./components/AdminInterface/ListContract";
 import ContractDetail from "./components/AdminInterface/ContractDetail";
+import AdminDashBoard from "./components/AdminInterface/AdminDashBoard";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -55,16 +56,13 @@ const App = () => {
                   <Route index element={<Staff />} />
                 </Route>
 
-                {/* admin */}
-                <Route path="admin/">
-                  <Route index element={<AdminLayout />} />
-                  <Route path="/admin/booking" element={<ListBooking />} />
-                  <Route path="/admin/booking/:id" element={<BookingDetail />} />
-                  <Route path="/admin/contract" element={<ListContract />} />
-                  <Route path="/admin/contract/:id" element={<ContractDetail />} />
-                </Route>
-
                 <Route path="*" element={<NotFoundPage />} />
+              </Route>
+              {/* admin */}
+              <Route path="admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashBoard />} />
+                <Route path="contract" element={<ListContract />} />
+                <Route path="contract/:id" element={<ContractDetail />} />
               </Route>
             </Routes>
           </Suspense>
