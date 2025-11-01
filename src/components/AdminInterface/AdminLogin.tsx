@@ -10,7 +10,7 @@ const AdminLogin: React.FC = () => {
     const [loading, setLoading] = useState(false); // Thêm trạng thái loading
 
     const navigate = useNavigate(); // Khởi tạo hook chuyển hướng
-    
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
@@ -22,17 +22,18 @@ const AdminLogin: React.FC = () => {
         setLoading(true); // Bắt đầu loading
         // TODO: wire up real auth (API call)
         try {
-            // 1. GỌI API THỰC TẾ
-            await adminLogin(email, password);
-
-            // 2. Xử lý thành công và chuyển hướng
+            const res = await adminLogin(email, password);
+            if (res.success === false) {
+                setError(res.err)
+                return;
+            }
             alert("Đăng nhập thành công!");
-            navigate("/admin"); // 👈 CHUYỂN HƯỚNG TỚI TRANG DASHBOARD
-
+            navigate("/admin");
         } catch (err: any) {
-            // 3. Xử lý lỗi
-            setError(err.message || "Lỗi đăng nhập không xác định.");
-        } finally {
+
+            setError(err.err);
+        }
+        finally {
             // 4. Kết thúc loading
             setLoading(false);
         }
@@ -48,7 +49,7 @@ const AdminLogin: React.FC = () => {
                         <div className="col-md-6 col-lg-5">
                             <div className="card shadow-sm">
                                 <div className="card-body p-4">
-                                    <h3 className="card-title text-center mb-3">Staff Login</h3>
+                                    <h3 className="card-title text-center mb-3">Admin Login</h3>
 
                                     <form onSubmit={handleSubmit}>
                                         {error && (
