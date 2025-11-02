@@ -137,7 +137,7 @@ const Navbar: React.FC = () => {
           <button
             className="btn btn-sm w-100 text-primary fw-bold"
             onClick={() => {
-              navigate("/staff/notifications");
+              navigate("notifications");
               setShowDropdown(false);
             }}
           >
