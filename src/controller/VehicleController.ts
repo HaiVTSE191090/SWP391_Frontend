@@ -195,9 +195,13 @@ export class VehicleController implements IVehicleController {
     return checkVehicleAvailable(vehicle);
   }
 
-  formatMileage(mileage: number): string {
+  formatMileage(mileage: number | null | undefined): string {
+    if (mileage == null || isNaN(mileage)) {
+      return "Chưa cập nhật"; // hoặc "0 km"
+    }
     return `${mileage.toLocaleString("vi-VN")} km`;
   }
+
 }
 
 export const vehicleController = new VehicleController();
