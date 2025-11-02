@@ -2,7 +2,7 @@ import { useLocation, Navigate, Outlet } from "react-router-dom"
 import { jwtDecode } from "jwt-decode";
 
 const RequireAuth = () => {
-    const token = localStorage.getItem("staffToken")
+    const token = localStorage.getItem("authToken")
     const location = useLocation();
     if (token) {
         try {

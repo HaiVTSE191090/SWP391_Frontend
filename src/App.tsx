@@ -35,45 +35,44 @@ const HomePage = lazy(() => import("./pages/HomePage"));
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <UserProvider>
-        <VehicleProvider>
-          <Suspense fallback={<div className="container py-5">Đang tải...</div>}>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<HomePage />} />
-                <Route path="sign-up" element={<SignUpForm />} />
-                <Route path="manualIdentity" element={<ManualIdentityPage />} />
-                <Route path="kyc-verification" element={<KycVerificationPage />} />
-                <Route path="xac-nhan-dat-xe/:bookingId" element={<DepositPage />} />
-                <Route path="rental-history" element={<RentalHistoryPage />} />
-                <Route path="contract-preview" element={<ContractPreviewPage />} />
-                <Route path="vehicles" element={<VehiclesPage />} />
-                <Route path="vehicles/:id" element={<VehicleDetailPage />} />
-                <Route path="profile" element={<UserProfilePage />} />
-                <Route path="payment-result" element={<PaymentResultPage/>}/>
 
-                <Route path="staff/login" element={<StaffLogin />} />
-                <Route path="staff" element={<RequireAuth />}>
-                  <Route index element={<Staff />} />
-                  <Route path="renters" element={<ListRenter />} />
-                  <Route path="renter/:id" element={<UserDetail />} />
-                  <Route path="bookings" element={<ListBookingStaff />} />
-                  <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
-                  <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
-                  <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
-                  <Route path="notifications" element={<NotificationsPage />} />
-                </Route>
+    <UserProvider>
+      <VehicleProvider>
+        <Suspense fallback={<div className="container py-5">Đang tải...</div>}>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<HomePage />} />
+              <Route path="sign-up" element={<SignUpForm />} />
+              <Route path="manualIdentity" element={<ManualIdentityPage />} />
+              <Route path="kyc-verification" element={<KycVerificationPage />} />
+              <Route path="xac-nhan-dat-xe/:bookingId" element={<DepositPage />} />
+              <Route path="rental-history" element={<RentalHistoryPage />} />
+              <Route path="contract-preview" element={<ContractPreviewPage />} />
+              <Route path="vehicles" element={<VehiclesPage />} />
+              <Route path="vehicles/:id" element={<VehicleDetailPage />} />
+              <Route path="profile" element={<UserProfilePage />} />
+              <Route path="payment-result" element={<PaymentResultPage />} />
 
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </Suspense>
+              <Route path="staff/login" element={<StaffLogin />} />
 
-          <ToastConfig />
-        </VehicleProvider>
-      </UserProvider>
-    </BrowserRouter>
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+            <Route path="staff" element={<RequireAuth />}>
+              <Route index element={<Staff />} />
+              <Route path="renters" element={<ListRenter />} />
+              <Route path="renter/:id" element={<UserDetail />} />
+              <Route path="bookings" element={<ListBookingStaff />} />
+              <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
+              <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
+              <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+            </Route>
+          </Routes>
+        </Suspense>
+
+        <ToastConfig />
+      </VehicleProvider>
+    </UserProvider>
   );
 };
 

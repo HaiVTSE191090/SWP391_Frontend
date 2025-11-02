@@ -136,10 +136,10 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                 <strong>Address:</strong> {detail?.address}
               </Col>
               <Col xs={6} className="mb-2">
-                <strong>Identity Card:</strong> {detail?.cccd.documentNumber}
+                <strong>Identity Card:</strong> {detail?.cccd?.documentNumber}
               </Col>
               <Col xs={12} className="mb-2">
-                <strong>License:</strong> {detail?.gplx.documentNumber}
+                <strong>License:</strong> {detail?.gplx?.documentNumber}
               </Col>
             </Row>
           </Col>
