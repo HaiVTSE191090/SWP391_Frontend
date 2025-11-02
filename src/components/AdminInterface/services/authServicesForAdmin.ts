@@ -1,24 +1,29 @@
 import axios from "axios";
+import api from "./AdminApiConfig";
+import { ApiResponse, Booking, Contract, ContractDetail, ServiceResponse } from "../types/api.type";
+import { jwtDecode } from "jwt-decode";
 
 const baseURL = "http://localhost:8080";
 
 export const adminLogin = async (email: string, password: string) => {
     try {
-        const response = await axios.post(`${baseURL}/api/auth/login/admin`, {
+        const response = await api.post(`/api/auth/login/admin`, {
             email,
             password
         });
 
-        // ✅ Lưu token sau khi đăng nhập thành công
         if (response.data?.data?.token) {
             localStorage.setItem("adminToken", response.data.data.token);
+            const decoded = jwtDecode<any>(response.data.data.token);
+            localStorage.setItem("role", decoded.role);
+            localStorage.setItem("userId", decoded.userId);
         }
 
         return response.data;
     } catch (error: any) {
         console.error("🔴 Lỗi đăng nhập Admin:", error);
 
-        let errorMessage = "Đăng nhập thất bại. Vui lòng thử lại.";
+        let errorMessage = error.response?.data?.data;
 
         if (error.response) {
             const res = error.response.data;
@@ -49,3 +54,193 @@ export const adminLogin = async (email: string, password: string) => {
         }
     }
 };
+
+export const adminLogout = () => {
+    try {
+        localStorage.removeItem("adminToken");
+        localStorage.removeItem("role");
+        localStorage.removeItem("userId");
+        return { success: true, message: "Đăng xuất thành công." };
+    } catch (error) {
+        return { success: false, message: "Có lỗi xảy ra khi đăng xuất." };
+    }
+};
+
+export const getAllContracts = async (): Promise<any> => {
+    try {
+        const response = await api.get<ApiResponse<Booking[]>>('/api/admin/contracts?status=PENDING_ADMIN_SIGNATURE');
+
+        if (!response.data.data || response.data.data.length === 0) {
+            return [];
+        }
+        const contracts: Contract[] = response.data.data.map((booking, index) => ({
+            id: index + 1,
+            bookingId: booking.bookingId,
+            renterName: booking.renterName,
+            status: "PENDING_ADMIN_SIGNATURE",
+            createdAt: booking.startDateTime
+        }));
+
+        return {
+            success: true,
+            data: contracts
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            err: error.response?.data?.data
+        }
+    }
+};
+
+export const getBookingDetail = async (bookingId: number): Promise<ServiceResponse<Booking>> => {
+    try {
+        const response = await api.get<ApiResponse<Booking>>(`/api/contracts/${bookingId}`);
+
+        if (!response.data.data) {
+            return {
+                success: false,
+                message: 'Không tìm thấy thông tin đơn đặt xe'
+            };
+        }
+
+        return {
+            success: true,
+            data: response.data.data
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Không thể tải thông tin đơn đặt xe'
+        };
+    }
+};
+
+/**
+ * Lấy chi tiết hợp đồng theo ID
+ */
+export const getContractDetail = async (contractId: number): Promise<ServiceResponse<ContractDetail>> => {
+    try {
+        const response = await api.get<ApiResponse<ContractDetail>>(`/api/admin/contracts/${contractId}`);
+
+        if (!response.data.data) {
+            return {
+                success: false,
+                message: 'Không tìm thấy thông tin hợp đồng'
+            };
+        }
+
+        return {
+            success: true,
+            data: response.data.data
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Không thể tải chi tiết hợp đồng'
+        };
+    }
+};
+
+
+/**
+ * Lấy chi tiết contract theo bookingId
+ */
+export const getContractByBookingId = async (bookingId: number): Promise<any> => {
+    try {
+        const response = await api.get<ApiResponse<ContractDetail>>(`/api/contracts/${bookingId}`);
+
+        if (!response.data.data) {
+            return {
+                success: false,
+                message: 'Không tìm thấy thông tin hợp đồng'
+            };
+        }
+
+        return {
+            success: true,
+            data: response.data.data
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.data || 'Không thể tải chi tiết hợp đồng'
+        };
+    }
+};
+
+/**
+ * Xem file hợp đồng PDF
+ */
+export const viewContractPDF = async (contractId: number): Promise<ServiceResponse<Blob>> => {
+    try {
+        const response = await api.get(`/api/contracts/view/${contractId}`, {
+            responseType: 'blob'
+        });
+
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Không thể tải file hợp đồng'
+        };
+    }
+};
+
+/**
+ * Admin gửi OTP để ký hợp đồng
+ */
+export const sendAdminOTP = async (contractId: number): Promise<ServiceResponse<null>> => {
+    try {
+        const response = await api.post<ApiResponse<null>>(
+            `/api/admin/contracts/${contractId}/send-otp`,
+            {},
+            {
+                params: {
+                    contractId,
+                    adminId: localStorage.getItem("userId")
+                }
+
+            });
+
+        return {
+            success: true,
+            message: response.data.message || 'Mã OTP đã được gửi đến email'
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Không thể gửi mã OTP'
+        };
+    }
+};
+
+/**
+ * Admin xác thực OTP và ký hợp đồng
+ */
+export const signContractByAdmin = async (
+    contractId: number,
+    otpCode: string
+): Promise<ServiceResponse<null>> => {
+    try {
+        const response = await api.post<ApiResponse<null>>(
+            `/api/admin/contracts/verify-sign`,
+            {contractId: contractId,adminId: localStorage.getItem("userId"), otpCode: otpCode, approved: true }
+            
+        );
+
+        return {
+            success: true,
+            message: response.data.data || 'Hợp đồng đã được ký thành công'
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.response?.data?.data || 'Mã OTP không hợp lệ hoặc không thể ký hợp đồng'
+        };
+    }
+};
+
