@@ -24,7 +24,11 @@ export default function DepositPage() {
   useEffect(() => {
     const fetchBooking = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/bookings/${bookingId}`);
+        const res = await axios.get(`http://localhost:8080/api/bookings/${bookingId}`, {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        });
         const data = res.data.data;
         setBooking(data);
         setLoadingBooking(false);
@@ -41,7 +45,7 @@ export default function DepositPage() {
 
     const fetchVehicle = async (vehicleId: number) => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/vehicle/detail/${vehicleId}`);
+        const res = await axios.get(`http://localhost:8080/api/vehicle/detail/${vehicleId}`)
         const data = res.data.data;
         console.log("✅ Vehicle detail:", res.data.data);
         setVehicle(data);
@@ -59,18 +63,23 @@ export default function DepositPage() {
   const handleConfirm = async () => {
     setShowConfirmBox(true);
     try {
-      const res = await axios.post(`http://localhost:8080/api/invoices/bookings/${bookingId}/invoices/deposit`, {
-        depositAmount: depositNumber,
+      const res = await axios.post(`http://localhost:8080/api/invoices/bookings/${bookingId}/invoices/deposit`, null, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
       });
-      await axios.put(`http://localhost:8080/api/bookings/${bookingId}/status/reserved`);
 
-      const res2 = await axios.get(`http://localhost:8080/api/invoices/bookings/${bookingId}/invoices`);
+      const res2 = await axios.get(`http://localhost:8080/api/invoices/bookings/${bookingId}/invoices`, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
       const data2 = res2.data.data;
       setInvoiceId(data2[0].invoiceId);
       setDepositNumber(data2[0].depositAmount);
       console.log("✅ Tạo hóa đơn tiền cọc thành công:", res.data.data);
     } catch (error: any) {
-      console.error( error);
+      console.error(error);
       setErrorMsg(error.response?.data?.data || "Đã xảy ra lỗi khi tạo hóa đơn tiền cọc.");
     }
 
@@ -82,6 +91,10 @@ export default function DepositPage() {
       setLoading(true);
       const res = await axios.post(`http://localhost:8080/api/payments/invoice/${invoiceId}/momo`, {
         amount: depositNumber,
+      }, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
       });
 
       const data = res.data.data;

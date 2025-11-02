@@ -47,7 +47,7 @@ const App = () => {
               <Route path="kyc-verification" element={<KycVerificationPage />} />
               <Route path="xac-nhan-dat-xe/:bookingId" element={<DepositPage />} />
               <Route path="rental-history" element={<RentalHistoryPage />} />
-              <Route path="contract-preview" element={<ContractPreviewPage />} />
+              <Route path="contract-preview/:bookingId" element={<ContractPreviewPage />} />
               <Route path="vehicles" element={<VehiclesPage />} />
               <Route path="vehicles/:id" element={<VehicleDetailPage />} />
               <Route path="profile" element={<UserProfilePage />} />
