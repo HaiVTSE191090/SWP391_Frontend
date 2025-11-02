@@ -17,9 +17,14 @@ import VehicleDetailPage from "./pages/VehicleDetailPage";
 import VehiclesPage from "./pages/VehiclesPage";
 import NotFoundPage from "./components/404/NotFoundPage";
 import UserProfilePage from "./pages/UserProfilePage";
-import StaffLogin from "./components/StaffInterface/StaffLogin";
-import Staff from "./components/StaffInterface/Staff";
 import PaymentResultPage from "./pages/PaymentResultPage";
+// ======== Các trang cho Admin ========
+import AdminLayout from "./components/AdminInterface/Admin";
+import ListBooking from "./components/AdminInterface/ListBooking";
+import ListContract from "./components/AdminInterface/ListContract";
+import ContractDetail from "./components/AdminInterface/ContractDetail";
+import AdminDashBoard from "./components/AdminInterface/AdminDashBoard";
+import AdminLogin from "./components/AdminInterface/AdminLogin";
 
 // ======== Các trang cho Staff ========
 import ListRenter from "./components/StaffInterface/ListRenter";
@@ -29,6 +34,8 @@ import CreateContract from "./components/StaffInterface/CreateContract";
 import BookingDetail from "./components/StaffInterface/BookingDetail";
 import PhotoCapturePage from "./components/StaffInterface/PhotoCapturePage";
 import NotificationsPage from "./components/StaffInterface/NotificationsPage";
+import StaffLogin from "./components/StaffInterface/StaffLogin";
+import Staff from "./components/StaffInterface/Staff";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -55,25 +62,31 @@ const App = () => {
 
               <Route path="staff/login" element={<StaffLogin />} />
 
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-            <Route path="staff" element={<RequireAuth />}>
-              <Route index element={<Staff />} />
-              <Route path="renters" element={<ListRenter />} />
-              <Route path="renter/:id" element={<UserDetail />} />
-              <Route path="bookings" element={<ListBookingStaff />} />
-              <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
-              <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
-              <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
-              <Route path="notifications" element={<NotificationsPage />} />
-            </Route>
-          </Routes>
-        </Suspense>
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Route>
+                  <Route path="staff" element={<RequireAuth />}>
+                    <Route index element={<Staff />} />
+                    <Route path="renters" element={<ListRenter />} />
+                    <Route path="renter/:id" element={<UserDetail />} />
+                    <Route path="bookings" element={<ListBookingStaff />} />
+                    <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
+                    <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
+                    <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+                    <Route path="notifications" element={<NotificationsPage />} />
+                  </Route>
+                  {/* admin */}
+                  <Route path="admin" element={<AdminLayout />}>
+                    <Route index element={<AdminDashBoard />} />
+                    <Route path="contract" element={<ListContract />} />
+                    <Route path="contract/:id" element={<ContractDetail />} />
+                  </Route>
+                </Routes>
+              </Suspense>
 
-        <ToastConfig />
-      </VehicleProvider>
-    </UserProvider>
-  );
+              <ToastConfig />
+            </VehicleProvider>
+          </UserProvider>
+          );
 };
 
-export default App;
+          export default App;
