@@ -15,41 +15,37 @@ import BookingDetails from "./AdminInterface/BookingDetails";
 import ListContract from "./AdminInterface/ListContract";
 import ContractDetail from "./AdminInterface/ContractDetail";
 import ListBookingStaff from "./components/StaffInterface/ListBookingStaff";
-import CreateContract from "./components/StaffInterface/CreateContract"; 
+import CreateContract from "./components/StaffInterface/CreateContract";
 import BookingDetail from "./components/StaffInterface/BookingDetail"; // Import component BookingDetail
 import PhotoCapturePage from "./components/StaffInterface/PhotoCapturePage"; // Import component PhotoCapturePage
-
+import NotificationsPage from "./components/StaffInterface/NotificationsPage"; // Import component NotificationsPage
 const App = () => {
-    return (
-        <>
-            {/* <AppRouter /> */}
-            {/* <Mapbox />  */}
-            <Navbar />
-            <Routes>
-                <Route path="/" element={<StaffLogin />} />
-                <Route path="/staff" element={<Staff />} />
-                <Route path="/staff/renters" element={<ListRenter />} />
-                <Route path="/staff/renter/:id" element={<UserDetail />} />
-                <Route path="/staff/bookings" element={<ListBookingStaff />} />
-                <Route path="/staff/booking/:bookingId/create-contract" element={<CreateContract />} />
-                
-                {/* ROUTE MỚI: Chi tiết Booking cho Staff (Để xử lý Check-in/Check-out) */}
-                <Route path="/staff/booking/:bookingId/detail" element={<BookingDetail />} /> 
-
-                {/* ROUTE MỚI: Trang Chụp ảnh tái sử dụng */}
-                <Route path="/staff/booking/:bookingId/photo/:type" element={<PhotoCapturePage />} /> 
-
-                {/* Các Route dành cho Admin (đã comment) */}
-                {/* <Route path="/" element={<AdminLogin />} />
+  return (
+    <>
+      {/* <AppRouter /> */}
+      {/* <Mapbox />  */}
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<StaffLogin />} />
+        <Route path="/staff" element={<Staff />} />
+        <Route path="/staff/renters" element={<ListRenter />} />
+        <Route path="/staff/renter/:id" element={<UserDetail />} />
+        <Route path="/staff/bookings" element={<ListBookingStaff />} />
+        <Route path="/staff/booking/:bookingId/create-contract" element={<CreateContract />} />
+        <Route path="/staff/booking/:bookingId/detail" element={<BookingDetail />} />
+        <Route path="/staff/booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+        <Route path="/staff/notifications" element={<NotificationsPage />} />
+        {/* Các Route dành cho Admin (đã comment) */}
+        {/* <Route path="/" element={<AdminLogin />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/booking" element={<ListBooking />} />
                 <Route path="/admin/booking/:id" element={<BookingDetails />} />
                 <Route path="/admin/contract" element={<ListContract />} />
                 <Route path="/admin/contract/:id" element={<ContractDetail />} /> */}
-            </Routes>
-            <Footer />
-        </>
-    );
+      </Routes>
+      <Footer />
+    </>
+  );
 };
 
 

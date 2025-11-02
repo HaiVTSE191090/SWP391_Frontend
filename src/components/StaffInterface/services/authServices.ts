@@ -192,3 +192,27 @@ export const sendContractToAdmin = async (contractId: number) => {
         throw error;
     }
 };
+
+//Hàm lấy thông báo cho nhân viên
+export const getStaffNotifications = async () => {
+    try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.warn('Không tìm thấy authToken. Không thể lấy thông báo.');
+            // Trả về một mảng rỗng nếu không có token (chưa đăng nhập)
+            return { data: { data: [] } }; 
+        }
+
+        const resp = await axios.get(`${baseURL}/api/notifications/my`, {
+            headers: {
+                Authorization: `Bearer ${token}` // Gửi Token
+            }
+        });
+        // Trả về trực tiếp response để lấy data sau này
+        return resp; 
+    } catch (error) {
+        console.error('Lỗi khi lấy thông báo nhân viên:', error);
+        // Ném lỗi hoặc trả về cấu trúc lỗi nếu cần xử lý sâu hơn
+        throw error;
+    }
+}
