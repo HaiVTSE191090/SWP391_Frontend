@@ -21,6 +21,15 @@ import StaffLogin from "./components/StaffInterface/StaffLogin";
 import Staff from "./components/StaffInterface/Staff";
 import PaymentResultPage from "./pages/PaymentResultPage";
 
+// ======== Các trang cho Staff ========
+import ListRenter from "./components/StaffInterface/ListRenter";
+import UserDetail from "./components/StaffInterface/UserDetail";
+import ListBookingStaff from "./components/StaffInterface/ListBookingStaff";
+import CreateContract from "./components/StaffInterface/CreateContract";
+import BookingDetail from "./components/StaffInterface/BookingDetail";
+import PhotoCapturePage from "./components/StaffInterface/PhotoCapturePage";
+import NotificationsPage from "./components/StaffInterface/NotificationsPage";
+
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
 
@@ -45,8 +54,15 @@ const App = () => {
                 <Route path="payment-result" element={<PaymentResultPage/>}/>
 
                 <Route path="staff/login" element={<StaffLogin />} />
-                <Route path="staff/" element={<RequireAuth />}>
+                <Route path="staff" element={<RequireAuth />}>
                   <Route index element={<Staff />} />
+                  <Route path="renters" element={<ListRenter />} />
+                  <Route path="renter/:id" element={<UserDetail />} />
+                  <Route path="bookings" element={<ListBookingStaff />} />
+                  <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
+                  <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
+                  <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFoundPage />} />

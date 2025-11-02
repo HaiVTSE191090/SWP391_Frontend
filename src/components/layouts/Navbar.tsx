@@ -15,6 +15,20 @@ const Navbar: React.FC = () => {
 
   return (
     <>
+      <style>{`
+        /* CSS tuỳ chỉnh cho Navbar */
+        .navbar-brand .text-primary { color: #4678e5ff !important; }
+        .nav-link { 
+          font-weight: 500;
+          color: #374151 !important; 
+        }
+        .nav-link:hover { color: #4678e5ff !important; }
+        .cursor-pointer { cursor: pointer; }
+        /* Style mới cho thông báo chưa đọc */
+        .bg-light-blue { background-color: #eaf3ffff; }
+        .bg-hover-light:hover { background-color: #f7f7f7; }
+        .transition-all { transition: all 0.2s ease; }
+      `}</style>
       <nav className="navbar navbar-expand-lg bg-white border-bottom px-4">
         <div className="container-fluid">
           {/* Logo và tên trang */}
