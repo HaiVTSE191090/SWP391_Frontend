@@ -264,6 +264,17 @@
   box-shadow: 0 6px 14px rgba(255, 59, 59, 0.5);
 }
 
+button.btn-info {
+  color: white;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+button.btn-info:hover {
+  opacity: 0.9;
+  transform: scale(1.03);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
