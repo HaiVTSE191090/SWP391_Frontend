@@ -98,7 +98,7 @@ const ListContract: React.FC = () => {
                                     <td><strong>#{c.id}</strong></td>
                                     <td>#{c.bookingId}</td>
                                     <td>{c.renterName}</td>
-                                    <td>{c.createdAt}</td>
+                                    <td>{c.createdAt?.replace("T", " ")}</td>
                                     <td>{getStatusBadge(c.status)}</td>
                                     <td className="text-center">
                                         <Button

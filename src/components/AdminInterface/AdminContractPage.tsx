@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Button, Spinner, Card, Form } from "react-bootstrap";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import { Button, Spinner, Card } from "react-bootstrap";
+import { useNavigate, useParams } from "react-router-dom";
 import "./AdminContractPage.css";
-import { Booking } from "../../models/BookingModel";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Contract, ContractFullDetail, ServiceResponse } from "./types/api.type";
+import { ContractFullDetail } from "./types/api.type";
 import * as adminContractService from "./services/authServicesForAdmin";
-import { set } from "react-datepicker/dist/date_utils";
 
 
 
@@ -25,34 +22,35 @@ export default function AdminContractPage() {
     const [otp, setOtp] = useState("");
 
     useEffect(() => {
+        const fetchContractAndBooking = async () => {
+            if (!bookingId) return;
+
+            setLoading(true);
+            try {
+                const contractResult = await adminContractService.getContractByBookingId(Number(bookingId));
+
+                if (!contractResult.success || !contractResult.data) {
+                    toast.error(contractResult.message || 'Không tìm thấy hợp đồng');
+                    return;
+                }
+
+                setContract(contractResult.data);
+
+                const bookingResult = await adminContractService.getBookingDetail(Number(bookingId));
+
+                if (bookingResult.success && bookingResult.data) {
+                    setBooking(bookingResult.data);
+                }
+            } catch (error) {
+                toast.error("Có lỗi xảy ra khi tải dữ liệu");
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchContractAndBooking();
     }, [bookingId]);
 
-    const fetchContractAndBooking = async () => {
-        if (!bookingId) return;
 
-        setLoading(true);
-        try {
-            const contractResult = await adminContractService.getContractByBookingId(Number(bookingId));
-
-            if (!contractResult.success || !contractResult.data) {
-                toast.error(contractResult.message || 'Không tìm thấy hợp đồng');
-                return;
-            }
-
-            setContract(contractResult.data);
-
-            const bookingResult = await adminContractService.getBookingDetail(Number(bookingId));
-
-            if (bookingResult.success && bookingResult.data) {
-                setBooking(bookingResult.data);
-            }
-        } catch (error) {
-            toast.error("Có lỗi xảy ra khi tải dữ liệu");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleViewContract = async () => {
         if (!contract) return;
@@ -126,8 +124,8 @@ export default function AdminContractPage() {
                 <p><strong>Mã booking:</strong> #{contract.bookingId}</p>
                 <p><strong>Loại hợp đồng:</strong> {contract.contractType}</p>
                 <p><strong>Trạng thái:</strong> <span className={`badge bg-${contract.status === 'FULLY_SIGNED' ? 'success' :
-                        contract.status === 'ADMIN_SIGNED' ? 'primary' :
-                            contract.status === 'PENDING_ADMIN_SIGNATURE' ? 'warning' : 'secondary'
+                    contract.status === 'ADMIN_SIGNED' ? 'primary' :
+                        contract.status === 'PENDING_ADMIN_SIGNATURE' ? 'warning' : 'secondary'
                     }`}>{contract.status}</span></p>
                 <p><strong>Ngày tạo:</strong> {contract.contractDate?.replace("T", " ")}</p>
                 <p><strong>Admin:</strong> {contract.adminName}</p>
