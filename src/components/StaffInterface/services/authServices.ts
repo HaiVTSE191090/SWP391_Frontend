@@ -216,3 +216,25 @@ export const getStaffNotifications = async () => {
         throw error;
     }
 }
+
+// --- BỔ SUNG HÀM API PATCH MỚI ---
+export const markNotificationAsRead = async (notificationId: number) => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+        throw new Error("Không tìm thấy Auth Token.");
+    }
+    try {
+        const response = await axios.patch(`${baseURL}/api/notifications/${notificationId}/read`, {}, // Body rỗng vì PATCH này chỉ cần URL và header
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    // Thêm các header cần thiết khác (ví dụ: 'Content-Type': 'application/json')
+                }
+            }
+        );
+        return response;
+    } catch (error) {
+        console.error("Lỗi khi đánh dấu đã đọc:", error);
+        throw error;
+    }
+};

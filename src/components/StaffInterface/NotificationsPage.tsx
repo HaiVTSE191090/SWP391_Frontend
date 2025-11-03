@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getStaffNotifications } from './services/authServices'; // Cập nhật đường dẫn nếu cần
+// Đảm bảo import cả hai hàm API từ services
+import { getStaffNotifications, markNotificationAsRead } from './services/authServices';
 import { Bell, CheckCircle, Clock } from 'lucide-react';
 
-// Khai báo type cho Notification (giống trong Navbar)
+// Khai báo type cho Notification
 interface Notification {
   notificationId: number;
   title: string;
@@ -10,7 +11,7 @@ interface Notification {
   recipientType: 'STAFF' | 'USER';
   recipientId: number;
   isRead: boolean;
-  createdAt?: string; // Giả định có trường thời gian
+  createdAt?: string;
 }
 
 const NotificationsPage: React.FC = () => {
@@ -18,7 +19,7 @@ const NotificationsPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Hàm lấy thông báo
+  // 1. Hàm lấy tất cả thông báo
   const fetchAllNotifications = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -26,8 +27,8 @@ const NotificationsPage: React.FC = () => {
       const response = await getStaffNotifications();
       if (response && response.data && response.data.data) {
         // Sắp xếp theo ID giảm dần (thông báo mới nhất lên đầu)
-        const sortedNoti = response.data.data.sort((a: Notification, b: Notification) => 
-            b.notificationId - a.notificationId
+        const sortedNoti = response.data.data.sort((a: Notification, b: Notification) =>
+          b.notificationId - a.notificationId
         );
         setNotifications(sortedNoti);
       }
@@ -42,19 +43,29 @@ const NotificationsPage: React.FC = () => {
   useEffect(() => {
     fetchAllNotifications();
   }, [fetchAllNotifications]);
-  
-  // TODO: Hàm xử lý Đánh dấu đã đọc (cần bổ sung API trong services)
-  const handleMarkAsRead = (id: number) => {
-    // Logic gọi API đánh dấu đã đọc
-    console.log(`Đánh dấu thông báo ${id} là đã đọc`);
-    
-    // Cập nhật state local ngay lập tức để có phản hồi nhanh
-    setNotifications(prev => prev.map(n => 
+
+
+  // 2. Hàm xử lý Đánh dấu đã đọc (Sử dụng API PATCH)
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      // Gọi API PATCH: Đợi server xác nhận
+      await markNotificationAsRead(id);
+
+      // API THÀNH CÔNG: Cập nhật state local để giao diện thay đổi
+      setNotifications(prev => prev.map(n =>
         n.notificationId === id ? { ...n, isRead: true } : n
-    ));
+      ));
+      console.log(`Thông báo ${id} đã được đánh dấu đã đọc thành công.`);
+
+    } catch (err) {
+      console.error(`Lỗi khi gọi API đánh dấu đã đọc cho ID ${id}:`, err);
+      // API LỖI: Báo lỗi cho người dùng
+      alert("Lỗi: Không thể đánh dấu đã đọc. Vui lòng thử lại.");
+    }
   };
 
 
+  // --- Logic Hiển thị Loading/Error ---
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -71,6 +82,8 @@ const NotificationsPage: React.FC = () => {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+
+  // --- Render UI Chính ---
   return (
     <div className="container py-5">
       <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
@@ -78,11 +91,12 @@ const NotificationsPage: React.FC = () => {
           <Bell size={32} className="me-3" />
           Tất cả Thông báo
         </h2>
-        {/* Nút đánh dấu tất cả đã đọc (nếu có API hỗ trợ) */}
+
+        {/* Nút đánh dấu tất cả đã đọc */}
         {unreadCount > 0 && (
-          <button 
+          <button
             className="btn btn-outline-success btn-sm d-flex align-items-center"
-            onClick={() => console.log("Đánh dấu tất cả đã đọc")} // Thay thế bằng hàm API thực tế
+            onClick={() => console.log("Đánh dấu tất cả đã đọc")} // Thay thế bằng hàm API thực tế nếu có
           >
             <CheckCircle size={18} className="me-2" />
             Đánh dấu tất cả đã đọc
@@ -99,15 +113,23 @@ const NotificationsPage: React.FC = () => {
           notifications.map(noti => (
             <a
               key={noti.notificationId}
-              href="#" // Thay thế bằng link chi tiết của booking/contract
+              href="#" // Giữ là href="#" để kích hoạt sự kiện onClick
               className={`list-group-item list-group-item-action ${!noti.isRead ? 'bg-light-blue fw-bold' : ''}`}
-              onClick={() => handleMarkAsRead(noti.notificationId)}
+
+              // 3. Gọi hàm Đánh dấu đã đọc khi click
+              onClick={(e) => {
+                e.preventDefault();
+                if (!noti.isRead) {
+                  handleMarkAsRead(noti.notificationId);
+                }
+                // Thêm logic chuyển hướng đến trang chi tiết ở đây nếu cần
+              }}
               style={{ borderLeft: !noti.isRead ? '5px solid #0d6efd' : '1px solid #dee2e6' }}
             >
               <div className="d-flex w-100 justify-content-between">
                 <h6 className={`mb-1 ${!noti.isRead ? 'text-dark' : 'text-secondary'}`}>{noti.title}</h6>
                 <small className="text-muted d-flex align-items-center">
-                  <Clock size={14} className="me-1" /> 
+                  <Clock size={14} className="me-1" />
                   {noti.createdAt ? new Date(noti.createdAt).toLocaleDateString() : 'Vừa xong'}
                 </small>
               </div>
@@ -117,7 +139,7 @@ const NotificationsPage: React.FC = () => {
           ))
         )}
       </div>
-      
+
       {/* Thêm style CSS cần thiết */}
       <style>{`
         .bg-light-blue { background-color: #eaf3ffff !important; }
