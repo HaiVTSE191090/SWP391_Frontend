@@ -10,7 +10,7 @@ export const adminLogin = async (email: string, password: string) => {
 
         // QUAN TRỌNG: Lưu token sau khi đăng nhập thành công
         if (response.data.token) {
-            localStorage.setItem('adminToken', response.data.token);
+            localStorage.setItem('token', response.data.token);
         }
         return response.data; // Trả về dữ liệu phản hồi từ API
     } catch (error : any) {
