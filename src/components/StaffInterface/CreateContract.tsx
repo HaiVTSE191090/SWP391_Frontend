@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert, ListGroup, Form, InputGroup, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Spinner, Alert, ListGroup, Form, InputGroup, Modal, Toast, ToastContainer } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     getContractTermsTemplate, 
@@ -31,9 +31,20 @@ interface BookingInfo {
     pricePerDay: number; 
     depositAmount: number; 
     contractId: number | null;
-    // Thêm các trường ID cần thiết
     renterId: number; 
     vehicleId: number; 
+    // Các trường khác được sử dụng trong fetchData nhưng không khai báo trong interface chính
+    renterIdentityCard?: string;
+    staffCCCD?: string;
+    staffBirthYear?: number;
+    renterBirthYear?: number;
+}
+
+// Định nghĩa kiểu dữ liệu cho Toast state
+interface ToastState {
+    show: boolean;
+    message: string;
+    variant: 'success' | 'danger' | 'warning' | 'info' | 'primary' | 'secondary' | 'light' | 'dark';
 }
 // --- Kết thúc Interfaces ---
 
@@ -50,7 +61,8 @@ const CreateContract: React.FC = () => {
     const [editableTerms, setEditableTerms] = useState<TermCondition[]>([]); 
 
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    // Thay thế 'error' state cũ bằng toast
+    // const [error, setError] = useState(''); 
     
     const [contractId, setContractId] = useState<number | null>(null);
     const [isSending, setIsSending] = useState<boolean>(false);
@@ -60,29 +72,47 @@ const CreateContract: React.FC = () => {
     const [deposit, setDeposit] = useState<number>(0);
     const [totalPrice, setTotalPrice] = useState<number>(0);
 
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    // STATE MỚI: Quản lý Toast
+    const [appToast, setAppToast] = useState<ToastState>({
+        show: false,
+        message: "",
+        variant: "info",
+    });
+
+    /**
+     * HÀM MỚI: Hiển thị Toast với nội dung và màu sắc
+     */
+    const showToast = useCallback((message: string, variant: ToastState['variant']) => {
+        // Đóng toast đang hiển thị trước khi mở cái mới (để tránh chồng chéo)
+        setAppToast(prev => ({ ...prev, show: false })); 
+        // Đặt show=true, nội dung và variant mới để kích hoạt Toast
+        setAppToast({ show: true, message, variant });
+    }, []);
 
     // --- HÀM TÁCH BIỆT: Fetch Dữ liệu ---
     const fetchData = useCallback(async () => {
         if (!id || isNaN(id)) {
-            setError('ID Booking không hợp lệ.');
+            showToast('ID Booking không hợp lệ.', 'danger'); // Dùng Toast
             setLoading(false);
             return;
         }
 
         setLoading(true);
-        setError('');
+        // setError(''); // Loại bỏ setError
         
         try {
+            // TOAST INFO: Đang tải dữ liệu
+            showToast('Đang tải thông tin Booking và Điều khoản...', 'info');
+
             const bookingResponse = await getBookingInfoForContract(id);
             const apiData = bookingResponse?.data?.data || {};
 
             // Xử lý logic gán dữ liệu
             const info: BookingInfo = {
                 ...apiData,
-                
                 renterId: apiData.renterId, 
                 vehicleId: apiData.vehicleId, 
+                // Gán các trường bổ sung
                 renterIdentityCard: apiData.renterIdentityCard,
                 staffCCCD: apiData.staffCCCD,
                 staffBirthYear: apiData.staffBirthYear,
@@ -108,20 +138,24 @@ const CreateContract: React.FC = () => {
             const termsResponse = await getContractTermsTemplate();
             setTerms(termsResponse?.data?.data || []);
             
+            // Tắt Toast Info sau khi tải xong
+            setAppToast(prev => ({ ...prev, show: false }));
+
         } catch (err) {
+            setAppToast(prev => ({ ...prev, show: false })); // Tắt info toast
             const errorMessage = (err as any).response?.data?.message || 'Không thể tải dữ liệu để tạo hợp đồng.';
-            setError(errorMessage);
+            showToast(errorMessage, 'danger'); // Dùng Toast Lỗi
         } finally {
             setLoading(false);
         }
-    }, [id, currentStaffName]); 
+    }, [id, currentStaffName, showToast]); 
 
 
     useEffect(() => {
         fetchData();
     }, [fetchData]); 
 
-    // --- Khởi tạo và Cập nhật Điều khoản ---
+    // --- Khởi tạo và Cập nhật Điều khoản (Giữ nguyên) ---
     useEffect(() => {
         if (terms.length > 0) {
             setEditableTerms(terms.map(term => ({ ...term }))); 
@@ -136,7 +170,6 @@ const CreateContract: React.FC = () => {
         );
     }, []);
     
-    // Sử dụng hàm chung cho Content và Title
     const handleTermContentChange = (index: number, newContent: string) => {
         updateTerm(index, 'termContent', newContent);
     };
@@ -158,21 +191,23 @@ const CreateContract: React.FC = () => {
     // --- 2. Handler Tạo Hợp đồng (Bước 1: createContract) ---
     const handleCreateContract = async () => {
         setIsSending(true);
-        setError('');
+        // setError(''); // Loại bỏ setError
         
         if (!bookingInfo) {
              setIsSending(false);
-             setError('Thiếu thông tin Booking cần thiết.');
+             showToast('Thiếu thông tin Booking cần thiết.', 'danger'); // Dùng Toast Lỗi
              return;
         }
 
         try {
-            // PAYLOAD TỐI GIẢN CHÍNH XÁC THEO YÊU CẦU CỦA BE (FIX LỖI 400 BẰNG CÁCH THÊM CÁC ID & GIÁ TRỊ)
+            // TOAST INFO: Đang gửi yêu cầu tạo hợp đồng
+            showToast("Đang gửi yêu cầu tạo Hợp đồng...", "info");
+
+            // PAYLOAD TỐI GIẢN CHÍNH XÁC THEO YÊU CẦU CỦA BE
             const payload = {
                 bookingId: id,
                 contractType: "ELECTRONIC",
                 
-                // THÊM: Các trường ID và Giá trị (BE thường cần để xử lý dữ liệu)
                 renterId: bookingInfo.renterId, 
                 vehicleId: bookingInfo.vehicleId, 
                 depositAmount: deposit,
@@ -190,64 +225,69 @@ const CreateContract: React.FC = () => {
             const response = await createContract(payload);
             const newContractId = response.data?.data?.contractId; 
             
+            // Ẩn toast info
+            setAppToast(prev => ({ ...prev, show: false })); 
+
             if (newContractId) {
                 setContractId(newContractId);
-                alert(`✅ Hợp đồng ID ${newContractId} đã được tạo thành công!`);
+                // THAY THẾ alert() BẰNG TOAST SUCCESS (Màu Xanh Lá)
+                showToast(`✅ Hợp đồng ID ${newContractId} đã được tạo thành công!`, 'success');
             } else {
-                setError('Tạo hợp đồng thành công nhưng không nhận được Contract ID.');
+                showToast('Tạo hợp đồng thành công nhưng không nhận được Contract ID.', 'warning');
             }
 
         } catch (err) {
-            const errorMessage = (err as any).response?.data?.message || 'Lỗi 400: Payload có thể thiếu Renter ID, Vehicle ID hoặc thông tin giá trị.';
-            setError(errorMessage);
+            setAppToast(prev => ({ ...prev, show: false })); // Ẩn toast info
+            const errorMessage = (err as any).response?.data?.message || 'Lỗi: Không thể tạo hợp đồng.';
+            showToast(errorMessage, 'danger'); // Dùng Toast Lỗi
         } finally {
             setIsSending(false);
         }
     };
 
-    // --- 3. Handler Gửi Admin (Bước 2: sendContractToAdmin) (Giữ nguyên) ---
+    // --- 3. Handler Gửi Admin (Bước 2: sendContractToAdmin) ---
     const handleSendToAdmin = async () => {
         if (!contractId) {
-            setError('Không tìm thấy Contract ID để gửi.');
+            showToast('Không tìm thấy Contract ID để gửi.', 'danger');
             return;
         }
 
         setIsSending(true);
-        setError('');
+        // setError(''); // Loại bỏ setError
+        
         try {
+            // TOAST INFO: Đang gửi Admin
+            showToast("Đang gửi Hợp đồng đến Admin...", "info");
+
             await sendContractToAdmin(contractId);
             
+            // Ẩn toast info
+            setAppToast(prev => ({ ...prev, show: false })); 
+            
             setIsSent(true); 
-            setShowSuccessModal(true); 
+            // KHÔNG DÙNG MODAL NỮA, DÙNG TOAST
+            showToast(`🚀 Hợp đồng ID ${contractId} đã được gửi thành công đến Admin để ký duyệt!`, 'success'); 
+            
+            // Chuyển hướng sau khi toast kịp hiển thị
+            setTimeout(() => {
+                navigate('/staff/bookings');
+            }, 3000); 
 
         } catch (err) {
+            setAppToast(prev => ({ ...prev, show: false })); // Ẩn toast info
             const errorMessage = (err as any).response?.data?.message || 'Lỗi khi gửi Hợp đồng đến Admin.';
-            setError(errorMessage);
+            showToast(errorMessage, 'danger'); // Dùng Toast Lỗi
         } finally {
             setIsSending(false);
         }
     };
 
-    const handleAction = contractId ? handleSendToAdmin : handleCreateContract;
+    // --- UI Renders (Điều chỉnh loại bỏ SuccessModal) ---
 
-    // --- UI Renders (Giữ nguyên) ---
-
-    const SuccessModal = () => (
-        <Modal show={showSuccessModal} onHide={() => { setShowSuccessModal(false); navigate('/staff/bookings'); }}>
-            <Modal.Header closeButton className='bg-success text-white'>
-                <Modal.Title>🚀 Gửi Thành Công!</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <p>Hợp đồng ID **{contractId}** đã được gửi thành công đến Admin để ký duyệt.</p>
-                <p className='text-muted small'>Bạn sẽ được chuyển về trang danh sách Booking.</p>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="success" onClick={() => { setShowSuccessModal(false); navigate('/staff/bookings'); }}>Hoàn tất</Button>
-            </Modal.Footer>
-        </Modal>
-    );
+    // Loại bỏ SuccessModal
 
     const renderActionButton = () => {
+        // ... (Giữ nguyên logic render nút)
         if (isSent) {
             return (
                 <Button variant="success" size="lg" disabled>
@@ -290,7 +330,30 @@ const CreateContract: React.FC = () => {
 
     return (
         <Container fluid className="py-4" style={{ backgroundColor: '#f8f9fa' }}>
-            <SuccessModal />
+            
+            {/* 💡 TOAST CONTAINER CỦA REACT-BOOTSTRAP (MỚI) */}
+            <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1050 }}>
+                <Toast 
+                    bg={appToast.variant} 
+                    onClose={() => setAppToast(prev => ({ ...prev, show: false }))} 
+                    show={appToast.show} 
+                    // Toast Info (đang xử lý) sẽ không tự đóng
+                    delay={appToast.variant === 'info' ? undefined : 3000} 
+                    autohide={appToast.variant !== 'info'} 
+                >
+                    <Toast.Header>
+                        <strong className="me-auto">
+                            {appToast.variant === 'success' ? 'Thành công' : 
+                             appToast.variant === 'info' ? 'Đang xử lý' : 'Lỗi/Cảnh báo'}
+                        </strong>
+                        <small>{new Date().toLocaleTimeString('vi-VN')}</small>
+                    </Toast.Header>
+                    {/* Đảm bảo chữ trắng trừ trường hợp Toast màu Light */}
+                    <Toast.Body className={appToast.variant === 'light' ? 'text-dark' : 'text-white'}>
+                        {appToast.message}
+                    </Toast.Body>
+                </Toast>
+            </ToastContainer>
             
             <Row className="mb-4">
                 <Col>
@@ -298,7 +361,8 @@ const CreateContract: React.FC = () => {
                 </Col>
             </Row>
 
-            {error && <Alert variant="danger" className="shadow-sm">{error}</Alert>}
+            {/* Loại bỏ Alert cũ, chỉ dùng Toast cho thông báo lỗi */}
+            {/* {error && <Alert variant="danger" className="shadow-sm">{error}</Alert>} */}
 
             <Row>
                 {/* Cột trái: Thông tin Booking (Readonly) */}

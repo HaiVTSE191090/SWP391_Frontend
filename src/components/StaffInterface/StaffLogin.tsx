@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./StaffLogin.css";
 import { useNavigate } from "react-router-dom";
+import { Toast, ToastContainer } from "react-bootstrap";
 // Giả định staffLogin được import từ đây và đã được sửa đổi để ném lỗi HTTP
 import { staffLogin } from "./services/authServices"; 
 import { AxiosError } from "axios"; 
@@ -9,6 +10,9 @@ const StaffLogin: React.FC = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(""); // State để hiển thị lỗi
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
+    const [toastType, setToastType] = useState<"success" | "error">("success");
 
     const navigate = useNavigate();
 
@@ -32,11 +36,18 @@ const StaffLogin: React.FC = () => {
 
             if (token && fullName) {
                 // Lưu token và tên vào localStorage
-                localStorage.setItem('authToken', token);
+                localStorage.setItem('token', token);
                 localStorage.setItem('name', fullName);
                 
-                alert(`Đăng nhập thành công! Chào mừng, ${fullName}!`);
-                navigate("/staff"); // Chuyển hướng đến trang Staff Dashboard
+                // Hiển thị toast thành công
+                setToastMessage(`Đăng nhập thành công! Chào mừng, ${fullName}!`);
+                setToastType("success");
+                setShowToast(true);
+                
+                // Chuyển hướng sau 1.5 giây
+                setTimeout(() => {
+                    navigate("/staff");
+                }, 1500);
             } else {
                 // Trường hợp thành công nhưng phản hồi thiếu thông tin cần thiết
                 setError("Phản hồi đăng nhập không hợp lệ từ máy chủ.");
@@ -75,6 +86,24 @@ const StaffLogin: React.FC = () => {
 
     return (
         <>
+            {/* Toast Container */}
+            <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
+                <Toast 
+                    show={showToast} 
+                    onClose={() => setShowToast(false)} 
+                    delay={3000} 
+                    autohide
+                    bg={toastType === "success" ? "success" : "danger"}
+                >
+                    <Toast.Header>
+                        <strong className="me-auto">
+                            {toastType === "success" ? "✅ Thành công" : "❌ Lỗi"}
+                        </strong>
+                    </Toast.Header>
+                    <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+                </Toast>
+            </ToastContainer>
+
             <main className="staff-login-main py-5">
                 <div className="container">
                     <div className="row justify-content-center">

@@ -39,6 +39,8 @@ import StaffLogin from "./components/StaffInterface/StaffLogin";
 import Staff from "./components/StaffInterface/Staff";
 import FinalPayment from "./components/FinalPayment/FinalInvoice";
 import AdminRequireAuth from "./components/AdminInterface/services/AdminRequireAuth";
+import StaffLayout from "./components/layouts/StaffLayout";
+import InvoiceDetailPage from "./components/StaffInterface/InvoiceDetailPage";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -85,14 +87,17 @@ const App = () => {
             </Route >
             {/* staff */}
             <Route path="staff" element={<RequireAuth />}>
-              <Route index element={<Staff />} />
-              <Route path="renters" element={<ListRenter />} />
-              <Route path="renter/:id" element={<UserDetail />} />
-              <Route path="bookings" element={<ListBookingStaff />} />
-              <Route path="booking/:bookingId/detail" element={<StaffBookingDetail />} />
-              <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
-              <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
-              <Route path="notifications" element={<NotificationsPage />} />
+              <Route element={<StaffLayout />}>
+                <Route index element={<Staff />} />
+                <Route path="renters" element={<ListRenter />} />
+                <Route path="renter/:id" element={<UserDetail />} />
+                <Route path="bookings" element={<ListBookingStaff />} />
+                <Route path="booking/:bookingId/detail" element={<StaffBookingDetail />} />
+                <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
+                <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="booking/:invoiceId/create-invoice" element={<InvoiceDetailPage />} />
+              </Route>
             </Route>
             {/* admin */}
             <Route path="admin" element={<AdminRequireAuth />}>
