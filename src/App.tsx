@@ -64,31 +64,35 @@ const App = () => {
 
               <Route path="staff/login" element={<StaffLogin />} />
 
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                  <Route path="staff" element={<RequireAuth />}>
-                    <Route index element={<Staff />} />
-                    <Route path="renters" element={<ListRenter />} />
-                    <Route path="renter/:id" element={<UserDetail />} />
-                    <Route path="bookings" element={<ListBookingStaff />} />
-                    <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
-                    <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
-                    <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
-                    <Route path="notifications" element={<NotificationsPage />} />
-                  </Route>
-                  {/* admin */}
-                  <Route path="admin" element={<AdminLayout />}>
-                    <Route index element={<AdminDashBoard />} />
-                    <Route path="contract" element={<ListContract />} />
-                    <Route path="contract/:id" element={<ContractDetail />} />
-                  </Route>
-                </Routes>
-              </Suspense>
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+            <Route path="staff" element={<RequireAuth />}>
+              <Route index element={<Staff />} />
+              <Route path="renters" element={<ListRenter />} />
+              <Route path="renter/:id" element={<UserDetail />} />
+              <Route path="bookings" element={<ListBookingStaff />} />
+              <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
+              <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
+              <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+            </Route>
+            {/* admin */}
+            <Route path="admin" element={<AdminRequireAuth />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminDashBoard />} />
+                <Route path="contract" element={<ListContract />} />
+                <Route path="contract/:bookingId" element={<AdminContractPage />} />
+                <Route path="booking" element={<ListBooking />} />
+                <Route path="booking/:bookingId" element={<AdminBookingDetail />} />
+              </Route>
+            </Route>
+          </Routes>
+        </Suspense>
 
-              <ToastConfig />
-            </VehicleProvider>
-          </UserProvider>
-          );
+        <ToastConfig />
+      </VehicleProvider>
+    </UserProvider>
+  );
 };
 
-          export default App;
+export default App;
