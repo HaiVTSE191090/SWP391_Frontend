@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../context/UserContext";
 import { getProfile } from "../../services/authService";
 import { User } from "../../models/AuthModel";
+import "./UserProfile.css";
 
 const UserProfile: React.FC = () => {
   const userContext = useContext(UserContext);
@@ -21,7 +22,7 @@ const UserProfile: React.FC = () => {
       try {
         setLoading(true);
         const response = await getProfile(userContext.token);
-        
+
         if (response.data) {
           setProfileData(response.data);
           setError(null);
@@ -130,7 +131,7 @@ const UserProfile: React.FC = () => {
         <div className="profile-content">
           <div className="profile-section">
             <h3 className="section-title">Thông tin cơ bản</h3>
-            
+
             <div className="info-group">
               <label className="info-label">Họ và tên</label>
               {isEditing ? (
@@ -182,7 +183,8 @@ const UserProfile: React.FC = () => {
 
           <div className="profile-section">
             <h3 className="section-title">Trạng thái tài khoản</h3>
-            
+
+            {/* Trạng thái KYC */}
             <div className="info-group">
               <label className="info-label">Trạng thái KYC</label>
               <div className="status-container">
@@ -197,6 +199,7 @@ const UserProfile: React.FC = () => {
               </div>
             </div>
 
+            {/* Trạng thái tài khoản */}
             <div className="info-group">
               <label className="info-label">Trạng thái tài khoản</label>
               <span className={`status-badge ${profileData.blacklisted ? "status-blocked" : "status-active"}`}>
@@ -204,13 +207,31 @@ const UserProfile: React.FC = () => {
               </span>
             </div>
 
+            {/* Mã người thuê */}
             {profileData.renterId && (
               <div className="info-group">
                 <label className="info-label">Mã người thuê</label>
                 <p className="info-value">#{profileData.renterId}</p>
               </div>
             )}
+
+            {/* 🪙 Ví của bạn */}
+            <div className="info-group wallet-section">
+              <label className="info-label">Ví của bạn</label>
+              <div className="wallet-box">
+                <p className="wallet-balance">
+                  {"500.000 VND"}
+                </p>
+                <button
+                  className="btn btn-outline-primary view-transactions-btn"
+                  onClick={() => window.location.href = "/wallet/transactions"}
+                >
+                  Xem các giao dịch của bạn
+                </button>
+              </div>
+            </div>
           </div>
+
         </div>
 
         <div className="profile-actions">

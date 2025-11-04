@@ -1,0 +1,536 @@
+/* Guide Component - Modern Design */
+
+/* Section Container */
+section.container.py-5 {
+  padding: 4rem 1rem !important;
+  animation: sectionFadeIn 0.8s ease-out;
+}
+
+@keyframes sectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section Headers */
+.text-center.mb-2 h2,
+.text-center.mb-2 h3 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d3748;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 1rem;
+  animation: titleSlideIn 0.8s ease-out;
+}
+
+@keyframes titleSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.text-center.mb-2 h2::after,
+.text-center.mb-2 h3::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+  animation: lineExpand 0.8s ease-out 0.3s both;
+}
+
+@keyframes lineExpand {
+  from {
+    width: 0;
+  }
+  to {
+    width: 80px;
+  }
+}
+
+/* Subtitle */
+.text-center.text-muted.mb-5,
+.text-center.text-muted.mb-4 {
+  font-size: 1.15rem;
+  color: #718096 !important;
+  line-height: 1.8;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Advantages Cards */
+.row.g-4.mb-5 {
+  animation: fadeIn 0.8s ease-out 0.4s both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.row.g-4.mb-5 .col-12 {
+  animation: cardSlideUp 0.6s ease-out both;
+}
+
+.row.g-4.mb-5 .col-12:nth-child(1) {
+  animation-delay: 0.5s;
+}
+
+.row.g-4.mb-5 .col-12:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.row.g-4.mb-5 .col-12:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+@keyframes cardSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Card Styling */
+.card.h-100.border-0 {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.card.h-100.border-0::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.card.h-100.border-0:hover::before {
+  transform: scaleX(1);
+}
+
+.card.h-100.border-0:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(102, 126, 234, 0.25);
+}
+
+/* Card Image */
+.card-img-top.img-fluid.p-2 {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 16px;
+  padding: 1rem !important;
+  transition: all 0.4s ease;
+}
+
+.card.h-100.border-0:hover .card-img-top.img-fluid.p-2 {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* Card Body */
+.card-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1rem;
+  transition: color 0.3s ease;
+}
+
+.card.h-100.border-0:hover .card-title {
+  color: #667eea;
+}
+
+.card-text.small.text-muted {
+  font-size: 1rem !important;
+  color: #718096 !important;
+  line-height: 1.7;
+}
+
+/* Steps Section */
+.row.g-4 {
+  animation: fadeIn 0.8s ease-out 0.4s both;
+}
+
+.row.g-4 .col-6,
+.row.g-4 .col-md-3 {
+  animation: stepFadeIn 0.6s ease-out both;
+}
+
+.row.g-4 .col-6:nth-child(1),
+.row.g-4 .col-md-3:nth-child(1) {
+  animation-delay: 0.6s;
+}
+
+.row.g-4 .col-6:nth-child(2),
+.row.g-4 .col-md-3:nth-child(2) {
+  animation-delay: 0.7s;
+}
+
+.row.g-4 .col-6:nth-child(3),
+.row.g-4 .col-md-3:nth-child(3) {
+  animation-delay: 0.8s;
+}
+
+.row.g-4 .col-6:nth-child(4),
+.row.g-4 .col-md-3:nth-child(4) {
+  animation-delay: 0.9s;
+}
+
+@keyframes stepFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Figure Styling */
+figure.text-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.4s ease;
+  height: 100%; /* giúp các thẻ có chiều cao bằng nhau */
+  padding: 1.5rem;
+}
+
+figure.text-center img.img-fluid.mb-2 {
+  width: 100%;
+  height: 180px; /* cố định chiều cao đồng đều */
+  object-fit: contain; /* hiển thị full ảnh, không bị cắt */
+  background-color: #f8f9fa; /* nền sáng để tránh khoảng trống trắng */
+  border-radius: 12px;
+  margin-bottom: 1rem !important;
+  transition: all 0.4s ease;
+}
+
+figure.text-center figcaption.fw-semibold.small {
+  font-size: 1.05rem !important;
+  font-weight: 600;
+  color: #2d3748;
+  text-align: center;
+  margin-top: auto; /* đẩy caption xuống đáy đều */
+}
+
+figure.text-center:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.25);
+}
+.row.g-4 .col-6,
+.row.g-4 .col-md-3 {
+  display: flex;
+  align-items: stretch; /* kéo các phần tử bằng nhau */
+}
+
+.row.g-4 .col-6 figure,
+.row.g-4 .col-md-3 figure {
+  flex-grow: 1; /* cho phép co giãn đều nhau */
+}
+figure.text-center:hover img.img-fluid.mb-2 {
+  transform: scale(1.05);
+  filter: brightness(1.08);
+}
+@media (max-width: 768px) {
+  figure.text-center img.img-fluid.mb-2 {
+    height: 150px;
+  }
+}
+
+@media (max-width: 576px) {
+  figure.text-center img.img-fluid.mb-2 {
+    height: 130px;
+  }
+}
+
+
+/* Step Caption */
+figcaption.fw-semibold.small {
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  color: #2d3748;
+  margin-top: 0.5rem;
+  transition: color 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+figure.text-center:hover figcaption.fw-semibold.small {
+  color: #667eea;
+}
+
+/* Add Step Numbers */
+figure.text-center {
+  counter-increment: step-counter;
+}
+
+figure.text-center::after {
+  content: counter(step-counter);
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+figure.text-center:hover::after {
+  transform: scale(1.15) rotate(10deg);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.row.g-4 {
+  counter-reset: step-counter;
+}
+
+/* Connecting Lines Between Steps */
+@media (min-width: 768px) {
+  .row.g-4 {
+    position: relative;
+  }
+
+  .row.g-4::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 12.5%;
+    right: 12.5%;
+    height: 3px;
+    background: linear-gradient(90deg, 
+      #667eea 0%, 
+      #764ba2 25%, 
+      #667eea 50%, 
+      #764ba2 75%, 
+      #667eea 100%);
+    transform: translateY(-50%);
+    z-index: 0;
+    opacity: 0.2;
+    animation: lineGrow 1.5s ease-out 1s both;
+  }
+
+  @keyframes lineGrow {
+    from {
+      width: 0;
+      left: 50%;
+    }
+    to {
+      width: 75%;
+      left: 12.5%;
+    }
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .text-center.mb-2 h2,
+  .text-center.mb-2 h3 {
+    font-size: 2rem;
+  }
+
+  .text-center.text-muted.mb-5,
+  .text-center.text-muted.mb-4 {
+    font-size: 1rem;
+  }
+
+  .card-img-top.img-fluid.p-2 {
+  width: 100%;
+  height: 250px;
+  object-fit: scale-down; /* hiển thị full, không crop và không phóng vượt khung */
+  object-position: center;
+  background-color: #f8f9fa;
+  border-radius: 16px;
+  padding: 1rem !important;
+  transition: all 0.4s ease;
+}
+
+  .card-title {
+    font-size: 1.2rem;
+  }
+
+  .card-text.small.text-muted {
+    font-size: 0.9rem !important;
+  }
+
+  figure.text-center img.img-fluid.mb-2 {
+    height: 150px;
+  }
+
+  figcaption.fw-semibold.small {
+    font-size: 0.95rem !important;
+  }
+
+  figure.text-center::after {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  section.container.py-5 {
+    padding: 3rem 0.75rem !important;
+  }
+
+  .text-center.mb-2 h2,
+  .text-center.mb-2 h3 {
+    font-size: 1.75rem;
+  }
+
+  .card-img-top.img-fluid.p-2 {
+    height: 180px;
+  }
+
+  figure.text-center {
+    padding: 1rem;
+  }
+
+  figure.text-center img.img-fluid.mb-2 {
+    height: 130px;
+  }
+
+  figcaption.fw-semibold.small {
+    font-size: 0.85rem !important;
+  }
+
+  figure.text-center::after {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+/* Smooth Transitions */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Performance Optimization */
+.card,
+figure,
+img {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Accessibility - Focus States */
+.card:focus-within,
+figure:focus-within {
+  outline: 3px solid rgba(102, 126, 234, 0.4);
+  outline-offset: 4px;
+}
+
+/* Loading State Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Pulse Effect on Load */
+.card.h-100.border-0,
+figure.text-center {
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover Glow Effect */
+.card.h-100.border-0::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  animation: cardShimmer 3s infinite;
+}
+
+@keyframes cardShimmer {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+.card.h-100.border-0:hover::after {
+  opacity: 1;
+}

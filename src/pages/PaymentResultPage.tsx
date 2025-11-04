@@ -1,41 +1,70 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle, XCircle, Loader2, Home, Sparkles, CreditCard, Calendar, Hash, Wallet } from "lucide-react";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 export default function PaymentResultPage() {
     const [loading, setLoading] = useState(true);
     const [success, setSuccess] = useState(false);
     const [message, setMessage] = useState("");
     const [paymentData, setPaymentData] = useState<any>(null);
+    const params = new URLSearchParams(window.location.search);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        
-        const ipnData = {
-            partnerCode: params.get("partnerCode"),
-            orderId: params.get("orderId"),
-            requestId: params.get("requestId"),
-            amount: Number(params.get("amount")),
-            orderInfo: decodeURIComponent(params.get("orderInfo") || ""),
-            orderType: params.get("orderType"),
-            transId: params.get("transId"),
-            resultCode: Number(params.get("resultCode")),
-            message: params.get("message"),
-            payType: params.get("payType"),
-            responseTime: Number(params.get("responseTime")),
-            extraData: params.get("extraData"),
-            signature: params.get("signature"),
+        const processIpn = async () => {
+            try {
+                const token = localStorage.getItem("token");
+
+                const ipnData = {
+                    partnerCode: params.get("partnerCode"),
+                    orderId: params.get("orderId"),
+                    requestId: params.get("requestId"),
+                    amount: Number(params.get("amount")),
+                    orderInfo: decodeURIComponent(params.get("orderInfo") || ""),
+                    orderType: params.get("orderType"),
+                    transId: params.get("transId"),
+                    resultCode: Number(params.get("resultCode")),
+                    message: params.get("message"),
+                    payType: params.get("payType"),
+                    responseTime: Number(params.get("responseTime")),
+                    extraData: params.get("extraData"),
+                    signature: params.get("signature"),
+                };
+
+                // 🟢 Gửi dữ liệu IPN đến backend
+                const res = await axios.post(
+                    "http://localhost:8080/api/payments/momo/ipn",
+                    ipnData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+                // ✅ Cập nhật state
+                setPaymentData(ipnData);
+                setSuccess(ipnData.resultCode === 0);
+                setMessage(
+                    ipnData.resultCode === 0
+                        ? "🎉 Thanh toán thành công!"
+                        : "❌ Thanh toán thất bại!"
+                );
+
+                
+            } catch (error: any) {
+                console.error("❌ Lỗi khi gửi IPN:", error.response?.data || error.message);
+                setSuccess(false);
+                setMessage("Lỗi trong quá trình xác nhận thanh toán!");
+                toast.error("Không thể gửi thông tin IPN đến server.", {
+                    position: "top-right",
+                });
+            } finally {
+                setLoading(false);
+            }
         };
 
-        // Simulate API call
-        setTimeout(() => {
-            setSuccess(ipnData.resultCode === 0);
-            setMessage(ipnData.resultCode === 0 
-                ? "Thanh toán thành công!" 
-                : "Thanh toán thất bại!"
-            );
-            setPaymentData(ipnData);
-            setLoading(false);
-        }, 1500);
+        processIpn();
     }, []);
 
     const formatCurrency = (amount: number) => {
@@ -73,9 +102,9 @@ export default function PaymentResultPage() {
                         </div>
                         <h3 style={styles.loadingText}>Đang xác nhận thanh toán...</h3>
                         <div style={styles.dots}>
-                            <span style={{...styles.dot, animationDelay: '0s'}}></span>
-                            <span style={{...styles.dot, animationDelay: '0.2s'}}></span>
-                            <span style={{...styles.dot, animationDelay: '0.4s'}}></span>
+                            <span style={{ ...styles.dot, animationDelay: '0s' }}></span>
+                            <span style={{ ...styles.dot, animationDelay: '0.2s' }}></span>
+                            <span style={{ ...styles.dot, animationDelay: '0.4s' }}></span>
                         </div>
                     </div>
                 ) : (
@@ -86,14 +115,14 @@ export default function PaymentResultPage() {
                         {success ? (
                             <>
                                 <div style={styles.iconWrapper}>
-                                    <div style={{...styles.successRing, animation: 'ringExpand 0.6s ease-out'}}></div>
+                                    <div style={{ ...styles.successRing, animation: 'ringExpand 0.6s ease-out' }}></div>
                                     <CheckCircle size={80} style={styles.successIcon} />
-                                    <Sparkles size={24} style={{...styles.sparkle, top: '10px', right: '10px'}} />
-                                    <Sparkles size={20} style={{...styles.sparkle, bottom: '10px', left: '10px'}} />
+                                    <Sparkles size={24} style={{ ...styles.sparkle, top: '10px', right: '10px' }} />
+                                    <Sparkles size={20} style={{ ...styles.sparkle, bottom: '10px', left: '10px' }} />
                                 </div>
                                 <h2 style={styles.successTitle}>Thanh toán thành công!</h2>
                                 <p style={styles.successMessage}>{message}</p>
-                                
+
                                 {paymentData && (
                                     <>
                                         {/* Amount Highlight */}
@@ -113,7 +142,7 @@ export default function PaymentResultPage() {
                                                 </div>
                                                 <span style={styles.detailValue}>{paymentData.orderId}</span>
                                             </div>
-                                            
+
                                             <div style={styles.detailItem}>
                                                 <div style={styles.detailLeft}>
                                                     <Hash size={18} style={styles.detailIcon} />
@@ -128,9 +157,9 @@ export default function PaymentResultPage() {
                                                     <span style={styles.detailLabel}>Phương thức</span>
                                                 </div>
                                                 <span style={styles.detailValue}>
-                                                    {paymentData.payType === 'napas' ? 'Thẻ ATM' : 
-                                                     paymentData.payType === 'cc' ? 'Thẻ tín dụng' : 
-                                                     'MoMo Wallet'}
+                                                    {paymentData.payType === 'napas' ? 'Thẻ ATM' :
+                                                        paymentData.payType === 'cc' ? 'Thẻ tín dụng' :
+                                                            'MoMo Wallet'}
                                                 </span>
                                             </div>
 
@@ -164,12 +193,12 @@ export default function PaymentResultPage() {
                         ) : (
                             <>
                                 <div style={styles.iconWrapper}>
-                                    <div style={{...styles.errorRing, animation: 'shake 0.5s ease-out'}}></div>
+                                    <div style={{ ...styles.errorRing, animation: 'shake 0.5s ease-out' }}></div>
                                     <XCircle size={80} style={styles.errorIcon} />
                                 </div>
                                 <h2 style={styles.errorTitle}>Thanh toán thất bại</h2>
                                 <p style={styles.errorMessage}>{message}</p>
-                                
+
                                 {paymentData && (
                                     <div style={styles.errorDetails}>
                                         <div style={styles.detailItem}>
@@ -182,15 +211,15 @@ export default function PaymentResultPage() {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 <p style={styles.errorHint}>Vui lòng thử lại hoặc liên hệ hỗ trợ nếu vấn đề vẫn tiếp diễn.</p>
                             </>
                         )}
-                        
-                        <button 
+
+                        <button
                             style={{
                                 ...styles.homeButton,
-                                background: success 
+                                background: success
                                     ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                                     : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
                             }}

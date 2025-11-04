@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useVehicle } from "../../hooks/useVehicle";
 import VehicleCard from "../vehicle/VehicleCard";
+import "./CarList.css";
 
 export const CarList: React.FC = () => {
   const { vehicles, loading, error, loadAllVehicles } = useVehicle();

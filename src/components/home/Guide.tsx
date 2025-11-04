@@ -6,6 +6,7 @@ import rectangle52 from "../../images/guide-img/Diemdendedang.jpg";
 import rectangle53 from "../../images/guide-img/nhanxe.png";
 import rectangle54 from "../../images/guide-img/laixe.png";
 import rectangle55 from "../../images/guide-img/danhgia.jpg";
+import "./Guide.css";
 // import "../guide-component/guide-style.css";
 
 export const Guide: React.FC = () => {

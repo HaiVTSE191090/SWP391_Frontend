@@ -14,6 +14,8 @@ import NotFoundPage from "../components/404/NotFoundPage";
 import UserProfilePage from "../pages/UserProfilePage";
 import PaymentResult from "../pages/PaymentResultPage";
 import PaymentResultPage from "../pages/PaymentResultPage";
+import FinalPayment from "../components/FinalPayment/FinalInvoice";
+
 
 
 // Lazy load các trang (tối ưu bundle)
@@ -39,6 +41,7 @@ const router = createBrowserRouter([
             { path: "/profile", element: <UserProfilePage /> },
             { path: "/xac-nhan-dat-xe/:bookingId", element: <DepositPage /> },
             { path: "/payment-result", element: <PaymentResultPage/>},
+            { path: "final-invoice/booking/:bookingId", element: <FinalPayment /> },
             // 404 bắt mọi thứ còn lại
             { path: "*", element: <NotFoundPage /> },
         ],

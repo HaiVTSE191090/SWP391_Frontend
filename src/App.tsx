@@ -36,6 +36,7 @@ import PhotoCapturePage from "./components/StaffInterface/PhotoCapturePage";
 import NotificationsPage from "./components/StaffInterface/NotificationsPage";
 import StaffLogin from "./components/StaffInterface/StaffLogin";
 import Staff from "./components/StaffInterface/Staff";
+import FinalPayment from "./components/FinalPayment/FinalInvoice";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -59,6 +60,7 @@ const App = () => {
               <Route path="vehicles/:id" element={<VehicleDetailPage />} />
               <Route path="profile" element={<UserProfilePage />} />
               <Route path="payment-result" element={<PaymentResultPage />} />
+              <Route path="final-invoice/booking/:bookingId" element={<FinalPayment />} />
 
               <Route path="staff/login" element={<StaffLogin />} />
 

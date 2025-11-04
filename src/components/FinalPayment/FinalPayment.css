@@ -1,0 +1,25 @@
+.final-invoice-page {
+  max-width: 800px;
+}
+
+.final-invoice-page h3 {
+  color: #1e40af;
+}
+
+.invoice-summary p {
+  font-size: 1rem;
+}
+
+.table th {
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+button.btn-lg {
+  min-width: 200px;
+  border-radius: 10px;
+}

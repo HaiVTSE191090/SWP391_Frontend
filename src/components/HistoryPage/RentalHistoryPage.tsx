@@ -4,6 +4,8 @@ import { Button, Spinner, Badge, Modal } from "react-bootstrap";
 import "./RentalHistoryPage.css";
 import { Booking } from "../../models/BookingModel";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import StarRating from "./StarRating";
 
 const formatDateTime = (isoString: string) => {
   const date = new Date(isoString);
@@ -25,6 +27,15 @@ export default function RentalHistoryPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<number | null>(null);
+  const [cancelInfo, setCancelInfo] = useState<{ message: string } | null>(null);
+  const [loadingCancelInfo, setLoadingCancelInfo] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [bookingId, setBookingId] = useState<number | null>(null);
+  const [vehicleRating, setVehicleRating] = useState(5);
+  const [staffRating, setStaffRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submittingRating, setSubmittingRating] = useState(false);
+
 
   const navigate = useNavigate();
 
@@ -69,7 +80,7 @@ export default function RentalHistoryPage() {
     try {
       setLoadingDetail(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(`http://localhost:8080/api/renter/bookings/${bookingId}`, {
+      const res = await axios.get(`http://localhost:8080/api/bookings/${bookingId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSelectedBooking(res.data.data);
@@ -82,10 +93,55 @@ export default function RentalHistoryPage() {
     }
   };
 
-  const handleCancelClick = (bookingId: number) => {
+  const handleCancelClick = async (bookingId: number) => {
     setBookingToCancel(bookingId);
+    await fetchCancelInfo(bookingId);
     setShowCancelConfirm(true);
   };
+
+  const handleConfirmCancel = async (bookingId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `http://localhost:8080/api/bookings/${bookingId}/cancel`,
+        { reason: "Người thuê tự hủy" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (res.data?.status === "success") {
+        toast.success("✅ Đơn đặt xe đã được hủy thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+
+        // ✅ Cập nhật danh sách booking tại chỗ
+        setBookings((prev) =>
+          prev.map((b) =>
+            b.bookingId === bookingId
+              ? { ...b, status: "CANCELLED" }
+              : b
+          )
+        );
+      } else {
+        toast.error("⚠️ Không thể hủy đơn. Vui lòng thử lại sau.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      }
+    } catch (error: any) {
+      console.error("❌ Lỗi khi hủy đơn:", error);
+      toast.error(
+        error.response?.data?.message ||
+        "Không thể hủy đơn. Vui lòng thử lại.",
+      );
+    }
+  };
+
 
   if (loading)
     return (
@@ -94,6 +150,103 @@ export default function RentalHistoryPage() {
         <p>Đang tải lịch sử thuê xe...</p>
       </div>
     );
+
+  const fetchCancelInfo = async (bookingId: number) => {
+    try {
+      setLoadingCancelInfo(true);
+      const token = localStorage.getItem("token");
+      const res = await axios.get(
+        `http://localhost:8080/api/bookings/${bookingId}/confirm-cancel`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data?.data) {
+        setCancelInfo(res.data.data);
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi gọi API confirm-cancel:", error);
+      setCancelInfo({ message: "Không thể lấy thông tin hoàn tiền. Vui lòng thử lại." });
+    } finally {
+      setLoadingCancelInfo(false);
+    }
+  };
+
+  const handleNotifyReturn = async (bookingId: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `http://localhost:8080/api/bookings/${bookingId}/notify-return`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (res.data?.status === "success") {
+        toast.success("📨 Thông báo trả xe đã được gửi đến nhân viên trạm!", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      } else {
+        toast.error("⚠️ Gửi thông báo thất bại. Vui lòng thử lại.", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+      }
+    } catch (error: any) {
+      console.error("❌ Lỗi khi gửi thông báo trả xe:", error);
+      toast.error(
+        error.response?.data?.message ||
+        "Không thể gửi thông báo. Vui lòng thử lại.",
+        { position: "top-right", autoClose: 3000 }
+      );
+    }
+  };
+
+  const handleSubmitRating = async (bookingId: number) => {
+    if (!bookingId) return;
+
+    try {
+      setSubmittingRating(true);
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `http://localhost:8080/api/bookings/${bookingId}/rating`,
+        {
+          vehicleRating,
+          staffRating,
+          comment,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      toast.success("🌟 Cảm ơn bạn đã đánh giá!", {
+        position: "top-right",
+        autoClose: 2500,
+      });
+
+      setShowRatingModal(false);
+      setComment("");
+      setVehicleRating(5);
+      setStaffRating(5);
+    } catch (error: any) {
+      console.error(" Lỗi khi gửi đánh giá:", error);
+      toast.error(
+        error.response?.data?.message || "Không thể gửi đánh giá. Vui lòng thử lại.",
+        { position: "top-right", autoClose: 3000 }
+      );
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
+
 
   return (
     <div className="container py-4">
@@ -252,13 +405,27 @@ export default function RentalHistoryPage() {
                 <Button
                   variant={b.status === "IN_USE" ? "success" : "secondary"}
                   disabled={b.status !== "IN_USE"}
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    // TODO: Gọi API trả xe
+                    await handleNotifyReturn(b.bookingId);
                   }}
                 >
                   Trả xe
                 </Button>
+
+                {b.status === "COMPLETED" && (
+                  <Button
+                    variant="outline-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowRatingModal(true);
+                      setBookingId(b.bookingId); 
+                    }}
+                  >
+                    ⭐ Đánh giá
+                  </Button>
+                )}
+
 
                 {/* ✅ Nút Hủy đơn (ẩn khi hợp đồng FULLY_SIGNED hoặc CANCELLED) */}
                 {b.status === "RESERVED" &&
@@ -296,8 +463,120 @@ export default function RentalHistoryPage() {
                 <p><strong>Người thuê:</strong> {selectedBooking.renterName}</p>
                 <p><strong>Xe:</strong> {selectedBooking.vehicleName}</p>
                 <p><strong>Nhân viên:</strong> {selectedBooking.staffName}</p>
-                <p><strong>Thời gian:</strong> {formatDateTime(selectedBooking.startDateTime)} → {formatDateTime(selectedBooking.endDateTime)}</p>
-                <p><strong>Tổng tiền:</strong> {selectedBooking.totalAmount.toLocaleString()} VND</p>
+                <p>
+                  <strong>Thời gian:</strong>{" "}
+                  {formatDateTime(selectedBooking.startDateTime)} →{" "}
+                  {formatDateTime(selectedBooking.endDateTime)}
+                </p>
+                <p>
+                  <strong>Tổng tiền (ước tính): </strong>{" "}
+                  {selectedBooking.totalAmount.toLocaleString()} VND
+                </p>
+                {/* 🧾 Nút xem hóa đơn */}
+                <Button
+                  variant="outline-primary"
+                  size="sm"
+                  className="mb-3"
+                  onClick={async () => {
+                    try {
+                      const token = localStorage.getItem("token");
+                      const res = await axios.get(
+                        `http://localhost:8080/api/invoices/bookings/${selectedBooking.bookingId}/invoices`,
+                        {
+                          headers: { Authorization: `Bearer ${token}` },
+                        }
+                      );
+
+                      const invoices = res.data?.data || [];
+                      const finalInvoice = invoices.find(
+                        (inv: any) => inv.type === "FINAL"
+                      );
+
+                      if (finalInvoice) {
+                        toast.success("✅ Đang mở hóa đơn tổng của bạn...", {
+                          position: "top-right",
+                          autoClose: 2500,
+                        });
+                        // Điều hướng sang trang FinalInvoice.tsx
+                        navigate(`/final-invoice/booking/${selectedBooking.bookingId}`);
+                      } else {
+                        toast.info("📄 Hiện chưa có hóa đơn tổng cho đơn này.", {
+                          position: "top-right",
+                          autoClose: 3000,
+                        });
+                      }
+                    } catch (error: any) {
+                      console.error("❌ Lỗi khi tải hóa đơn:", error);
+                      toast.error("Không thể tải thông tin hóa đơn. Vui lòng thử lại sau.", {
+                        position: "top-right",
+                        autoClose: 3000,
+                      });
+                    }
+                  }}
+                >
+                  💳 Xem chi tiết hóa đơn
+                </Button>
+
+                {/* 🖼️ Hình ảnh xe */}
+                {selectedBooking.bookingImages && selectedBooking.bookingImages.length > 0 && (
+                  <>
+                    <hr />
+                    <h5 className="fw-bold mb-3 text-primary">📷 Hình ảnh xe</h5>
+
+                    {["BEFORE_RENTAL", "AFTER_RENTAL", "DAMAGE", "OTHER"].map((type) => {
+                      const imagesOfType = selectedBooking.bookingImages?.filter(
+                        (img) => img.imageType === type
+                      );
+                      if (!imagesOfType || imagesOfType.length === 0) return null;
+
+                      const typeTitle: Record<string, string> = {
+                        BEFORE_RENTAL: "📦 Ảnh xe trước khi thuê",
+                        AFTER_RENTAL: "🚗 Ảnh xe sau khi trả",
+                        DAMAGE: "⚠️ Ảnh hư hỏng (nếu có)",
+                        OTHER: "🗂️ Ảnh khác",
+                      };
+
+                      return (
+                        <div key={type} className="mb-4">
+                          <h6 className="fw-bold text-secondary mb-3">{typeTitle[type]}</h6>
+                          <div className="row booking-images-container">
+                            {imagesOfType.map((img) => (
+                              <div
+                                key={img.imageId}
+                                className="col-12 col-sm-6 col-md-4 mb-4 text-center"
+                              >
+                                <img
+                                  src={img.imageUrl}
+                                  alt={img.description || "Hình ảnh xe"}
+                                  className="img-fluid rounded shadow-sm"
+                                  style={{
+                                    maxHeight: "160px",
+                                    objectFit: "cover",
+                                    border: "1px solid #ddd",
+                                  }}
+                                />
+                                <div className="mt-2 small text-muted">
+                                  <p className="mb-1">
+                                    <strong>Mô tả:</strong>{" "}
+                                    {img.description || "Không có mô tả"}
+                                  </p>
+                                  <p className="mb-1">
+                                    <strong>Hạng mục:</strong>{" "}
+                                    {img.vehicleComponent || "Không rõ"}
+                                  </p>
+                                  <p className="mb-0">
+                                    <strong>Tạo lúc:</strong>{" "}
+                                    {new Date(img.createdAt || "").toLocaleString("vi-VN")}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             )}
           </Modal.Body>
@@ -307,29 +586,96 @@ export default function RentalHistoryPage() {
       {/* Modal xác nhận hủy */}
       <Modal show={showCancelConfirm} onHide={() => setShowCancelConfirm(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Cảnh báo hủy đơn</Modal.Title>
+          <Modal.Title>Xác nhận hủy đơn đặt xe</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
-          <p className="text-danger fw-bold">
-            ⚠️ Bạn sẽ bị mất <strong>50% tiền cọc</strong> nếu hủy đơn này.
-          </p>
-          <p>Bạn có chắc chắn muốn hủy đơn không?</p>
+          {loadingCancelInfo ? (
+            <div className="text-center">
+              <Spinner animation="border" size="sm" /> Đang kiểm tra chính sách hoàn tiền...
+            </div>
+          ) : cancelInfo ? (
+            <>
+              <p className="text-danger fw-bold">⚠️ {cancelInfo.message}</p>
+              <p>Bạn có chắc chắn muốn hủy đơn này không?</p>
+            </>
+          ) : (
+            <p>Không thể tải thông tin hoàn tiền. Bạn có chắc chắn muốn hủy?</p>
+          )}
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowCancelConfirm(false)}>
             Không
           </Button>
           <Button
             variant="danger"
-            onClick={() => {
+            onClick={async () => {
               setShowCancelConfirm(false);
-              console.log("API hủy đơn cho booking:", bookingToCancel);
+              if (bookingToCancel) {
+                await handleConfirmCancel(bookingToCancel);
+              }
+              setShowCancelConfirm(false);
             }}
           >
-            Có
+            Có, hủy ngay
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* 🌟 Modal đánh giá với ngôi sao thật */}
+      <Modal show={showRatingModal} onHide={() => setShowRatingModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Đánh giá đơn thuê #{bookingId}</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {/* ⭐ Đánh giá xe */}
+          <div className="mb-4 text-center">
+            <label className="form-label fw-bold">Đánh giá xe</label>
+            <StarRating rating={vehicleRating} onRatingChange={setVehicleRating} />
+          </div>
+
+          {/* 👤 Đánh giá nhân viên */}
+          <div className="mb-4 text-center">
+            <label className="form-label fw-bold">Đánh giá nhân viên</label>
+            <StarRating rating={staffRating} onRatingChange={setStaffRating} />
+          </div>
+
+          {/* 📝 Nhận xét thêm */}
+          <div className="mb-3">
+            <label className="form-label fw-bold">Nhận xét thêm</label>
+            <textarea
+              className="form-control"
+              rows={3}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Chia sẻ trải nghiệm của bạn..."
+            ></textarea>
+          </div>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowRatingModal(false)}>
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => bookingId && handleSubmitRating(Number(bookingId))}
+            disabled={submittingRating}
+          >
+            {submittingRating ? (
+              <>
+                <Spinner size="sm" animation="border" /> Đang gửi...
+              </>
+            ) : (
+              "Gửi đánh giá"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+
     </div>
   );
 }

@@ -85,6 +85,7 @@
 }
 
 
+
 .modal-loading {
   display: flex;
   flex-direction: column;
@@ -285,3 +286,98 @@ button.btn-info:hover {
     transform: translateY(0);
   }
 }
+.booking-card .btn {
+  min-width: 120px; /* đảm bảo nút đều nhau */
+  height: 42px; /* cùng chiều cao */
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 10px !important;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Màu sắc đồng bộ theo chủ đề */
+.booking-card .btn-secondary {
+  background-color: #adb5bd;
+  color: #fff;
+  border: none;
+}
+.booking-card .btn-secondary:hover {
+  background-color: #868e96;
+  transform: translateY(-2px);
+}
+
+.booking-card .btn-success {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+}
+.booking-card .btn-success:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.booking-card .btn-warning {
+  background-color: #fd7e14;
+  color: #fff;
+  border: none;
+}
+.booking-card .btn-warning:hover {
+  background-color: #e66a00;
+  transform: translateY(-2px);
+}
+
+.booking-card .btn-info {
+  background-color: #0dcaf0;
+  color: #fff;
+  border: none;
+}
+.booking-card .btn-info:hover {
+  background-color: #0bbcd9;
+  transform: translateY(-2px);
+}
+
+.booking-card .btn-danger {
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+}
+.booking-card .btn-danger:hover {
+  background-color: #c82333;
+  transform: translateY(-2px);
+}
+
+/* Khi bị disable (ví dụ: Chưa có hợp đồng) */
+.booking-card .btn:disabled,
+.booking-card .btn.disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Nhóm nút gọn gàng, khoảng cách đều */
+.booking-card .d-flex.flex-wrap.gap-2 {
+  gap: 10px !important;
+}
+
+/* Khi hover vào card, nút hơi nổi lên nhẹ */
+.booking-card:hover .btn {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+}
+.star-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 1.8rem;
+    color: #e0e0e0; 
+    transition: color 0.1s;
+  }
+  .star-button.filled {
+    color: #ffc107;
+  }
+  .star-button:hover {
+    transform: scale(1.1);
+  }
