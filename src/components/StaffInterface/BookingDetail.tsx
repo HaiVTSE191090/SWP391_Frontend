@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Table, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Table, Spinner, Alert, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getBookingDetail } from './services/authServices';
 
@@ -32,8 +32,20 @@ interface BookingImage {
     description: string;
     createdAt: string;
     imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL' | 'DAMAGE';
-    vehicleComponent: string;
+    vehicleComponent: string; // Tên phụ tùng
 }
+
+// Danh sách giả định các phụ tùng xe cần kiểm tra
+// Trong thực tế, bạn có thể fetch danh sách này từ API
+const VEHICLE_COMPONENTS = [
+    'Tất cả phụ tùng', 
+    'Thân xe (ngoài)', 
+    'Nội thất', 
+    'Động cơ', 
+    'Bánh xe/Lốp', 
+    'Đèn/Gương',
+    'Khác'
+];
 
 function BookingDetail() {
     const { bookingId } = useParams<{ bookingId: string }>(); 
@@ -44,6 +56,10 @@ function BookingDetail() {
     const [afterImages, setAfterImages] = useState<BookingImage[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    
+    // State cho Select Box Phụ tùng
+    const [selectedComponent, setSelectedComponent] = useState(VEHICLE_COMPONENTS[0]);
+    
     const navigate = useNavigate();
 
 
@@ -59,32 +75,47 @@ function BookingDetail() {
             setLoading(true);
             setError('');
             
-            const response = await getBookingDetail(bookingIdNumber);
-            if (response?.data?.data) {
-                const bookingData = response.data.data;
-                setBooking(bookingData);
-                
-                // Phân loại ảnh theo imageType
-                const before = bookingData.bookingImages.filter((img: BookingImage) => img.imageType === 'BEFORE_RENTAL');
-                const after = bookingData.bookingImages.filter((img: BookingImage) => img.imageType === 'AFTER_RENTAL');
-                
-                setBeforeImages(before);
-                setAfterImages(after);
-                setLoading(false);
-            } else {
-                setError("Không thể tải chi tiết Booking. Vui lòng thử lại.");
+            try {
+                const response = await getBookingDetail(bookingIdNumber);
+                if (response?.data?.data) {
+                    const bookingData = response.data.data;
+                    setBooking(bookingData);
+                    
+                    // Phân loại ảnh theo imageType
+                    const before = bookingData.bookingImages.filter((img: BookingImage) => img.imageType === 'BEFORE_RENTAL');
+                    const after = bookingData.bookingImages.filter((img: BookingImage) => img.imageType === 'AFTER_RENTAL');
+                    
+                    setBeforeImages(before);
+                    setAfterImages(after);
+                    
+                } else {
+                    setError("Không thể tải chi tiết Booking. Vui lòng thử lại.");
+                }
+            } catch (err) {
+                console.error("Lỗi tải chi tiết booking:", err);
+                setError("Đã xảy ra lỗi trong quá trình tải dữ liệu.");
+            } finally {
                 setLoading(false);
             }
         };
 
         fetchDetail();
     }, [bookingIdNumber]);
+    
+    // Lọc ảnh theo phụ tùng được chọn
+    const filteredBeforeImages = beforeImages.filter(img => 
+        selectedComponent === VEHICLE_COMPONENTS[0] || img.vehicleComponent === selectedComponent
+    );
 
-    // HANDLER CHUYỂN HƯỚNG ĐẾN TRANG CHỤP ẢNH - navigation trực tiếp
+    const filteredAfterImages = afterImages.filter(img => 
+        selectedComponent === VEHICLE_COMPONENTS[0] || img.vehicleComponent === selectedComponent
+    );
+
+
+    // HANDLER CHUYỂN HƯỚNG ĐẾN TRANG CHỤP ẢNH
     const handleUploadPhoto = (type: 'before' | 'after') => {
         if (!booking) return;
 
-        // Map button -> backend image type
         const typeMapping: { [key: string]: string } = {
             'before': 'BEFORE_RENTAL',
             'after': 'AFTER_RENTAL'
@@ -94,11 +125,29 @@ function BookingDetail() {
         navigate(`/staff/booking/${booking.bookingId}/photo/${targetImageType}`);
     };
 
-    // Handler cho Report - navigation trực tiếp
+    // Handler cho Report
     const handleCreateReport = () => {
         if (!booking) return;
         const targetImageType = 'DAMAGE';
         navigate(`/staff/booking/${booking.bookingId}/photo/${targetImageType}`);
+    };
+
+    // Handler cho Tạo Hóa đơn (Chuyển hướng đến trang tạo hóa đơn)
+    const handleCreateInvoice = () => {
+        if (!booking) return;
+        // Giả định đường dẫn tạo hóa đơn là: /staff/booking/:bookingId/create-invoice
+        navigate(`/staff/booking/${booking.bookingId}/create-invoice`);
+    };
+
+    // Handler cho Hủy Booking (Xác nhận và gọi API hủy)
+    const handleCancelBooking = () => {
+        if (!booking) return;
+        if (window.confirm(`Bạn có chắc chắn muốn HỦY Booking #${booking.bookingId} không?`)) {
+            // TODO: Triển khai gọi API hủy booking tại đây
+            alert(`Tính năng hủy booking #${booking.bookingId} đang được phát triển...`);
+            // Sau khi hủy thành công:
+            // navigate('/staff/list-bookings'); 
+        }
     };
     
     // --- Hiển thị Loading/Error State ---
@@ -147,36 +196,81 @@ function BookingDetail() {
                         </Col>
                     </Row>
                     
-                    <h4 className="fw-bold mt-4 mb-3 border-bottom pb-2">Thủ tục Check-in/Check-out</h4>
+                    <h4 className="fw-bold mt-4 mb-3 border-bottom pb-2">Thủ tục Check-in/Check-out & Hành động</h4>
                     
                     {/* NÚT HÀNH ĐỘNG MỚI */}
                     <Row className="mb-4 justify-content-center">
                         <Col xs={12} md={4} className="mb-2">
                             <Button variant="secondary" className="w-100" onClick={() => handleUploadPhoto('before')}>
-                                📸 Ảnh chụp **trước khi** thuê
+                                <b>Ảnh chụp trước khi thuê</b>
                             </Button>
                         </Col>
                         <Col xs={12} md={4} className="mb-2">
                             <Button variant="warning" className="w-100" onClick={handleCreateReport}>
-                                ⚠️ **Report** (Báo cáo hư hỏng/sự cố)
+                                <b>Report</b> (Báo cáo hư hỏng/sự cố)
                             </Button>
                         </Col>
                         <Col xs={12} md={4} className="mb-2">
                             <Button variant="secondary" className="w-100" onClick={() => handleUploadPhoto('after')}>
-                                📷 Ảnh chụp **sau khi** trả
+                                <b>Ảnh chụp sau khi trả</b>
                             </Button>
                         </Col>
                     </Row>
 
-                    {/* HIỂN THỊ ẢNH ĐÃ UPLOAD */}
+                    {/* HÀNG NÚT HÀNH ĐỘNG THỨ HAI */}
+                    <Row className="mb-4 justify-content-center">
+                        <Col xs={12} md={6} className="mb-2">
+                            {/* Logic hiển thị nút Tạo Hóa đơn (chỉ khi hoàn tất trả xe) */}
+                            <Button 
+                                variant="success" 
+                                className="w-100" 
+                                onClick={handleCreateInvoice}
+                                disabled={booking.status !== 'COMPLETED' || booking.actualReturnTime === null} // Chỉ cho phép tạo HĐ khi xe đã trả (COMPLETED)
+                            >
+                                Tạo Hóa đơn
+                            </Button>
+                        </Col>
+                        <Col xs={12} md={6} className="mb-2">
+                            {/* Logic hiển thị nút Hủy Booking */}
+                            <Button 
+                                variant="danger" 
+                                className="w-100" 
+                                onClick={handleCancelBooking}
+                                disabled={booking.status === 'COMPLETED' || booking.status === 'CANCELLED'} // Không cho hủy nếu đã hoàn thành hoặc đã hủy
+                            >
+                                Hủy Booking
+                            </Button>
+                        </Col>
+                    </Row>
+
+
+                    {/* SELECT BOX PHỤ TÙNG */}
+                    <Row className="mt-4 mb-3">
+                        <Col>
+                            <h6 className="fw-bold mb-2">Lọc ảnh theo Phụ tùng</h6>
+                            <Form.Select 
+                                value={selectedComponent} 
+                                onChange={(e) => setSelectedComponent(e.target.value)}
+                                aria-label="Lọc ảnh theo phụ tùng xe"
+                            >
+                                {VEHICLE_COMPONENTS.map(component => (
+                                    <option key={component} value={component}>
+                                        {component}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                        </Col>
+                    </Row>
+
+                    {/* HIỂN THỊ ẢNH ĐÃ UPLOAD (ĐÃ LỌC) */}
                     <Row className="mt-4">
                         <Col md={6}>
-                            <h6 className="fw-bold mb-3">📸 Ảnh trước khi thuê ({beforeImages.length})</h6>
-                            {beforeImages.length === 0 ? (
-                                <Alert variant="secondary">Chưa có ảnh nào được upload</Alert>
+                            <h6 className="fw-bold mb-3"> Ảnh trước khi thuê ({filteredBeforeImages.length})</h6>
+                            {filteredBeforeImages.length === 0 ? (
+                                <Alert variant="secondary">Chưa có ảnh nào được upload cho hạng mục này.</Alert>
                             ) : (
                                 <div>
-                                    {beforeImages.map((img) => (
+                                    {filteredBeforeImages.map((img) => (
                                         <Card key={img.imageId} className="mb-3">
                                             <Card.Body>
                                                 <img 
@@ -200,12 +294,12 @@ function BookingDetail() {
                         </Col>
                         
                         <Col md={6}>
-                            <h6 className="fw-bold mb-3">📷 Ảnh sau khi trả ({afterImages.length})</h6>
-                            {afterImages.length === 0 ? (
-                                <Alert variant="secondary">Chưa có ảnh nào được upload</Alert>
+                            <h6 className="fw-bold mb-3"> Ảnh sau khi trả ({filteredAfterImages.length})</h6>
+                            {filteredAfterImages.length === 0 ? (
+                                <Alert variant="secondary">Chưa có ảnh nào được upload cho hạng mục này.</Alert>
                             ) : (
                                 <div>
-                                    {afterImages.map((img) => (
+                                    {filteredAfterImages.map((img) => (
                                         <Card key={img.imageId} className="mb-3">
                                             <Card.Body>
                                                 <img 

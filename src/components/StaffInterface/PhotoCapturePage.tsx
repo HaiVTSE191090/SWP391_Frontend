@@ -307,7 +307,7 @@ const PhotoCapturePage: React.FC = () => {
                         </div>
                     ) : detail.photoUrl ? (
                         <div className="text-success small">
-                            ✅ Upload xong: 
+                            Upload xong: 
                             <a href={detail.photoUrl} target="_blank" rel="noopener noreferrer" className="ms-1 text-truncate d-inline-block" style={{ maxWidth: '100px' }}>Link Ảnh</a>
                         </div>
                     ) : (

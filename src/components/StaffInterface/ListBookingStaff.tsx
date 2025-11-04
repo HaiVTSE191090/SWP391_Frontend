@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getStaffStationBookings } from './services/authServices';
 import { Link } from 'react-router-dom';
 
-// Cập nhật Interface để khớp với dữ liệu API
+// Cập nhật Interface để khớp với dữ liệu API/DB
 interface BookingContract {
     bookingId: number;
     vehicleName: string;
@@ -14,7 +14,8 @@ interface BookingContract {
     startDateTime: string;
     endDateTime: string;
     contractId: number | null;
-    contractStatus: 'NOT_CREATED' | 'PENDING_ADMIN_SIGNATURE' | 'APPROVED' | 'REJECTED' | string;
+    // Cập nhật các trạng thái để khớp với DB
+    contractStatus: 'NOT_CREATED' | 'PENDING_ADMIN_SIGNATURE' | 'APPROVED' | 'REJECTED' | 'ADMIN_SIGNED' | 'FULLY_SIGNED' | 'CANCELLED' | string;
     contractFileUrl: string | null;
     renterSignedAt: string | null;
     staffSignedAt: string | null;
@@ -37,10 +38,7 @@ const ListBookingStaff: React.FC = () => {
         setError('');
 
         try {
-            // Giả định getStaffStationBookings trả về data có cấu trúc: { data: { data: BookingContract[] } }
-            // Lưu ý: Đảm bảo 'getStaffStationBookings' đã được import đúng từ './services/authServices'
             const response = await getStaffStationBookings(); 
-
             setBookings(response?.data?.data || []);
 
         } catch (error) {
@@ -52,7 +50,7 @@ const ListBookingStaff: React.FC = () => {
         }
     };
 
-    // Render badge theo trạng thái Booking
+    // Render badge theo trạng thái Booking (GIỮ NGUYÊN)
     const renderBookingStatusBadge = (status?: string) => {
         switch (status) {
             case 'RESERVED':
@@ -66,17 +64,23 @@ const ListBookingStaff: React.FC = () => {
         }
     };
 
-    // Render badge theo trạng thái Hợp đồng
+    // Render badge theo trạng thái Hợp đồng (ĐÃ CẬP NHẬT để khớp DB)
     const renderContractStatusBadge = (status?: string) => {
         switch (status) {
             case 'NOT_CREATED':
                 return <Badge bg="info">Chưa tạo</Badge>;
             case 'PENDING_ADMIN_SIGNATURE':
                 return <Badge bg="warning">Chờ Admin ký</Badge>;
-            case 'APPROVED':
-                return <Badge bg="success">Đã duyệt</Badge>;
+            case 'APPROVED': // Giả sử trạng thái sau khi Renter ký, Admin chưa ký.
+                return <Badge bg="primary">Renter đã ký</Badge>;
+            case 'ADMIN_SIGNED':
+                return <Badge bg="success">Admin đã ký</Badge>;
+            case 'FULLY_SIGNED':
+                return <Badge bg="success">**Ký hoàn tất**</Badge>;
             case 'REJECTED':
                 return <Badge bg="danger">Đã từ chối</Badge>;
+            case 'CANCELLED':
+                return <Badge bg="secondary">Đã hủy</Badge>;
             default:
                 return <Badge bg="secondary">---</Badge>;
         }
@@ -88,14 +92,23 @@ const ListBookingStaff: React.FC = () => {
         if (booking.contractStatus === 'NOT_CREATED') {
             navigate(`/staff/booking/${booking.bookingId}/create-contract`);
         } 
-        // 2. Chờ Admin ký hoặc Đã duyệt: Chuyển hướng đến trang Chi tiết Booking (Staff thực hiện Check-in/Check-out)
-        else if (booking.contractStatus === 'PENDING_ADMIN_SIGNATURE' || booking.contractStatus === 'APPROVED') {
+        // 2. Chờ Admin ký: Chuyển hướng đến trang Chi tiết Booking để nhân viên ký thay Admin (nếu có quyền) hoặc chờ
+        else if (booking.contractStatus === 'PENDING_ADMIN_SIGNATURE') {
             navigate(`/staff/booking/${booking.bookingId}/detail`); 
         }
-        // 3. Trường hợp khác (ví dụ: Rejected, Completed): Xem chi tiết Hợp đồng (nếu có contractId)
+        // 3. Các trường hợp đã có contractId và đã ký (APPROVED, ADMIN_SIGNED, FULLY_SIGNED) hoặc Rejected/Cancelled: Xem chi tiết
         else if (booking.contractId) {
-            navigate(`/staff/contract/${booking.contractId}`);
+             navigate(`/staff/booking/${booking.bookingId}/detail`); 
+        } else {
+             // Dành cho các trạng thái không có contractId nhưng cần xem chi tiết booking
+             navigate(`/staff/booking/${booking.bookingId}/detail`); 
         }
+    };
+
+    // Handler cho nút "Trả xe"
+    const handleReturnVehicle = (bookingId: number) => {
+        // Chuyển hướng đến trang chi tiết booking để thực hiện Check-out/Trả xe
+        navigate(`/staff/booking/${bookingId}/detail`);
     };
 
     // --- Hiển thị Loading State ---
@@ -150,34 +163,55 @@ const ListBookingStaff: React.FC = () => {
                     </thead>
                     <tbody>
                         {bookings.length > 0 ? (
-                            bookings.map((b) => (
-                                <tr key={b.bookingId}>
-                                    <td>{b.bookingId}</td>
-                                    <td>{b.renterName}</td>
-                                    <td>{b.vehicleName}</td>
-                                    <td>{b.stationName}</td>
-                                    <td>
-                                        {renderBookingStatusBadge(b.bookingStatus)}
-                                    </td>
-                                    <td>
-                                        {renderContractStatusBadge(b.contractStatus)}
-                                    </td>
-                                    <td>
-                                        <Button
-                                            variant={b.contractStatus === 'NOT_CREATED' ? "success" : "primary"}
-                                            size="sm"
-                                            onClick={() => handleContractAction(b)}
-                                            // Vô hiệu hóa nút nếu booking đã hủy
-                                            disabled={b.bookingStatus === 'CANCELLED'}
-                                        >
-                                            {/* Logic hiển thị theo trạng thái */}
-                                            {b.contractStatus === 'PENDING_ADMIN_SIGNATURE' || b.contractStatus === 'APPROVED' 
-                                                ? 'Thực hiện/Xem chi tiết' 
-                                                : b.contractStatus === 'NOT_CREATED' ? 'Tạo Hợp đồng' : 'Xem Chi tiết'}
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))
+                            bookings.map((b) => {
+                                // Kiểm tra nếu contract đã được ký hoàn tất (ADMIN_SIGNED hoặc FULLY_SIGNED)
+                                const isContractFullySigned = b.contractStatus === 'ADMIN_SIGNED' || b.contractStatus === 'FULLY_SIGNED';
+                                // Kiểm tra nếu booking đang ở trạng thái sẵn sàng để trả xe (RESERVED hoặc trạng thái đang thuê)
+                                const isReadyToReturn = b.bookingStatus === 'RESERVED';
+
+                                return (
+                                    <tr key={b.bookingId}>
+                                        <td>{b.bookingId}</td>
+                                        <td>{b.renterName}</td>
+                                        <td>{b.vehicleName}</td>
+                                        <td>{b.stationName}</td>
+                                        <td>
+                                            {renderBookingStatusBadge(b.bookingStatus)}
+                                        </td>
+                                        <td>
+                                            {renderContractStatusBadge(b.contractStatus)}
+                                        </td>
+                                        <td>
+                                            <div className="d-flex gap-2 flex-wrap">
+                                                
+                                                {/* Nút Hành động chính */}
+                                                <Button
+                                                    variant={b.contractStatus === 'NOT_CREATED' ? "success" : "primary"}
+                                                    size="sm"
+                                                    onClick={() => handleContractAction(b)}
+                                                    disabled={b.bookingStatus === 'CANCELLED'}
+                                                >
+                                                    {b.contractStatus === 'PENDING_ADMIN_SIGNATURE' 
+                                                        ? 'Thực hiện/Ký hợp đồng' 
+                                                        : b.contractStatus === 'NOT_CREATED' ? 'Tạo Hợp đồng' : 'Xem Chi tiết'}
+                                                </Button>
+                                                
+                                                {/* Nút Trả xe - CHỈ HIỆN KHI BOOKING RESERVED VÀ CONTRACT FULLY SIGNED */}
+                                                {isReadyToReturn && isContractFullySigned && (
+                                                    <Button
+                                                        variant="warning"
+                                                        size="sm"
+                                                        onClick={() => handleReturnVehicle(b.bookingId)}
+                                                    >
+                                                        Trả xe
+                                                    </Button>
+                                                )}
+                                                
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })
                         ) : (
                             <tr>
                                 <td colSpan={7} className="text-center text-muted">
