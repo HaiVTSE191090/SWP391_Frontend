@@ -84,3 +84,23 @@ export interface ContractFullDetail {
     createdAt?: string;
     updatedAt?: string;
 }
+
+export interface BookingResponse {
+  bookingId: number;
+  renterId: number;
+  renterName: string;
+  vehicleId: number;
+  vehicleName: string;
+  staffId: number | null;
+  staffName: string | null;
+  priceSnapshotPerHour: number;
+  priceSnapshotPerDay: number;
+  startDateTime: string;
+  endDateTime: string;
+  actualReturnTime: string | null;
+  totalAmount: number;
+  status: BookingStatus;
+  depositStatus: DepositStatus;
+  createdAt: string;
+  updatedAt: string;
+}

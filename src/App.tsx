@@ -22,15 +22,27 @@ import Staff from "./components/StaffInterface/Staff";
 import PaymentResultPage from "./pages/PaymentResultPage";
 import AdminLayout from "./components/AdminInterface/Admin";
 import ListBooking from "./components/AdminInterface/ListBooking";
-import BookingDetail from "./components/AdminInterface/BookingDetails";
+import BookingDetail from "./components/AdminInterface/BookingDetail";
 import ListContract from "./components/AdminInterface/ListContract";
-import ContractDetail from "./components/AdminInterface/ContractDetail";
 import AdminDashBoard from "./components/AdminInterface/AdminDashBoard";
 import AdminLogin from "./components/AdminInterface/AdminLogin";
 import AdminContractPage from "./components/AdminInterface/AdminContractPage";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
+//hàm này để load lại token khi load lại...
+function removeExpiredToken() {
+  const currentTime = new Date().getTime() / 1000;
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  if (currentTime > payload.exp) {
+    localStorage.removeItem("token");
+  }
+}
+
+window.addEventListener("load", removeExpiredToken);
+window.addEventListener("beforeunload", removeExpiredToken);
 
 const App = () => {
   return (
@@ -66,6 +78,8 @@ const App = () => {
                 <Route index element={<AdminDashBoard />} />
                 <Route path="contract" element={<ListContract />} />
                 <Route path="contract/:bookingId" element={<AdminContractPage />} />
+                <Route path="booking" element={<ListBooking />} />
+                <Route path="booking/:bookingId" element={<BookingDetail />} />
               </Route>
             </Routes>
           </Suspense>

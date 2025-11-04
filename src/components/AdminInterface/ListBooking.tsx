@@ -1,130 +1,248 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Table, Button, Spinner, Alert } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom'; // Thêm useNavigate
-
-// Sidebar giống AdminSidebar
-const AdminSidebar: React.FC = () => {
-    const sidebarStyle: React.CSSProperties = {
-        backgroundColor: '#000',
-        color: '#fff',
-        minHeight: '100vh',
-        paddingTop: '20px',
-    };
-    const linkStyle: React.CSSProperties = {
-        color: '#fff',
-        textDecoration: 'none',
-        fontSize: '18px',
-        padding: '10px 0',
-        display: 'block',
-        borderLeft: '3px solid transparent',
-        paddingLeft: '15px',
-        cursor: 'pointer',
-    };
-    const activeLinkStyle = {
-        ...linkStyle,
-        borderLeft: '3px solid #007bff',
-    };
-    return (
-        <div style={sidebarStyle}>
-            <div className="d-flex flex-column">
-                <Link to="/admin/locations" style={linkStyle}>List Điểm Thuê</Link>
-                <Link to="/admin/customers" style={linkStyle}>List Khách Hàng</Link>
-                <Link to="/admin/contract" style={linkStyle}>List Contract</Link>
-                <Link to="/admin/booking" style={activeLinkStyle as React.CSSProperties}>Hợp đồng chờ ký duyệt</Link>
-            </div>
-        </div>
-    );
-};
-
-// Interface cho hợp đồng chờ ký duyệt
-interface PendingContract {
-    id: number;
-    renterName: string;
-    createdAt: string;
-    details: string;
-}
+import React, { useEffect, useState, useMemo } from 'react';
+import { Card, Table, Button, Spinner, Alert, Form, Row, Col } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { BookingResponse } from './types/api.type';
+import { getAllBookings } from './services/authServicesForAdmin';
+import "./ListBooking.css";
 
 // Component chính
 const ListBooking: React.FC = () => {
-    const [contracts, setContracts] = useState<PendingContract[]>([]);
+    const [bookings, setBookings] = useState<BookingResponse[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const navigate = useNavigate(); // Khởi tạo useNavigate
+    const [error, setError] = useState("");
+    const [filterStatus, setFilterStatus] = useState<string>("ALL");
 
-    // Giả lập fetch API hợp đồng chờ ký duyệt
+    const navigate = useNavigate();
+
     useEffect(() => {
-        setLoading(true);
-        setError('');
-        // TODO: Thay bằng API thực tế để lấy danh sách các Booking có status = PENDING
-        setTimeout(() => {
-            // Thêm nhiều mock data hơn để kiểm tra giao diện
-            setContracts([
-                { id: 1, renterName: 'Nguyễn Văn A', createdAt: '2025-10-28 10:30', details: 'Thuê xe VinFast VF7' },
-                { id: 2, renterName: 'Trần Thị B', createdAt: '2025-10-29 15:00', details: 'Thuê xe Toyota Vios' },
-                { id: 3, renterName: 'Lê Văn C', createdAt: '2025-10-29 17:45', details: 'Thuê xe Honda Civic' },
-                { id: 4, renterName: 'Phạm Thị D', createdAt: '2025-10-30 08:00', details: 'Thuê xe Mazda 3' },
-                { id: 5, renterName: 'Hoàng Văn E', createdAt: '2025-10-30 11:20', details: 'Thuê xe Kia Seltos' },
-                { id: 6, renterName: 'Ngô Thị F', createdAt: '2025-10-30 14:05', details: 'Thuê xe Mercedes C300' },
-                { id: 7, renterName: 'Đặng Văn G', createdAt: '2025-10-30 16:50', details: 'Thuê xe Ford Ranger' },
-            ]);
-            setLoading(false);
-        }, 800);
+        fetchBookings();
     }, []);
 
-    // Handler cho nút "Xem chi tiết"
-    const handleViewDetails = (id: number) => {
-        // Chuyển hướng sang trang chi tiết Booking
-        navigate(`/admin/booking/${id}`);
+    const fetchBookings = async () => {
+        try {
+            setLoading(true);
+            const result = await getAllBookings();
+
+            if (result.success) {
+                setBookings(result.data);
+            } else {
+                setError(result.message || "không tải được booking");
+            }
+        } catch (err) {
+            setError('Lỗi kết nối server');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
+
+
+    const handleViewDetails = (id: number) => {
+        navigate(`${id}`);
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    };
+
+    const getStatusBadge = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+            'RESERVED': 'warning',
+            'CONFIRMED': 'info',
+            'IN_PROGRESS': 'primary',
+            'COMPLETED': 'success',
+            'CANCELLED': 'danger'
+        };
+        return statusMap[status] || 'secondary';
+    };
+
+    const getDepositStatusBadge = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+            'PENDING': 'warning',
+            'PAID': 'success',
+            'REFUNDED': 'info',
+            'FAILED': 'danger'
+        };
+        return statusMap[status] || 'secondary';
+    };
+
+    // Filter bookings based on selected status
+    const filteredBookings = useMemo(() => {
+        if (filterStatus === "ALL") {
+            return bookings;
+        }
+        return bookings.filter(booking => booking.status === filterStatus);
+    }, [bookings, filterStatus]);
+
     return (
-        <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-            <Container fluid>
-                <Row>
-                    {/* Sidebar */}
-                    <Col xs={2} className="p-0">
-                        <AdminSidebar />
+        <Card className="shadow-sm border-0">
+            <Card.Header className="bg-white pb-0 border-0">
+                <Row className="align-items-center">
+                    <Col>
+                        <Card.Title as="h2">Danh sách Booking</Card.Title>
                     </Col>
-                    {/* Main content */}
-                    <Col xs={10} className="p-4">
-                        <h2 className="mb-4">Hợp đồng chờ ký duyệt (List Booking)</h2>
-                        {error && <Alert variant="danger">{error}</Alert>}
-                        {loading ? (
-                            <div className="d-flex justify-content-center align-items-center" style={{ height: 200 }}>
-                                <Spinner animation="border" variant="primary" />
-                            </div>
-                        ) : (
-                            <Table bordered hover responsive>
-                                <thead style={{ background: '#e9ecef' }}>
-                                    <tr>
-                                        <th>STT</th>
-                                        <th>Name Renter</th>
-                                        <th>Ngày Tạo Hợp Đồng</th>
-                                        <th>Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {contracts.length === 0 ? (
-                                        <tr><td colSpan={4} className="text-center">Không có hợp đồng chờ ký duyệt</td></tr>
-                                    ) : contracts.map((c, idx) => (
-                                        <tr key={c.id}>
-                                            <td>{idx + 1}</td>
-                                            <td>{c.renterName}</td>
-                                            <td>{c.createdAt}</td>
-                                            <td>
-                                                <Button variant="outline-primary" size="sm" onClick={() => handleViewDetails(c.id)}>
-                                                    Xem chi tiết
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </Table>
-                        )}
+                    <Col xs="auto">
+                        <Form.Group className="mb-0">
+                            <Form.Label className="me-2 mb-0">Lọc theo trạng thái:</Form.Label>
+                            <Form.Select 
+                                value={filterStatus} 
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                style={{ width: 'auto', display: 'inline-block' }}
+                            >
+                                <option value="ALL">Tất cả</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="RESERVED">RESERVED</option>
+                                <option value="CONFIRMED">CONFIRMED</option>
+                                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                                <option value="COMPLETED">COMPLETED</option>
+                                <option value="CANCELLED">CANCELLED</option>
+                            </Form.Select>
+                        </Form.Group>
                     </Col>
                 </Row>
-            </Container>
-        </div>
+            </Card.Header>
+            <Card.Body>
+                {error && <Alert variant="danger">{error}</Alert>}
+                {loading ? (
+                    <div className="d-flex justify-content-center align-items-center" style={{ height: 200 }}>
+                        <Spinner animation="border" variant="primary" />
+                        <span className="ms-3">Đang tải dữ liệu...</span>
+                    </div>
+                ) : filteredBookings.length === 0 ? (
+                    <div className="text-center p-5">
+                        <h5 className="mt-3">Không có booking nào</h5>
+                        <p className="text-muted">
+                            {filterStatus === "ALL" 
+                                ? "Chưa có booking nào được tạo trong hệ thống." 
+                                : `Không có booking nào với trạng thái ${filterStatus}.`}
+                        </p>
+                    </div>
+                ) : (
+                    <Table responsive hover className="align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Người thuê</th>
+                                <th>Xe</th>
+                                <th>Nhân viên</th>
+                                <th>Thời gian thuê</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Đặt cọc</th>
+                                <th className="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredBookings.map((booking) => (
+                                <tr
+                                    key={booking.bookingId}
+                                    onClick={() => handleViewDetails(booking.bookingId)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <td><strong>#{booking.bookingId}</strong></td>
+                                    <td>
+                                        <div>
+                                            <strong>{booking.renterName}</strong>
+                                            <br />
+                                            <small className="text-muted">
+                                                ID: {booking.renterId}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>{booking.vehicleName}</strong>
+                                            <br />
+                                            <small className="text-muted">
+                                                ID: {booking.vehicleId}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {booking.staffName ? (
+                                            <div>
+                                                <strong>{booking.staffName}</strong>
+                                                <br />
+                                                <small className="text-muted">
+                                                    ID: {booking.staffId}
+                                                </small>
+                                            </div>
+                                        ) : (
+                                            <span className="text-muted">Chưa phân công</span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <small className="text-muted d-block">Bắt đầu:</small>
+                                            {formatDate(booking.startDateTime)}
+                                            <br />
+                                            <small className="text-muted d-block mt-1">Kết thúc:</small>
+                                            {formatDate(booking.endDateTime)}
+                                            {booking.actualReturnTime && (
+                                                <>
+                                                    <br />
+                                                    <small className="text-success d-block mt-1">
+                                                        Trả xe: {formatDate(booking.actualReturnTime)}
+                                                    </small>
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{formatCurrency(booking.totalAmount)}</strong>
+                                        <br />
+                                        <small className="text-muted">
+                                            {formatCurrency(booking.priceSnapshotPerHour)}/giờ
+                                        </small>
+                                        <br />
+                                        <small className="text-muted">
+                                            {formatCurrency(booking.priceSnapshotPerDay)}/ngày
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span className={`badge bg-${getStatusBadge(booking.status)}`}>
+                                            {booking.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span className={`badge bg-${getDepositStatusBadge(booking.depositStatus)}`}>
+                                            {booking.depositStatus}
+                                        </span>
+                                    </td>
+                                    <td className="text-center">
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewDetails(booking.bookingId);
+                                            }}
+                                        >
+                                            Xem chi tiết
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                )}
+            </Card.Body>
+        </Card>
     );
 };
 

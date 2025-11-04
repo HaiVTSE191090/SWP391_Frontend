@@ -1,9 +1,9 @@
-import { useLocation, Navigate, Outlet } from "react-router-dom"
+import { useLocation, Navigate } from "react-router-dom"
 import { jwtDecode } from "jwt-decode";
 import AdminLayout from "./Admin";
 
 const RequireAdminAuth = () => {
-    const token = localStorage.getItem("adminToken");
+    const token = localStorage.getItem("token");
     const location = useLocation();
     
     if (token) {

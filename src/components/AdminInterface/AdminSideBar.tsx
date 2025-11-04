@@ -1,13 +1,9 @@
 import React from "react";
 import {
     LayoutDashboard,
-    BarChart3,
     UserCircle,
-    Boxes,
     Package,
     Receipt,
-    Settings,
-    LifeBuoy,
     AlertCircle,
     ClipboardList,
     ChevronFirst
@@ -21,7 +17,7 @@ export const AdminSideBar = () => {
 
     const menuItems = [
         { icon: <LayoutDashboard size={20} />, text: "Dashboard", path: "/admin" },
-        { icon: <ClipboardList size={20} />, text: "Điểm Thuê", path: "/admin/locations" },
+        { icon: <ClipboardList size={20} />, text: "Thiết Lập Điều Khoản", path: "/admin/locations" },
         { icon: <UserCircle size={20} />, text: "Khách Hàng", path: "/admin/customers" },
         { icon: <Package size={20} />, text: "Hợp Đồng", path: "/admin/contract" },
         { icon: <Receipt size={20} />, text: "Booking (Chờ duyệt)", path: "/admin/booking", alert: true },
