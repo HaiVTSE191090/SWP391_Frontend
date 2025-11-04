@@ -28,7 +28,7 @@ const AdminLogin: React.FC = () => {
 
             // 2. Xử lý thành công và chuyển hướng
             alert("Đăng nhập thành công!");
-            navigate("/admin"); // 👈 CHUYỂN HƯỚNG TỚI TRANG DASHBOARD
+            navigate("/admin");
 
         } catch (err: any) {
             // 3. Xử lý lỗi

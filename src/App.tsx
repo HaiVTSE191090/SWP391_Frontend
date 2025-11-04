@@ -85,7 +85,6 @@ const App = () => {
 
               <Route path="*" element={<NotFoundPage />} />
             </Route >
-            {/* staff */}
             <Route path="staff" element={<RequireAuth />}>
               <Route element={<StaffLayout />}>
                 <Route index element={<Staff />} />

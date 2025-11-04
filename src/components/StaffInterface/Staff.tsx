@@ -206,10 +206,7 @@ export default function Staff() {
       <Container fluid className="mt-4">
         <Row>
           <Col>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2>{selectedCategory}</h2>
-              <Button variant="primary">Thêm xe mới</Button>
-            </div>
+
 
             {/* Car Grid */}
             <Row>

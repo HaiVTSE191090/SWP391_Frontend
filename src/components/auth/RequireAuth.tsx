@@ -7,7 +7,6 @@ const RequireAuth = () => {
     if (token) {
         try {
             const decoded: any = jwtDecode(token);
-            console.log(decoded)
             const staffRole = decoded.role;
 
             return (

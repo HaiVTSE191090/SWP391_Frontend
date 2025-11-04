@@ -225,7 +225,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setToken(null);
     setUser(null);
     authController.clearAuthData();
-    localStorage.removeItem("staffToken")
+    localStorage.removeItem("token")
     localStorage.removeItem('rememberedEmail');
     localStorage.removeItem('rememberedPassword');
     localStorage.removeItem('staffRememberedEmail');
