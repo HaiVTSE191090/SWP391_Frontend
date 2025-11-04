@@ -39,7 +39,23 @@ const ListBookingStaff: React.FC = () => {
 
         try {
             const response = await getStaffStationBookings(); 
-            setBookings(response?.data?.data || []);
+            const bookingData = response?.data?.data || [];
+            
+            // Sắp xếp: Booking có trạng thái "Chưa rõ" (không phải RESERVED, COMPLETED, CANCELLED) lên đầu
+            const sortedBookings = bookingData.sort((a: BookingContract, b: BookingContract) => {
+                const knownStatuses = ['RESERVED', 'COMPLETED', 'CANCELLED'];
+                const aIsUnknown = !knownStatuses.includes(a.bookingStatus);
+                const bIsUnknown = !knownStatuses.includes(b.bookingStatus);
+                
+                // Nếu a là "Chưa rõ" và b không phải, a lên trước
+                if (aIsUnknown && !bIsUnknown) return -1;
+                // Nếu b là "Chưa rõ" và a không phải, b lên trước
+                if (!aIsUnknown && bIsUnknown) return 1;
+                // Nếu cùng loại, giữ nguyên thứ tự
+                return 0;
+            });
+            
+            setBookings(sortedBookings);
 
         } catch (error) {
             console.error('Lỗi khi lấy danh sách booking:', error);

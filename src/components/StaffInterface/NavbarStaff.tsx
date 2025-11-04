@@ -254,7 +254,7 @@ const Navbar: React.FC = () => {
       <nav className="navbar navbar-expand-lg bg-white border-bottom px-4">
         <div className="container-fluid">
           {/* Logo + Brand */}
-          <a className="navbar-brand d-flex align-items-center" href="#">
+          <a className="navbar-brand d-flex align-items-center" href="/staff" style={{ cursor: 'pointer' }}>
             <img
               src={logo}
               alt="EV Station"

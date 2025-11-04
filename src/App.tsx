@@ -29,6 +29,7 @@ import CreateContract from "./components/StaffInterface/CreateContract";
 import BookingDetail from "./components/StaffInterface/BookingDetail";
 import PhotoCapturePage from "./components/StaffInterface/PhotoCapturePage";
 import NotificationsPage from "./components/StaffInterface/NotificationsPage";
+import ChooseCar from "./components/StaffInterface/ChooseCar";
 import StaffLayout from "./components/layouts/StaffLayout";
 
 // Lazy load trang chính
@@ -64,6 +65,7 @@ const App = () => {
                 <Route path="renters" element={<ListRenter />} />
                 <Route path="renter/:id" element={<UserDetail />} />
                 <Route path="bookings" element={<ListBookingStaff />} />
+                <Route path="vehicle/:vehicleId" element={<ChooseCar />} />
                 <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
                 <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
                 <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />

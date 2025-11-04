@@ -238,7 +238,7 @@ function BookingDetail() {
                                 onClick={handleCancelBooking}
                                 disabled={booking.status === 'COMPLETED' || booking.status === 'CANCELLED'} // Không cho hủy nếu đã hoàn thành hoặc đã hủy
                             >
-                                Hủy Booking
+                                Hủy
                             </Button>
                         </Col>
                     </Row>
