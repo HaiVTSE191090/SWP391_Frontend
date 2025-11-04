@@ -72,9 +72,9 @@ const FinalPayment: React.FC = () => {
       if (selectedMethod === "MOMO") {
         url = `http://localhost:8080/api/payments/invoice/${invoice.invoiceId}/momo`;
       } else if (selectedMethod === "CASH") {
-        url = `http://localhost:8080/api/payments/invoice/${invoice.invoiceId}/wallet`;
+        url = `http://localhost:8080/api/notifications/booking/${bookingId}/cash-payment`;
       } else {
-        url = `http://localhost:8080/api/payments/invoice/${invoice.invoiceId}/cash`;
+        url = `http://localhost:8080/api/payments/invoice/${invoice.invoiceId}/wallet`;
       }
 
       const res = await axios.post(
@@ -89,7 +89,7 @@ const FinalPayment: React.FC = () => {
         });
         window.location.href = res.data.data.payUrl;
       } else {
-        toast.success("✅ Thanh toán thành công!", {
+        toast.success("Đã thông báo đến nhân viên của trạm!, vui lòng chờ xác nhận.", {
           position: "top-right",
         });
       }

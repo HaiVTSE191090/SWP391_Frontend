@@ -1,22 +1,4 @@
-import React, { useState } from 'react';
-
-/* Bạn có thể đặt CSS này trong file .css riêng
-  .star-button {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font-size: 1.8rem;
-    color: #e0e0e0; // Màu sao rỗng
-    transition: color 0.1s;
-  }
-  .star-button.filled {
-    color: #ffc107; // Màu sao đã chọn (màu vàng)
-  }
-  .star-button:hover {
-    transform: scale(1.1);
-  }
-*/
+import React, { useState } from 'react';   
 
 interface StarRatingProps {
   rating: number; 

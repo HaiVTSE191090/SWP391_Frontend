@@ -35,6 +35,7 @@ export default function RentalHistoryPage() {
   const [staffRating, setStaffRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [ratedBookingIds, setRatedBookingIds] = useState<number[]>([]);
 
 
   const navigate = useNavigate();
@@ -45,14 +46,12 @@ export default function RentalHistoryPage() {
         const token = localStorage.getItem("token");
         setLoading(true);
 
-        // ✅ Lấy danh sách booking
         const res = await axios.get("http://localhost:8080/api/renter/bookings", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = res.data.data;
         setBookings(data);
 
-        // ✅ Lấy trạng thái hợp đồng tương ứng
         const statusMap: { [key: number]: string } = {};
         for (const bk of data) {
           try {
@@ -66,6 +65,23 @@ export default function RentalHistoryPage() {
           }
         }
         setContractStatuses(statusMap);
+
+        const ratedIds: number[] = [];
+        await Promise.all(
+          data.map(async (bk: any) => {
+            try {
+              const resRating = await axios.get(
+                `http://localhost:8080/api/bookings/${bk.bookingId}/rating`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              if (resRating.data?.data) ratedIds.push(bk.bookingId);
+            } catch (err: any) {
+              if (err?.response?.status === 404) return; // ch có rating
+              console.warn(`⚠️ Không thể lấy rating cho booking ${bk.bookingId}`);
+            }
+          })
+        );
+        setRatedBookingIds(ratedIds);
       } catch (error) {
         console.error("❌ Lỗi khi tải danh sách booking:", error);
       } finally {
@@ -247,7 +263,6 @@ export default function RentalHistoryPage() {
     }
   };
 
-
   return (
     <div className="container py-4">
       <h3 className="fw-bold text-center mb-4">Lịch sử thuê xe của người dùng</h3>
@@ -413,18 +428,25 @@ export default function RentalHistoryPage() {
                   Trả xe
                 </Button>
 
-                {b.status === "COMPLETED" && (
+                {b.status === "COMPLETED" && !ratedBookingIds.includes(b.bookingId) && (
                   <Button
                     variant="outline-primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowRatingModal(true);
-                      setBookingId(b.bookingId); 
+                      setBookingId(b.bookingId);
                     }}
                   >
                     ⭐ Đánh giá
                   </Button>
                 )}
+
+                {b.status === "COMPLETED" && ratedBookingIds.includes(b.bookingId) && (
+                  <Button variant="outline-success" disabled>
+                    ✅ Đã đánh giá
+                  </Button>
+                )}
+
 
 
                 {/* ✅ Nút Hủy đơn (ẩn khi hợp đồng FULLY_SIGNED hoặc CANCELLED) */}
