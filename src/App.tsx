@@ -21,25 +21,40 @@ import PaymentResultPage from "./pages/PaymentResultPage";
 // ======== Các trang cho Admin ========
 import AdminLayout from "./components/AdminInterface/Admin";
 import ListBooking from "./components/AdminInterface/ListBooking";
+import AdminBookingDetail from "./components/AdminInterface/BookingDetail";
 import ListContract from "./components/AdminInterface/ListContract";
-import ContractDetail from "./components/AdminInterface/ContractDetail";
 import AdminDashBoard from "./components/AdminInterface/AdminDashBoard";
 import AdminLogin from "./components/AdminInterface/AdminLogin";
+import AdminContractPage from "./components/AdminInterface/AdminContractPage";
 
 // ======== Các trang cho Staff ========
 import ListRenter from "./components/StaffInterface/ListRenter";
 import UserDetail from "./components/StaffInterface/UserDetail";
 import ListBookingStaff from "./components/StaffInterface/ListBookingStaff";
 import CreateContract from "./components/StaffInterface/CreateContract";
-import BookingDetail from "./components/StaffInterface/BookingDetail";
+import StaffBookingDetail from "./components/StaffInterface/BookingDetail";
 import PhotoCapturePage from "./components/StaffInterface/PhotoCapturePage";
 import NotificationsPage from "./components/StaffInterface/NotificationsPage";
 import StaffLogin from "./components/StaffInterface/StaffLogin";
 import Staff from "./components/StaffInterface/Staff";
 import FinalPayment from "./components/FinalPayment/FinalInvoice";
+import AdminRequireAuth from "./components/AdminInterface/services/AdminRequireAuth";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
+//hàm này để load lại token khi load lại...
+function removeExpiredToken() {
+  const currentTime = new Date().getTime() / 1000;
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  const payload = JSON.parse(atob(token.split(".")[1]));
+  if (currentTime > payload.exp) {
+    localStorage.removeItem("token");
+  }
+}
+
+window.addEventListener("load", removeExpiredToken);
+window.addEventListener("beforeunload", removeExpiredToken);
 
 const App = () => {
   return (
@@ -48,6 +63,7 @@ const App = () => {
       <VehicleProvider>
         <Suspense fallback={<div className="container py-5">Đang tải...</div>}>
           <Routes>
+            {/* renter */}
             <Route path="/" element={<Layout />}>
               <Route index element={<HomePage />} />
               <Route path="sign-up" element={<SignUpForm />} />
@@ -63,32 +79,38 @@ const App = () => {
               <Route path="final-invoice/booking/:bookingId" element={<FinalPayment />} />
 
               <Route path="staff/login" element={<StaffLogin />} />
+              <Route path="admin/login" element={<AdminLogin />} />
 
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                  <Route path="staff" element={<RequireAuth />}>
-                    <Route index element={<Staff />} />
-                    <Route path="renters" element={<ListRenter />} />
-                    <Route path="renter/:id" element={<UserDetail />} />
-                    <Route path="bookings" element={<ListBookingStaff />} />
-                    <Route path="booking/:bookingId/detail" element={<BookingDetail />} />
-                    <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
-                    <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
-                    <Route path="notifications" element={<NotificationsPage />} />
-                  </Route>
-                  {/* admin */}
-                  <Route path="admin" element={<AdminLayout />}>
-                    <Route index element={<AdminDashBoard />} />
-                    <Route path="contract" element={<ListContract />} />
-                    <Route path="contract/:id" element={<ContractDetail />} />
-                  </Route>
-                </Routes>
-              </Suspense>
+              <Route path="*" element={<NotFoundPage />} />
+            </Route >
+            {/* staff */}
+            <Route path="staff" element={<RequireAuth />}>
+              <Route index element={<Staff />} />
+              <Route path="renters" element={<ListRenter />} />
+              <Route path="renter/:id" element={<UserDetail />} />
+              <Route path="bookings" element={<ListBookingStaff />} />
+              <Route path="booking/:bookingId/detail" element={<StaffBookingDetail />} />
+              <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
+              <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+            </Route>
+            {/* admin */}
+            <Route path="admin" element={<AdminRequireAuth />}>
+              <Route element={<AdminLayout />}>
+                <Route index element={<AdminDashBoard />} />
+                <Route path="contract" element={<ListContract />} />
+                <Route path="contract/:bookingId" element={<AdminContractPage />} />
+                <Route path="booking" element={<ListBooking />} />
+                <Route path="booking/:bookingId" element={<AdminBookingDetail />} />
+              </Route>
+            </Route>
+          </Routes >
+        </Suspense >
 
-              <ToastConfig />
-            </VehicleProvider>
-          </UserProvider>
-          );
+        <ToastConfig />
+      </VehicleProvider >
+    </UserProvider >
+  );
 };
 
-          export default App;
+export default App;

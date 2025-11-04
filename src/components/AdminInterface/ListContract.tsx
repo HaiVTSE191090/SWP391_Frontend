@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Spinner, Alert, Card } from 'react-bootstrap';
-import {  useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import "./ListContract.css"
+import { Contract, ContractStatus } from './types/api.type';
+import * as authServicesForAdmin from './services/authServicesForAdmin';
 
-type ContractStatus = 'ADMIN_SIGNED' | 'CANCELLED' | 'FULLY_SIGNED' | 'PENDING_ADMIN_SIGNATURE';
 
-interface Contract {
-    id: number;
-    renterName: string;
-    bookingId: number;
-    status: ContractStatus;
-    createdAt: string;
-}
 
 const getStatusBadge = (status: ContractStatus) => {
     let variant: string;
@@ -34,24 +28,34 @@ const getStatusBadge = (status: ContractStatus) => {
     return <span className={`badge bg-${variant}`}>{status}</span>;
 };
 
+
 const ListContract: React.FC = () => {
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    useEffect(() => {
+    const fetchContracts = async () => {
         setLoading(true);
         setError('');
-        setTimeout(() => {
-            setContracts([
-                { id: 101, renterName: 'Nguyễn Văn A', bookingId: 1, createdAt: '2025-10-28 11:00', status: 'PENDING_ADMIN_SIGNATURE' },
-                { id: 102, renterName: 'Trần Thị B', bookingId: 2, createdAt: '2025-10-29 16:30', status: 'FULLY_SIGNED' },
-                { id: 103, renterName: 'Lê Văn C', bookingId: 3, createdAt: '2025-10-30 09:00', status: 'ADMIN_SIGNED' },
-                { id: 104, renterName: 'Phạm Thị D', bookingId: 4, createdAt: '2025-10-30 10:00', status: 'PENDING_ADMIN_SIGNATURE' },
-            ]);
+        try {
+            const data = await authServicesForAdmin.getAllContracts();
+            if (!data.success) {
+                setError(data.err);
+                setContracts([]);
+                return;
+            }
+            setContracts(data.data);
+        } catch (err: any) {
+            setError(err?.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách hợp đồng');
+            console.error('Error fetching contracts:', err);
+        } finally {
             setLoading(false);
-        }, 800);
+        }
+    };
+
+    useEffect(() => {
+        fetchContracts();
     }, []);
 
     const handleViewDetails = (id: number) => {
@@ -73,7 +77,6 @@ const ListContract: React.FC = () => {
                     </div>
                 ) : contracts.length === 0 ? (
                     <div className="text-center p-5">
-
                         <h5 className="mt-3">Không có hợp đồng nào</h5>
                         <p className="text-muted">Chưa có hợp đồng nào được tạo trong hệ thống.</p>
                     </div>
@@ -91,11 +94,11 @@ const ListContract: React.FC = () => {
                         </thead>
                         <tbody>
                             {contracts.map((c) => (
-                                <tr key={c.id} onClick={() => handleViewDetails(c.id)} className="clickable-row">
+                                <tr key={c.bookingId} onClick={() => handleViewDetails(c.bookingId)} className="clickable-row">
                                     <td><strong>#{c.id}</strong></td>
                                     <td>#{c.bookingId}</td>
                                     <td>{c.renterName}</td>
-                                    <td>{c.createdAt}</td>
+                                    <td>{c.createdAt?.replace("T", " ")}</td>
                                     <td>{getStatusBadge(c.status)}</td>
                                     <td className="text-center">
                                         <Button
