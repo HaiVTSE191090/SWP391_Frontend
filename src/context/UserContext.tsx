@@ -86,7 +86,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       const resp = await staffLogin(email, password)
       if (resp.status === "success") {
         setToken(resp.data.token)
-        localStorage.setItem("staffToken",resp.data.token)
+        localStorage.setItem("token",resp.data.token)
       }
       return {
         success: true,
