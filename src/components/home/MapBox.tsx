@@ -61,6 +61,27 @@ function Mapbox({ selectedLocation, onLocationChange }: Props) {
     setSelectedStationId(stationId);
   };
 
+  const handleClick = (station: any) => {
+    if (selectedStationId === station.stationId) {
+      // 👇 Nếu click lại cùng station → reset để show tất cả
+      setSelectedStationId(null);
+      setViewState({
+        latitude: 10.7769,
+        longitude: 106.7009,
+        zoom: 11,
+      });
+    } else {
+      setSelectedStationId(station.stationId);
+      setViewState({
+        latitude: station.latitude,
+        longitude: station.longitude,
+        zoom: 14,
+      });
+      handleStationClick(station.stationId);
+    }
+  };
+
+
   return (
     <div className="row h-100 shadow rounded overflow-hidden">
       <div className="col-lg-8 col-md-7 position-relative p-0 h-100">
@@ -140,18 +161,13 @@ function Mapbox({ selectedLocation, onLocationChange }: Props) {
           </button>
           {sortedStations
             .filter(station => !isStationAtUserLocation(station))
+            .filter(station => selectedStationId === null || station.stationId === selectedStationId)
             .map((station) => (
               <button
                 key={station.stationId}
-                className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                onClick={() => {
-                  setViewState({
-                    latitude: station.latitude,
-                    longitude: station.longitude,
-                    zoom: 14,
-                  });
-                  handleStationClick(station.stationId);
-                }}
+                className={`list-group-item list-group-item-action d-flex justify-content-between align-items-center ${selectedStationId === station.stationId ? "active" : ""
+                  }`}
+                onClick={() => handleClick(station)}
               >
                 <div>
                   <div className="fw-semibold">{station.name}</div>
@@ -175,11 +191,21 @@ function Mapbox({ selectedLocation, onLocationChange }: Props) {
         </div>
       </div>
 
-      {selectedStationId && (
+      {/* Hiển thị danh sách xe */}
+      {selectedStationId ? (
         <div className="col-12">
-          <VehicleList stationId={selectedStationId} title={`Xe tại ${sortedStations.find(s => s.stationId === selectedStationId)?.name}`} />
+          <VehicleList
+            stationId={selectedStationId}
+            title={`Xe tại ${sortedStations.find((s) => s.stationId === selectedStationId)?.name
+              }`}
+          />
+        </div>
+      ) : (
+        <div className="col-12">
+          <VehicleList stationId={null} title="Tất cả xe khả dụng" />
         </div>
       )}
+
 
       {showLocationModal && (
         <LocationModal

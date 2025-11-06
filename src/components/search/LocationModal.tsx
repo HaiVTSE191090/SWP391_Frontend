@@ -57,7 +57,7 @@ export default function LocationModal({ current, onSave, onClose }: Props) {
           setShowSuggestions(false);
           setLoading(false);
         });
-    }, 500); 
+    }, 1000); 
 
   }, [value]);
 
