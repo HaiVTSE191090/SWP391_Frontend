@@ -21,16 +21,23 @@ export default function TimeModal({ current, onSave }: Props) {
 
   const minStartDate = useMemo(() => getDateAfterDays(7), []);
   const maxStartDate = useMemo(() => getDateAfterDays(14), []);
-  
+
+  const maxEndDate = useMemo(() => {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + 37);
+    return date.toISOString().slice(0, 10);
+  }, [startDate]);
+
+
   const minEndDate = useMemo(() => {
     const date = new Date(startDate);
     date.setDate(date.getDate() + 1);
     return date.toISOString().slice(0, 10);
   }, [startDate]);
-  
+
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
-    setEndTime(newStartTime); 
+    setEndTime(newStartTime);
   };
 
   const handleSave = () => {
@@ -49,8 +56,8 @@ export default function TimeModal({ current, onSave }: Props) {
       return;
     }
 
-    if (endDate > maxStartDate) {
-      alert(`Ngày trả xe không được quá ${maxStartDate} (14 ngày kể từ hôm nay)`);
+    if (endDate > maxEndDate) {
+      alert(`Ngày trả xe không được quá ${maxEndDate} (30 ngày kể từ ngày nhận)`);
       return;
     }
 
@@ -93,6 +100,7 @@ export default function TimeModal({ current, onSave }: Props) {
               minStartDate={minStartDate}
               maxStartDate={maxStartDate}
               minEndDate={minEndDate}
+              maxEndDate={maxEndDate}
               onStartDateChange={setStartDate}
               onEndDateChange={setEndDate}
               onStartTimeChange={handleStartTimeChange}
@@ -125,6 +133,7 @@ type DayModeFormProps = {
   minStartDate: string;
   maxStartDate: string;
   minEndDate: string;
+  maxEndDate: string;
   onStartDateChange: (val: string) => void;
   onEndDateChange: (val: string) => void;
   onStartTimeChange: (val: string) => void;
@@ -139,6 +148,7 @@ function DayModeForm({
   minStartDate,
   maxStartDate,
   minEndDate,
+  maxEndDate,
   onStartDateChange,
   onEndDateChange,
   onStartTimeChange,
@@ -165,7 +175,7 @@ function DayModeForm({
             type="date"
             className="form-control"
             min={minEndDate}
-            max={maxStartDate}
+            max={maxEndDate}
             value={endDate}
             onChange={(e) => onEndDateChange(e.target.value)}
           />

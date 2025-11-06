@@ -39,7 +39,19 @@ const ListBookingStaff: React.FC = () => {
 
         try {
             const response = await getStaffStationBookings(); 
-            setBookings(response?.data?.data || []);
+            const allBookings = response?.data?.data || [];
+            
+            // Lọc chỉ lấy booking có trạng thái hợp đồng là "NOT_CREATED" (Chưa tạo)
+            const filteredBookings = allBookings.filter(
+                (booking: BookingContract) => booking.contractStatus === 'NOT_CREATED'
+            );
+            
+            // Sắp xếp theo ID từ lớn đến nhỏ
+            const sortedBookings = filteredBookings.sort(
+                (a: BookingContract, b: BookingContract) => b.bookingId - a.bookingId
+            );
+            
+            setBookings(sortedBookings);
 
         } catch (error) {
             console.error('Lỗi khi lấy danh sách booking:', error);
@@ -59,6 +71,8 @@ const ListBookingStaff: React.FC = () => {
                 return <Badge bg="success">Hoàn thành</Badge>;
             case 'CANCELLED':
                 return <Badge bg="danger">Đã hủy</Badge>;
+            case 'IN_USE':
+                return <Badge bg="danger">Đang sử dụng</Badge>;
             default:
                 return <Badge bg="secondary">Chưa rõ</Badge>;
         }
@@ -142,7 +156,7 @@ const ListBookingStaff: React.FC = () => {
     return (
         <Container fluid className="mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Danh Sách Booking Tại Trạm</h2>
+                <h2>Danh Sách Booking Chưa Tạo Hợp Đồng</h2>
                 <Button variant="primary" onClick={fetchBooking}>
                     <i className="bi bi-arrow-clockwise"></i> Làm mới
                 </Button>
@@ -167,7 +181,7 @@ const ListBookingStaff: React.FC = () => {
                                 // Kiểm tra nếu contract đã được ký hoàn tất (ADMIN_SIGNED hoặc FULLY_SIGNED)
                                 const isContractFullySigned = b.contractStatus === 'ADMIN_SIGNED' || b.contractStatus === 'FULLY_SIGNED';
                                 // Kiểm tra nếu booking đang ở trạng thái sẵn sàng để trả xe (RESERVED hoặc trạng thái đang thuê)
-                                const isReadyToReturn = b.bookingStatus === 'RESERVED';
+                                const isReadyToReturn = b.bookingStatus === 'IN_USE';
 
                                 return (
                                     <tr key={b.bookingId}>
@@ -215,7 +229,7 @@ const ListBookingStaff: React.FC = () => {
                         ) : (
                             <tr>
                                 <td colSpan={7} className="text-center text-muted">
-                                    Không có Booking nào tại trạm.
+                                    Không có Booking nào cần tạo hợp đồng tại trạm.
                                 </td>
                             </tr>
                         )}
@@ -225,7 +239,7 @@ const ListBookingStaff: React.FC = () => {
 
             {bookings.length > 0 && (
                 <div className="text-muted">
-                    <small>Tổng số booking: {bookings.length}</small>
+                    <small>Tổng số booking chưa tạo hợp đồng: {bookings.length}</small>
                 </div>
             )}
 

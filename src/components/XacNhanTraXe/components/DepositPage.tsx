@@ -20,6 +20,8 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [depositNumber, setDepositNumber] = useState<number>(5000000);
+  const [selectedGateway, setSelectedGateway] = useState<"momo" | "payos" | null>(null);
+
 
   useEffect(() => {
     const fetchBooking = async () => {
@@ -110,6 +112,39 @@ export default function DepositPage() {
     }
   };
 
+  const handleRedirectToPayOS = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.post(
+        `http://localhost:8080/api/payments/invoice/${invoiceId}/payos`,
+        { amount: depositNumber },
+        {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        }
+      );
+
+      const data = res.data.data;
+      if (data.checkoutUrl) {
+        // ✅ Chuyển hướng đến link thanh toán PayOS
+        window.location.href = data.checkoutUrl;
+      } else if (data.qrCode) {
+        // ✅ Nếu trả về QR code, mở tab mới để hiển thị
+        const newTab = window.open();
+        newTab!.document.write(`<img src="${data.qrCode}" alt="QR Code PayOS"/>`);
+      } else {
+        setErrorMsg("Không thể tạo liên kết thanh toán PayOS.");
+      }
+    } catch (err: any) {
+      console.error("❌ Lỗi khi gọi PayOS:", err);
+      setErrorMsg(err.response?.data?.message || "Đã xảy ra lỗi khi tạo liên kết PayOS.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <div className="container py-5 deposit-page">
       <h2 className="text-center fw-bold mb-5">XÁC NHẬN ĐẶT XE</h2>
@@ -124,7 +159,7 @@ export default function DepositPage() {
         ) : booking ? (
           <ul className="info-list">
             <li><strong>Mã đặt xe:</strong> {booking.bookingId}</li>
-            <li><strong>Thời gian thuê:</strong> {booking.startDateTime} - {booking.endDateTime}</li>
+            <li><strong>Thời gian thuê:</strong> {booking.startDateTime.replace("T", " ")} - {booking.endDateTime.replace("T", " ")}</li>
             <li><strong>Giá ước tính:</strong> {booking.totalAmount.toLocaleString('vi-VN')} VND</li>
             <li><strong>Tiền cọc:</strong> {depositNumber.toLocaleString('vi-VN')} VND</li>
           </ul>
@@ -153,32 +188,58 @@ export default function DepositPage() {
         )}
       </section>
 
-      {/* THANH TOÁN QUA MOMO */}
+      {/* THANH TOÁN TIỀN CỌC */}
       <section className="card-custom fade-in text-center">
-        <h5 className="fw-bold mb-3">Thanh toán qua MoMo</h5>
-        <img
-          src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
-          alt="Momo"
-          width={80}
-          className="mb-3"
-        />
-        <p>Nhấn xác nhận để chuyển đến trang MoMo và thanh toán tiền cọc.</p>
+        <h5 className="fw-bold mb-3">Thanh toán tiền cọc</h5>
+        <p>Chọn phương thức thanh toán bạn muốn sử dụng:</p>
 
         {!showConfirmBox ? (
-          <Button
-            variant="success"
-            size="lg"
-            onClick={() => handleConfirm()}
-            className="rounded-pill px-4"
-          >
-            Xác nhận thanh toán
-          </Button>
+          <div className="d-flex justify-content-center gap-4 flex-wrap">
+            {/* --- Nút MOMO --- */}
+            <Button
+              variant="success"
+              size="lg"
+              onClick={() => {
+                setSelectedGateway("momo");
+                handleConfirm();
+              }}
+              className="rounded-pill px-4 d-flex align-items-center gap-2"
+            >
+              <img
+                src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png"
+                alt="MoMo"
+                width={35}
+                height={35}
+              />
+              Thanh toán bằng MoMo
+            </Button>
+
+            {/* --- Nút PAYOS --- */}
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => {
+                setSelectedGateway("payos");
+                handleConfirm();
+              }}
+              className="rounded-pill px-4 d-flex align-items-center gap-2"
+            >
+              <img
+                src="https://cdn.payos.vn/logo/payos-logo.svg"
+                alt="PayOS"
+                width={35}
+                height={35}
+              />
+              Thanh toán bằng PayOS
+            </Button>
+          </div>
         ) : (
           <div className="confirm-box mt-4 p-3 fade-in">
             <h6 className="fw-bold mb-2">Xác nhận thanh toán</h6>
             <p>
-              Bạn sắp được chuyển hướng đến trang <strong>MoMo</strong> để thanh toán{" "}
-              <strong>{depositNumber.toLocaleString('vi-VN')} VND</strong>.
+              Bạn sắp được chuyển hướng đến trang{" "}
+              <strong>{selectedGateway === "momo" ? "MoMo" : "PayOS"}</strong> để thanh toán{" "}
+              <strong>{depositNumber.toLocaleString("vi-VN")} VND</strong>.
             </p>
             <p className="text-muted small">
               ⚠️ Vui lòng không tắt trình duyệt trong quá trình xử lý.
@@ -194,7 +255,11 @@ export default function DepositPage() {
               <Button
                 variant="success"
                 size="sm"
-                onClick={handleRedirectToMomo}
+                onClick={() =>
+                  selectedGateway === "momo"
+                    ? handleRedirectToMomo()
+                    : handleRedirectToPayOS()
+                }
                 disabled={loading}
               >
                 {loading ? (
@@ -202,13 +267,14 @@ export default function DepositPage() {
                     <Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...
                   </>
                 ) : (
-                  "Tiếp tục đến MoMo"
+                  `Tiếp tục đến ${selectedGateway === "momo" ? "MoMo" : "PayOS"}`
                 )}
               </Button>
             </div>
           </div>
         )}
       </section>
+
     </div>
   );
 }

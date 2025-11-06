@@ -95,7 +95,7 @@ const ListContract: React.FC = () => {
                         <tbody>
                             {contracts.map((c) => (
                                 <tr key={c.bookingId} onClick={() => handleViewDetails(c.bookingId)} className="clickable-row">
-                                    <td><strong>#{c.id}</strong></td>
+                                    <td><strong>#{c.bookingId}</strong></td>
                                     <td>#{c.bookingId}</td>
                                     <td>{c.renterName}</td>
                                     <td>{c.createdAt?.replace("T", " ")}</td>
