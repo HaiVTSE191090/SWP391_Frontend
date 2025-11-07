@@ -42,9 +42,8 @@ import AdminRequireAuth from "./components/AdminInterface/services/AdminRequireA
 import StaffLayout from "./components/layouts/StaffLayout";
 import InvoiceDetailPage from "./components/StaffInterface/InvoiceDetailPage";
 
-// Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
-//hàm này để load lại token khi load lại...
+//hàm này để trong config thì được chứ tự nhiên để đây nó bị sai logic vl
 function removeExpiredToken() {
   const currentTime = new Date().getTime() / 1000;
   const token = localStorage.getItem("token");

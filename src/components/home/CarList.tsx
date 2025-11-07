@@ -105,7 +105,7 @@ export const CarList: React.FC = () => {
           Xe dành cho bạn
         </h2>
         <p className="text-muted mb-0">
-          Tổng cộng <strong className="text-primary">{vehicles.length}</strong> xe từ tất cả các trạm
+          Tổng cộng <strong className="text-primary">{vehicles.length}</strong> xe 
         </p>
       </div>
 

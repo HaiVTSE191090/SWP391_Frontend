@@ -39,20 +39,8 @@ const ListBookingStaff: React.FC = () => {
 
         try {
             const response = await getStaffStationBookings(); 
-            const allBookings = response?.data?.data || [];
+            setBookings(response?.data?.data || []);
             
-            // Lọc chỉ lấy booking có trạng thái hợp đồng là "NOT_CREATED" (Chưa tạo)
-            const filteredBookings = allBookings.filter(
-                (booking: BookingContract) => booking.contractStatus === 'NOT_CREATED'
-            );
-            
-            // Sắp xếp theo ID từ lớn đến nhỏ
-            const sortedBookings = filteredBookings.sort(
-                (a: BookingContract, b: BookingContract) => b.bookingId - a.bookingId
-            );
-            
-            setBookings(sortedBookings);
-
         } catch (error) {
             console.error('Lỗi khi lấy danh sách booking:', error);
             setError('Không thể tải danh sách booking/hợp đồng của trạm.');
@@ -156,7 +144,7 @@ const ListBookingStaff: React.FC = () => {
     return (
         <Container fluid className="mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Danh Sách Booking Chưa Tạo Hợp Đồng</h2>
+                <h2>Danh Sách Booking Tại Trạm</h2>
                 <Button variant="primary" onClick={fetchBooking}>
                     <i className="bi bi-arrow-clockwise"></i> Làm mới
                 </Button>
@@ -229,7 +217,7 @@ const ListBookingStaff: React.FC = () => {
                         ) : (
                             <tr>
                                 <td colSpan={7} className="text-center text-muted">
-                                    Không có Booking nào cần tạo hợp đồng tại trạm.
+                                    Không có Booking nào tại trạm.
                                 </td>
                             </tr>
                         )}
@@ -239,7 +227,7 @@ const ListBookingStaff: React.FC = () => {
 
             {bookings.length > 0 && (
                 <div className="text-muted">
-                    <small>Tổng số booking chưa tạo hợp đồng: {bookings.length}</small>
+                    <small>Tổng số booking: {bookings.length}</small>
                 </div>
             )}
 
