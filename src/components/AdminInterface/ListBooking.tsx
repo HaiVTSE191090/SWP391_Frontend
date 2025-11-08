@@ -10,7 +10,7 @@ const ListBooking: React.FC = () => {
     const [bookings, setBookings] = useState<BookingResponse[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [filterStatus, setFilterStatus] = useState<string>("ALL");
+    const [filterStatus, setFilterStatus] = useState<string>("PENDING");
 
     const navigate = useNavigate();
 

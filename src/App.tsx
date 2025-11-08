@@ -41,13 +41,18 @@ import FinalPayment from "./components/FinalPayment/FinalInvoice";
 import AdminRequireAuth from "./components/AdminInterface/services/AdminRequireAuth";
 import StaffLayout from "./components/layouts/StaffLayout";
 import InvoiceDetailPage from "./components/StaffInterface/InvoiceDetailPage";
+import AdminConfig from "./components/AdminInterface/AdminConfig";
+import AdminConfigDetail from "./components/AdminInterface/AdminConfigDetail";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 //hàm này để trong config thì được chứ tự nhiên để đây nó bị sai logic vl
 function removeExpiredToken() {
   const currentTime = new Date().getTime() / 1000;
   const token = localStorage.getItem("token");
-  if (!token) return;
+  if (!token) {
+    alert("Hết phiên đăng nhập!")
+    return
+  };
   const payload = JSON.parse(atob(token.split(".")[1]));
   if (currentTime > payload.exp) {
     localStorage.removeItem("token");
@@ -105,6 +110,9 @@ const App = () => {
                 <Route path="contract/:bookingId" element={<AdminContractPage />} />
                 <Route path="booking" element={<ListBooking />} />
                 <Route path="booking/:bookingId" element={<AdminBookingDetail />} />
+                <Route path="config" element={<AdminConfig />} />
+                <Route path="config/details/:policyId" element={<AdminConfigDetail />} />
+                <Route path="config/details" element={<AdminConfigDetail/>}/>
               </Route>
             </Route>
           </Routes >

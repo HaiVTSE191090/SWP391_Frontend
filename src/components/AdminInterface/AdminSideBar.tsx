@@ -6,21 +6,23 @@ import {
     Receipt,
     AlertCircle,
     ClipboardList,
-    ChevronFirst
+    ChevronFirst,
+    MonitorCog
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import userImage from "../../images/User_Icon.png";
 import "./AdminSideBar.css";
+import path from "path";
 
 export const AdminSideBar = () => {
     const location = useLocation();
 
     const menuItems = [
         { icon: <LayoutDashboard size={20} />, text: "Dashboard", path: "/admin" },
-        { icon: <ClipboardList size={20} />, text: "Thiết Lập Điều Khoản", path: "/admin/locations" },
         { icon: <UserCircle size={20} />, text: "Khách Hàng", path: "/admin/customers" },
         { icon: <Package size={20} />, text: "Hợp Đồng", path: "/admin/contract" },
         { icon: <Receipt size={20} />, text: "Booking (Chờ duyệt)", path: "/admin/booking", alert: true },
+        { icon: <MonitorCog size={20} />, text: "Thiết Lập Điều Khoản", path: "/admin/config" },
     ];
 
     return (
