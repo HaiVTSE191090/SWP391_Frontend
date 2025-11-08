@@ -60,6 +60,21 @@ export function usePolicy() {
     };
   }, [getPolicyAcitveByPolicyType]);
 
+  const fetchPolicDeposit = useCallback(async () => {
+    try {
+      const res = await api.get<ApiResponse<PolicyResponse>>(`/api/policies/active/DEPOSIT_AMOUNT`);
+      return{
+        success: true,
+        value: res.data.data.value
+      }
+    } catch (error:any) {
+      return{
+        success: false,
+        err: error.response?.data.data
+      }
+    }
+  }, [])
+
   return {
     policy,
     policies,
@@ -68,6 +83,7 @@ export function usePolicy() {
     loadPolicyById,
     fetchPolicyDay,
     getPolicyAcitveByPolicyType,
+    fetchPolicDeposit,
 
   };
 }

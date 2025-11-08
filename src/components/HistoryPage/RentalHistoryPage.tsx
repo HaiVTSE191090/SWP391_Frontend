@@ -20,14 +20,18 @@ const formatDateTime = (isoString: string) => {
 
 export default function RentalHistoryPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [contractStatuses, setContractStatuses] = useState<{ [key: number]: string }>({});
+  const [contractStatuses, setContractStatuses] = useState<{
+    [key: number]: string;
+  }>({});
   const [loading, setLoading] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<number | null>(null);
-  const [cancelInfo, setCancelInfo] = useState<{ message: string } | null>(null);
+  const [cancelInfo, setCancelInfo] = useState<{ message: string } | null>(
+    null
+  );
   const [loadingCancelInfo, setLoadingCancelInfo] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [bookingId, setBookingId] = useState<number | null>(null);
@@ -37,7 +41,6 @@ export default function RentalHistoryPage() {
   const [submittingRating, setSubmittingRating] = useState(false);
   const [ratedBookingIds, setRatedBookingIds] = useState<number[]>([]);
 
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,9 +49,12 @@ export default function RentalHistoryPage() {
         const token = localStorage.getItem("token");
         setLoading(true);
 
-        const res = await axios.get("http://localhost:8080/api/renter/bookings", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          "http://localhost:8080/api/renter/bookings",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         const data = res.data.data;
         setBookings(data);
 
@@ -61,7 +67,9 @@ export default function RentalHistoryPage() {
             );
             statusMap[bk.bookingId] = resContract.data.data?.status;
           } catch (err) {
-            console.warn(`Không thể lấy trạng thái contract cho booking ${bk.bookingId}`);
+            console.warn(
+              `Không thể lấy trạng thái contract cho booking ${bk.bookingId}`
+            );
           }
         }
         setContractStatuses(statusMap);
@@ -77,7 +85,9 @@ export default function RentalHistoryPage() {
               if (resRating.data?.data) ratedIds.push(bk.bookingId);
             } catch (err: any) {
               if (err?.response?.status === 404) return; // ch có rating
-              console.warn(`⚠️ Không thể lấy rating cho booking ${bk.bookingId}`);
+              console.warn(
+                `⚠️ Không thể lấy rating cho booking ${bk.bookingId}`
+              );
             }
           })
         );
@@ -96,9 +106,12 @@ export default function RentalHistoryPage() {
     try {
       setLoadingDetail(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get(`http://localhost:8080/api/bookings/${bookingId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `http://localhost:8080/api/bookings/${bookingId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setSelectedBooking(res.data.data);
       setShowModal(true);
     } catch (error) {
@@ -138,9 +151,7 @@ export default function RentalHistoryPage() {
         // ✅ Cập nhật danh sách booking tại chỗ
         setBookings((prev) =>
           prev.map((b) =>
-            b.bookingId === bookingId
-              ? { ...b, status: "CANCELLED" }
-              : b
+            b.bookingId === bookingId ? { ...b, status: "CANCELLED" } : b
           )
         );
       } else {
@@ -152,12 +163,10 @@ export default function RentalHistoryPage() {
     } catch (error: any) {
       console.error("❌ Lỗi khi hủy đơn:", error);
       toast.error(
-        error.response?.data?.message ||
-        "Không thể hủy đơn. Vui lòng thử lại.",
+        error.response?.data?.message || "Không thể hủy đơn. Vui lòng thử lại."
       );
     }
   };
-
 
   if (loading)
     return (
@@ -181,7 +190,9 @@ export default function RentalHistoryPage() {
       }
     } catch (error) {
       console.error("❌ Lỗi khi gọi API confirm-cancel:", error);
-      setCancelInfo({ message: "Không thể lấy thông tin hoàn tiền. Vui lòng thử lại." });
+      setCancelInfo({
+        message: "Không thể lấy thông tin hoàn tiền. Vui lòng thử lại.",
+      });
     } finally {
       setLoadingCancelInfo(false);
     }
@@ -216,7 +227,7 @@ export default function RentalHistoryPage() {
       console.error("❌ Lỗi khi gửi thông báo trả xe:", error);
       toast.error(
         error.response?.data?.message ||
-        "Không thể gửi thông báo. Vui lòng thử lại.",
+          "Không thể gửi thông báo. Vui lòng thử lại.",
         { position: "top-right", autoClose: 3000 }
       );
     }
@@ -255,7 +266,8 @@ export default function RentalHistoryPage() {
     } catch (error: any) {
       console.error(" Lỗi khi gửi đánh giá:", error);
       toast.error(
-        error.response?.data?.message || "Không thể gửi đánh giá. Vui lòng thử lại.",
+        error.response?.data?.message ||
+          "Không thể gửi đánh giá. Vui lòng thử lại.",
         { position: "top-right", autoClose: 3000 }
       );
     } finally {
@@ -265,7 +277,9 @@ export default function RentalHistoryPage() {
 
   return (
     <div className="container py-4">
-      <h3 className="fw-bold text-center mb-4">Lịch sử thuê xe của người dùng</h3>
+      <h3 className="fw-bold text-center mb-4">
+        Lịch sử thuê xe của người dùng
+      </h3>
 
       {bookings.length === 0 ? (
         <p className="text-center text-muted">Bạn chưa có lịch sử thuê xe.</p>
@@ -283,8 +297,8 @@ export default function RentalHistoryPage() {
               <div className="flex-grow-1 px-3">
                 <h5 className="fw-bold mb-1">{b.vehicleName}</h5>
                 <p className="mb-1">
-                  <strong>Thời gian:</strong> {formatDateTime(b.startDateTime)} -{" "}
-                  {formatDateTime(b.endDateTime)}
+                  <strong>Thời gian:</strong> {formatDateTime(b.startDateTime)}{" "}
+                  - {formatDateTime(b.endDateTime)}
                 </p>
 
                 <Badge
@@ -292,33 +306,32 @@ export default function RentalHistoryPage() {
                     b.status === "PENDING"
                       ? "warning"
                       : b.status === "RESERVED"
-                        ? "info"
-                        : b.status === "IN_USE"
-                          ? "success"
-                          : b.status === "COMPLETED"
-                            ? "secondary"
-                            : b.status === "CANCELLED"
-                              ? "danger"
-                              : "dark"
+                      ? "info"
+                      : b.status === "IN_USE"
+                      ? "success"
+                      : b.status === "COMPLETED"
+                      ? "secondary"
+                      : b.status === "CANCELLED"
+                      ? "danger"
+                      : "dark"
                   }
                 >
                   {b.status === "PENDING"
                     ? "Đang chờ duyệt"
                     : b.status === "RESERVED"
-                      ? "Đang chờ nhận xe"
-                      : b.status === "IN_USE"
-                        ? "Đang sử dụng"
-                        : b.status === "COMPLETED"
-                          ? "Hoàn tất"
-                          : b.status === "CANCELLED"
-                            ? "Đã hủy"
-                            : "Đã hết hạn"}
+                    ? "Đang chờ nhận xe"
+                    : b.status === "IN_USE"
+                    ? "Đang sử dụng"
+                    : b.status === "COMPLETED"
+                    ? "Hoàn tất"
+                    : b.status === "CANCELLED"
+                    ? "Đã hủy"
+                    : "Đã hết hạn"}
                 </Badge>
               </div>
 
               {/* ---- Các nút hành động ---- */}
               <div className="d-flex flex-wrap align-items-center gap-2">
-
                 {/* ✅ Nút Ký/Xem hợp đồng */}
                 {(() => {
                   if (contractStatus === "CANCELLED") return null; // Ẩn nếu hợp đồng bị hủy
@@ -396,7 +409,7 @@ export default function RentalHistoryPage() {
                         variant="warning"
                         onClick={(e) => {
                           e.stopPropagation();
-                          alert(`Đặt cọc cho booking #${b.bookingId}`);
+                          navigate("/xac-nhan-dat-xe/" + b.bookingId);
                         }}
                       >
                         Đặt cọc
@@ -428,29 +441,29 @@ export default function RentalHistoryPage() {
                   Trả xe
                 </Button>
 
-                {b.status === "COMPLETED" && !ratedBookingIds.includes(b.bookingId) && (
-                  <Button
-                    variant="outline-primary"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowRatingModal(true);
-                      setBookingId(b.bookingId);
-                    }}
-                  >
-                    ⭐ Đánh giá
-                  </Button>
-                )}
+                {b.status === "COMPLETED" &&
+                  !ratedBookingIds.includes(b.bookingId) && (
+                    <Button
+                      variant="outline-primary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowRatingModal(true);
+                        setBookingId(b.bookingId);
+                      }}
+                    >
+                      ⭐ Đánh giá
+                    </Button>
+                  )}
 
-                {b.status === "COMPLETED" && ratedBookingIds.includes(b.bookingId) && (
-                  <Button variant="outline-success" disabled>
-                    ✅ Đã đánh giá
-                  </Button>
-                )}
-
-
+                {b.status === "COMPLETED" &&
+                  ratedBookingIds.includes(b.bookingId) && (
+                    <Button variant="outline-success" disabled>
+                      ✅ Đã đánh giá
+                    </Button>
+                  )}
 
                 {/* ✅ Nút Hủy đơn (ẩn khi hợp đồng FULLY_SIGNED hoặc CANCELLED) */}
-                {b.status === "RESERVED" &&
+                {(b.status === "RESERVED" || b.status === "PENDING") &&
                   contractStatus !== "FULLY_SIGNED" &&
                   contractStatus !== "CANCELLED" && (
                     <Button
@@ -473,7 +486,9 @@ export default function RentalHistoryPage() {
       {selectedBooking && (
         <Modal show={showModal} onHide={() => setShowModal(false)} centered>
           <Modal.Header closeButton>
-            <Modal.Title>Chi tiết đơn đặt xe #{selectedBooking.bookingId}</Modal.Title>
+            <Modal.Title>
+              Chi tiết đơn đặt xe #{selectedBooking.bookingId}
+            </Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {loadingDetail ? (
@@ -482,9 +497,15 @@ export default function RentalHistoryPage() {
               </div>
             ) : (
               <div>
-                <p><strong>Người thuê:</strong> {selectedBooking.renterName}</p>
-                <p><strong>Xe:</strong> {selectedBooking.vehicleName}</p>
-                <p><strong>Nhân viên:</strong> {selectedBooking.staffName}</p>
+                <p>
+                  <strong>Người thuê:</strong> {selectedBooking.renterName}
+                </p>
+                <p>
+                  <strong>Xe:</strong> {selectedBooking.vehicleName}
+                </p>
+                <p>
+                  <strong>Nhân viên:</strong> {selectedBooking.staffName}
+                </p>
                 <p>
                   <strong>Thời gian:</strong>{" "}
                   {formatDateTime(selectedBooking.startDateTime)} →{" "}
@@ -520,19 +541,27 @@ export default function RentalHistoryPage() {
                           autoClose: 2500,
                         });
                         // Điều hướng sang trang FinalInvoice.tsx
-                        navigate(`/final-invoice/booking/${selectedBooking.bookingId}`);
+                        navigate(
+                          `/final-invoice/booking/${selectedBooking.bookingId}`
+                        );
                       } else {
-                        toast.info("📄 Hiện chưa có hóa đơn tổng cho đơn này.", {
-                          position: "top-right",
-                          autoClose: 3000,
-                        });
+                        toast.info(
+                          "📄 Hiện chưa có hóa đơn tổng cho đơn này.",
+                          {
+                            position: "top-right",
+                            autoClose: 3000,
+                          }
+                        );
                       }
                     } catch (error: any) {
                       console.error("❌ Lỗi khi tải hóa đơn:", error);
-                      toast.error("Không thể tải thông tin hóa đơn. Vui lòng thử lại sau.", {
-                        position: "top-right",
-                        autoClose: 3000,
-                      });
+                      toast.error(
+                        "Không thể tải thông tin hóa đơn. Vui lòng thử lại sau.",
+                        {
+                          position: "top-right",
+                          autoClose: 3000,
+                        }
+                      );
                     }
                   }}
                 >
@@ -540,65 +569,76 @@ export default function RentalHistoryPage() {
                 </Button>
 
                 {/* 🖼️ Hình ảnh xe */}
-                {selectedBooking.bookingImages && selectedBooking.bookingImages.length > 0 && (
-                  <>
-                    <hr />
-                    <h5 className="fw-bold mb-3 text-primary">📷 Hình ảnh xe</h5>
+                {selectedBooking.bookingImages &&
+                  selectedBooking.bookingImages.length > 0 && (
+                    <>
+                      <hr />
+                      <h5 className="fw-bold mb-3 text-primary">
+                        📷 Hình ảnh xe
+                      </h5>
 
-                    {["BEFORE_RENTAL", "AFTER_RENTAL", "DAMAGE", "OTHER"].map((type) => {
-                      const imagesOfType = selectedBooking.bookingImages?.filter(
-                        (img) => img.imageType === type
-                      );
-                      if (!imagesOfType || imagesOfType.length === 0) return null;
+                      {["BEFORE_RENTAL", "AFTER_RENTAL", "DAMAGE", "OTHER"].map(
+                        (type) => {
+                          const imagesOfType =
+                            selectedBooking.bookingImages?.filter(
+                              (img) => img.imageType === type
+                            );
+                          if (!imagesOfType || imagesOfType.length === 0)
+                            return null;
 
-                      const typeTitle: Record<string, string> = {
-                        BEFORE_RENTAL: "📦 Ảnh xe trước khi thuê",
-                        AFTER_RENTAL: "🚗 Ảnh xe sau khi trả",
-                        DAMAGE: "⚠️ Ảnh hư hỏng (nếu có)",
-                        OTHER: "🗂️ Ảnh khác",
-                      };
+                          const typeTitle: Record<string, string> = {
+                            BEFORE_RENTAL: "📦 Ảnh xe trước khi thuê",
+                            AFTER_RENTAL: "🚗 Ảnh xe sau khi trả",
+                            DAMAGE: "⚠️ Ảnh hư hỏng (nếu có)",
+                            OTHER: "🗂️ Ảnh khác",
+                          };
 
-                      return (
-                        <div key={type} className="mb-4">
-                          <h6 className="fw-bold text-secondary mb-3">{typeTitle[type]}</h6>
-                          <div className="row booking-images-container">
-                            {imagesOfType.map((img) => (
-                              <div
-                                key={img.imageId}
-                                className="col-12 col-sm-6 col-md-4 mb-4 text-center"
-                              >
-                                <img
-                                  src={img.imageUrl}
-                                  alt={img.description || "Hình ảnh xe"}
-                                  className="img-fluid rounded shadow-sm"
-                                  style={{
-                                    maxHeight: "160px",
-                                    objectFit: "cover",
-                                    border: "1px solid #ddd",
-                                  }}
-                                />
-                                <div className="mt-2 small text-muted">
-                                  <p className="mb-1">
-                                    <strong>Mô tả:</strong>{" "}
-                                    {img.description || "Không có mô tả"}
-                                  </p>
-                                  <p className="mb-1">
-                                    <strong>Hạng mục:</strong>{" "}
-                                    {img.vehicleComponent || "Không rõ"}
-                                  </p>
-                                  <p className="mb-0">
-                                    <strong>Tạo lúc:</strong>{" "}
-                                    {new Date(img.createdAt || "").toLocaleString("vi-VN")}
-                                  </p>
-                                </div>
+                          return (
+                            <div key={type} className="mb-4">
+                              <h6 className="fw-bold text-secondary mb-3">
+                                {typeTitle[type]}
+                              </h6>
+                              <div className="row booking-images-container">
+                                {imagesOfType.map((img) => (
+                                  <div
+                                    key={img.imageId}
+                                    className="col-12 col-sm-6 col-md-4 mb-4 text-center"
+                                  >
+                                    <img
+                                      src={img.imageUrl}
+                                      alt={img.description || "Hình ảnh xe"}
+                                      className="img-fluid rounded shadow-sm"
+                                      style={{
+                                        maxHeight: "160px",
+                                        objectFit: "cover",
+                                        border: "1px solid #ddd",
+                                      }}
+                                    />
+                                    <div className="mt-2 small text-muted">
+                                      <p className="mb-1">
+                                        <strong>Mô tả:</strong>{" "}
+                                        {img.description || "Không có mô tả"}
+                                      </p>
+                                      <p className="mb-1">
+                                        <strong>Hạng mục:</strong>{" "}
+                                        {img.vehicleComponent || "Không rõ"}
+                                      </p>
+                                      <p className="mb-0">
+                                        <strong>Tạo lúc:</strong>{" "}
+                                        {new Date(
+                                          img.createdAt || ""
+                                        ).toLocaleString("vi-VN")}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
+                            </div>
+                          );
+                        }
+                      )}
+                    </>
+                  )}
               </div>
             )}
           </Modal.Body>
@@ -606,7 +646,11 @@ export default function RentalHistoryPage() {
       )}
 
       {/* Modal xác nhận hủy */}
-      <Modal show={showCancelConfirm} onHide={() => setShowCancelConfirm(false)} centered>
+      <Modal
+        show={showCancelConfirm}
+        onHide={() => setShowCancelConfirm(false)}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>Xác nhận hủy đơn đặt xe</Modal.Title>
         </Modal.Header>
@@ -614,7 +658,8 @@ export default function RentalHistoryPage() {
         <Modal.Body>
           {loadingCancelInfo ? (
             <div className="text-center">
-              <Spinner animation="border" size="sm" /> Đang kiểm tra chính sách hoàn tiền...
+              <Spinner animation="border" size="sm" /> Đang kiểm tra chính sách
+              hoàn tiền...
             </div>
           ) : cancelInfo ? (
             <>
@@ -627,7 +672,10 @@ export default function RentalHistoryPage() {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCancelConfirm(false)}>
+          <Button
+            variant="secondary"
+            onClick={() => setShowCancelConfirm(false)}
+          >
             Không
           </Button>
           <Button
@@ -646,7 +694,11 @@ export default function RentalHistoryPage() {
       </Modal>
 
       {/* 🌟 Modal đánh giá với ngôi sao thật */}
-      <Modal show={showRatingModal} onHide={() => setShowRatingModal(false)} centered>
+      <Modal
+        show={showRatingModal}
+        onHide={() => setShowRatingModal(false)}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>Đánh giá đơn thuê #{bookingId}</Modal.Title>
         </Modal.Header>
@@ -655,7 +707,10 @@ export default function RentalHistoryPage() {
           {/* ⭐ Đánh giá xe */}
           <div className="mb-4 text-center">
             <label className="form-label fw-bold">Đánh giá xe</label>
-            <StarRating rating={vehicleRating} onRatingChange={setVehicleRating} />
+            <StarRating
+              rating={vehicleRating}
+              onRatingChange={setVehicleRating}
+            />
           </div>
 
           {/* 👤 Đánh giá nhân viên */}
@@ -696,8 +751,6 @@ export default function RentalHistoryPage() {
           </Button>
         </Modal.Footer>
       </Modal>
-
-
     </div>
   );
 }
