@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { VehicleProvider } from "./context/VehicleContext";
 import ToastConfig from "./components/common/ToastConfig";
@@ -43,6 +43,8 @@ import StaffLayout from "./components/layouts/StaffLayout";
 import InvoiceDetailPage from "./components/StaffInterface/InvoiceDetailPage";
 import AdminConfig from "./components/AdminInterface/AdminConfig";
 import AdminConfigDetail from "./components/AdminInterface/AdminConfigDetail";
+import AdminVehicleModel from "./components/AdminInterface/AdminVehicleModel";
+import AdminVehicleModelDetail from "./components/AdminInterface/AdminVehicleModelDetail";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 //hàm này để trong config thì được chứ tự nhiên để đây nó bị sai logic vl
@@ -50,11 +52,11 @@ function removeExpiredToken() {
   const currentTime = new Date().getTime() / 1000;
   const token = localStorage.getItem("token");
   if (!token) {
-    alert("Hết phiên đăng nhập!")
     return
   };
   const payload = JSON.parse(atob(token.split(".")[1]));
   if (currentTime > payload.exp) {
+    alert("Hết phiên đăng nhập")
     localStorage.removeItem("token");
   }
 }
@@ -113,6 +115,9 @@ const App = () => {
                 <Route path="config" element={<AdminConfig />} />
                 <Route path="config/details/:policyId" element={<AdminConfigDetail />} />
                 <Route path="config/details" element={<AdminConfigDetail/>}/>
+                <Route path="vehicle-model" element={<AdminVehicleModel/>} />
+                <Route path="vehicle-model/detail/:modelId" element={<AdminVehicleModelDetail/>}/>
+                <Route path="vehicle-model/detail/" element={<AdminVehicleModelDetail/>}/>
               </Route>
             </Route>
           </Routes >
