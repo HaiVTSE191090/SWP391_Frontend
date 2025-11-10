@@ -309,6 +309,25 @@ export const uploadCarImage = async (bookingId: number, imageType: string, vehic
     }
 };
 
+// Hàm xóa ảnh booking
+export const deleteBookingImage = async (bookingId: number, imageId: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.delete(
+            `${baseURL}/api/bookings/${bookingId}/images/${imageId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi xóa ảnh:', error);
+        throw error;
+    }
+};
+
 // Lấy danh sách ảnh đã upload theo bookingId và imageType
 export const getBookingImages = async (bookingId: number, imageType?: string) => {
     try {

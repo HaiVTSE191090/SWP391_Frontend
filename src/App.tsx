@@ -32,6 +32,7 @@ import NotificationsPage from "./components/StaffInterface/NotificationsPage";
 import ChooseCar from "./components/StaffInterface/ChooseCar";
 import StaffLayout from "./components/layouts/StaffLayout";
 import InvoiceDetailPage from "./components/StaffInterface/InvoiceDetailPage";
+import PaymentPage from "./components/StaffInterface/PaymentPage";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -72,6 +73,7 @@ const App = () => {
                 <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="booking/:invoiceId/create-invoice" element={<InvoiceDetailPage />} />
+                <Route path="payment" element={<PaymentPage />} />
               </Route>
             </Route>
           </Routes>

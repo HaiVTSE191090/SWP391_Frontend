@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Button, Table, Spinner, Alert, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getBookingDetail } from './services/authServices';
+import { getBookingDetail, deleteBookingImage, uploadCarImage } from './services/authServices';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -71,10 +71,14 @@ function BookingDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [invoice, setInvoice] = useState<FinalInvoice | null>(null);
-
+    const [deletingImageId, setDeletingImageId] = useState<number | null>(null);
+    const [uploadingImageId, setUploadingImageId] = useState<number | null>(null);
 
     // State cho Select Box Phụ tùng
     const [selectedComponent, setSelectedComponent] = useState(VEHICLE_COMPONENTS[0]);
+    
+    // Ref cho input file ẩn (dùng cho update ảnh)
+    const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
     const navigate = useNavigate();
 
@@ -148,80 +152,100 @@ function BookingDetail() {
         navigate(`/staff/booking/${booking.bookingId}/photo/${targetImageType}`);
     };
 
-    // Handler cho Tạo Hóa đơn (Chuyển hướng đến trang tạo hóa đơn)
-    const handleCreateInvoice = async () => {
-        if (!booking) return;
+    // Handler xóa ảnh
+    const handleDeleteImage = async (imageId: number, imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL') => {
+        if (!booking || !window.confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
+
         try {
-            setLoading(true);
-            const token = localStorage.getItem("token");
-
-            const res = await axios.post(
-                `http://localhost:8080/api/invoices/bookings/${bookingId}/invoices/final`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
-
-            const newInvoice: FinalInvoice = res.data.data;
-            setInvoice(newInvoice);
-
-            toast.success("✅ Hóa đơn tổng (FINAL) đã được tạo thành công!", {
-                position: "top-right",
-                autoClose: 2500,
-            });
-            navigate(`/staff/booking/${newInvoice.invoiceId}/create-invoice`);
-
-        } catch (error: any) {
-            console.error("❌ Lỗi khi tải danh sách hóa đơn:", error);
-            try {
-                // 👉 Nếu POST thất bại, thử GET lại danh sách hóa đơn theo bookingId
-                const token = localStorage.getItem("token");
-                const res = await axios.get(
-                    `http://localhost:8080/api/invoices/bookings/${bookingId}/invoices`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
-
-                const invoices = res.data?.data || [];
-
-                if (invoices.length > 0) {
-                    const finalInvoice = invoices.find(
-                        (inv: any) => inv.type === "FINAL"
-                    );
-
-                    if (finalInvoice) {
-                        navigate(`/staff/booking/${finalInvoice.invoiceId}/create-invoice`);
-
-                        toast.info(
-                            `📄 Đã có hóa đơn FINAL hiện tại (ID: ${finalInvoice.invoiceId}).`,
-                            { position: "top-right", autoClose: 4000 }
-                        );
-                        return;
-                    }
-                }
-
-                toast.warning(
-                    "⚠️ Không tìm thấy hóa đơn FINAL nào cho booking này.",
-                    { position: "top-right", autoClose: 3000 }
-                );
-            } catch (fetchError) {
-                toast.error("Không thể tải danh sách hóa đơn.", {
-                    position: "top-right",
-                    autoClose: 3000,
-                });
+            setDeletingImageId(imageId);
+            await deleteBookingImage(booking.bookingId, imageId);
+            
+            // Cập nhật state sau khi xóa thành công
+            if (imageType === 'BEFORE_RENTAL') {
+                setBeforeImages(prev => prev.filter(img => img.imageId !== imageId));
+            } else {
+                setAfterImages(prev => prev.filter(img => img.imageId !== imageId));
             }
+            
+            toast.success('Đã xóa ảnh thành công!');
+        } catch (error) {
+            console.error('Lỗi khi xóa ảnh:', error);
+            toast.error('Không thể xóa ảnh. Vui lòng thử lại.');
         } finally {
-            setLoading(false);
+            setDeletingImageId(null);
         }
     };
+
+    // Handler mở dialog chọn file để update ảnh
+    const handleUpdateImageClick = (imageId: number) => {
+        const inputRef = fileInputRefs.current[imageId];
+        if (inputRef) {
+            inputRef.click();
+        }
+    };
+
+    // Handler upload ảnh mới (update)
+    const handleUpdateImage = async (
+        imageId: number, 
+        file: File, 
+        imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL',
+        vehicleComponent: string,
+        description: string
+    ) => {
+        if (!booking) return;
+
+        try {
+            setUploadingImageId(imageId);
+            
+            // Xóa ảnh cũ trước
+            await deleteBookingImage(booking.bookingId, imageId);
+            
+            // Upload ảnh mới
+            const response = await uploadCarImage(
+                booking.bookingId,
+                imageType,
+                vehicleComponent,
+                description,
+                file
+            );
+
+            if (response?.data?.data?.imageUrl) {
+                // Tạo object ảnh mới
+                const newImage: BookingImage = {
+                    imageId: Date.now(), // Tạm thời dùng timestamp, backend sẽ trả về ID thật
+                    imageUrl: response.data.data.imageUrl,
+                    description: description,
+                    createdAt: new Date().toISOString(),
+                    imageType: imageType,
+                    vehicleComponent: vehicleComponent
+                };
+
+                // Cập nhật state với ảnh mới
+                if (imageType === 'BEFORE_RENTAL') {
+                    setBeforeImages(prev => prev.map(img => 
+                        img.imageId === imageId ? newImage : img
+                    ));
+                } else {
+                    setAfterImages(prev => prev.map(img => 
+                        img.imageId === imageId ? newImage : img
+                    ));
+                }
+
+                toast.success('Đã cập nhật ảnh thành công!');
+                
+                // Reload lại data để đồng bộ với server
+                window.location.reload();
+            } else {
+                toast.error('Upload ảnh mới thất bại. Vui lòng thử lại.');
+            }
+        } catch (error) {
+            console.error('Lỗi khi cập nhật ảnh:', error);
+            toast.error('Không thể cập nhật ảnh. Vui lòng thử lại.');
+        } finally {
+            setUploadingImageId(null);
+        }
+    };
+
 
     // Handler cho Hủy Booking (Xác nhận và gọi API hủy)
     const handleCancelBooking = () => {
@@ -308,7 +332,7 @@ function BookingDetail() {
                             <Button
                                 variant="success"
                                 className="w-100"
-                                onClick={handleCreateInvoice}
+                                
                                 disabled={booking.status !== 'COMPLETED' || booking.actualReturnTime === null} // Chỉ cho phép tạo HĐ khi xe đã trả (COMPLETED)
                             >
                                 Tạo Hóa đơn
@@ -349,13 +373,13 @@ function BookingDetail() {
                     {/* HIỂN THỊ ẢNH ĐÃ UPLOAD (ĐÃ LỌC) */}
                     <Row className="mt-4">
                         <Col md={6}>
-                            <h6 className="fw-bold mb-3"> Ảnh trước khi thuê ({filteredBeforeImages.length})</h6>
+                            <h6 className="fw-bold mb-3">📷 Ảnh trước khi thuê ({filteredBeforeImages.length})</h6>
                             {filteredBeforeImages.length === 0 ? (
                                 <Alert variant="secondary">Chưa có ảnh nào được upload cho hạng mục này.</Alert>
                             ) : (
                                 <div>
                                     {filteredBeforeImages.map((img) => (
-                                        <Card key={img.imageId} className="mb-3">
+                                        <Card key={img.imageId} className="mb-3 shadow-sm">
                                             <Card.Body>
                                                 <img
                                                     src={img.imageUrl}
@@ -365,11 +389,64 @@ function BookingDetail() {
                                                 />
                                                 <p className="mb-1"><strong>Hạng mục:</strong> {img.vehicleComponent}</p>
                                                 {img.description && (
-                                                    <p className="mb-0 text-muted"><strong>Mô tả:</strong> {img.description}</p>
+                                                    <p className="mb-2 text-muted"><strong>Mô tả:</strong> {img.description}</p>
                                                 )}
-                                                <small className="text-muted">
+                                                <small className="text-muted d-block mb-2">
                                                     Ngày chụp: {new Date(img.createdAt).toLocaleString()}
                                                 </small>
+                                                
+                                                {/* Nút hành động */}
+                                                <div className="d-flex gap-2 mt-2">
+                                                    <Button 
+                                                        variant="warning" 
+                                                        size="sm"
+                                                        onClick={() => handleUpdateImageClick(img.imageId)}
+                                                        disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
+                                                    >
+                                                        {uploadingImageId === img.imageId ? (
+                                                            <>
+                                                                <Spinner animation="border" size="sm" className="me-1" />
+                                                                Đang cập nhật...
+                                                            </>
+                                                        ) : (
+                                                            '🔄 Cập nhật'
+                                                        )}
+                                                    </Button>
+                                                    <Button 
+                                                        variant="danger" 
+                                                        size="sm"
+                                                        onClick={() => handleDeleteImage(img.imageId, 'BEFORE_RENTAL')}
+                                                        disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
+                                                    >
+                                                        {deletingImageId === img.imageId ? (
+                                                            <>
+                                                                <Spinner animation="border" size="sm" className="me-1" />
+                                                                Đang xóa...
+                                                            </>
+                                                        ) : (
+                                                            '🗑️ Xóa'
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                                
+                                                {/* Input file ẩn cho update */}
+                                                <input
+                                                    ref={(el) => { fileInputRefs.current[img.imageId] = el; }}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        if (e.target.files && e.target.files[0]) {
+                                                            handleUpdateImage(
+                                                                img.imageId, 
+                                                                e.target.files[0], 
+                                                                'BEFORE_RENTAL',
+                                                                img.vehicleComponent,
+                                                                img.description
+                                                            );
+                                                        }
+                                                    }}
+                                                />
                                             </Card.Body>
                                         </Card>
                                     ))}
@@ -378,13 +455,13 @@ function BookingDetail() {
                         </Col>
 
                         <Col md={6}>
-                            <h6 className="fw-bold mb-3"> Ảnh sau khi trả ({filteredAfterImages.length})</h6>
+                            <h6 className="fw-bold mb-3">📷 Ảnh sau khi trả ({filteredAfterImages.length})</h6>
                             {filteredAfterImages.length === 0 ? (
                                 <Alert variant="secondary">Chưa có ảnh nào được upload cho hạng mục này.</Alert>
                             ) : (
                                 <div>
                                     {filteredAfterImages.map((img) => (
-                                        <Card key={img.imageId} className="mb-3">
+                                        <Card key={img.imageId} className="mb-3 shadow-sm">
                                             <Card.Body>
                                                 <img
                                                     src={img.imageUrl}
@@ -394,11 +471,64 @@ function BookingDetail() {
                                                 />
                                                 <p className="mb-1"><strong>Hạng mục:</strong> {img.vehicleComponent}</p>
                                                 {img.description && (
-                                                    <p className="mb-0 text-muted"><strong>Mô tả:</strong> {img.description}</p>
+                                                    <p className="mb-2 text-muted"><strong>Mô tả:</strong> {img.description}</p>
                                                 )}
-                                                <small className="text-muted">
+                                                <small className="text-muted d-block mb-2">
                                                     Ngày chụp: {new Date(img.createdAt).toLocaleString()}
                                                 </small>
+                                                
+                                                {/* Nút hành động */}
+                                                <div className="d-flex gap-2 mt-2">
+                                                    <Button 
+                                                        variant="warning" 
+                                                        size="sm"
+                                                        onClick={() => handleUpdateImageClick(img.imageId)}
+                                                        disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
+                                                    >
+                                                        {uploadingImageId === img.imageId ? (
+                                                            <>
+                                                                <Spinner animation="border" size="sm" className="me-1" />
+                                                                Đang cập nhật...
+                                                            </>
+                                                        ) : (
+                                                            '🔄 Cập nhật'
+                                                        )}
+                                                    </Button>
+                                                    <Button 
+                                                        variant="danger" 
+                                                        size="sm"
+                                                        onClick={() => handleDeleteImage(img.imageId, 'AFTER_RENTAL')}
+                                                        disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
+                                                    >
+                                                        {deletingImageId === img.imageId ? (
+                                                            <>
+                                                                <Spinner animation="border" size="sm" className="me-1" />
+                                                                Đang xóa...
+                                                            </>
+                                                        ) : (
+                                                            '🗑️ Xóa'
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                                
+                                                {/* Input file ẩn cho update */}
+                                                <input
+                                                    ref={(el) => { fileInputRefs.current[img.imageId] = el; }}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        if (e.target.files && e.target.files[0]) {
+                                                            handleUpdateImage(
+                                                                img.imageId, 
+                                                                e.target.files[0], 
+                                                                'AFTER_RENTAL',
+                                                                img.vehicleComponent,
+                                                                img.description
+                                                            );
+                                                        }
+                                                    }}
+                                                />
                                             </Card.Body>
                                         </Card>
                                     ))}
