@@ -28,4 +28,23 @@ export interface ApiResponse<T> {
   message: string | null;
 }
 
+export interface StationRequest {
+  name: string;
+  location: string;
+  latitude: number;
+  longitude: number;
+  carNumber: number;
+  status: string;
+}
+
+export interface StationResponse {
+  stationId: number;
+  name: string;
+  location: string ;
+  latitude: number;
+  longitude: number;
+  capacity: number; 
+  status: string;
+}
+
 export type GetAllStationsResponse = ApiResponse<Station[]>;

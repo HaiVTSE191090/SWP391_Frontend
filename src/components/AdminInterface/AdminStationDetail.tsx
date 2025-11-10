@@ -1,48 +1,39 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import {
-    Spinner,
-    Container,
-    Card,
-    Form,
-    Button,
-    Row,
-    Col,
-    Modal,
-    Alert,
-} from "react-bootstrap";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAdminStation } from "../../hooks/useAdminStation";
+import { toast } from "react-toastify";
+import { StationRequest } from "../../models/StationModel";
+import { Container, Alert, Button, Card, Col, Form, Modal, Row, Spinner } from "react-bootstrap";
+import { ArrowLeft, Save, Trash2 } from "lucide-react";
 
-import { Save, Trash2, ArrowLeft } from "lucide-react";
-import { useVehicleModel } from '../../hooks/useVehicleModel';
-import { toast } from 'react-toastify';
-import { VehicleModelRequest } from '../../models/VehicleModalModel';
-
-
-const AdminVehicleModelDetail = () => {
-    const { modelId } = useParams<{ modelId: string }>();
-    const isCreateMode = !modelId;
+const AdminStationDetail = () => {
+    const { stationId } = useParams<{ stationId: string }>();
+    const isCreateMode = !stationId;
 
     const navigate = useNavigate();
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const handleCloseModal = () => setShowConfirmModal(false);
     const handleShowModal = () => setShowConfirmModal(true);
-    const { vehicleModel,
+
+    const {
+        station,
         error,
         isLoading,
-        loadVehicleModelById,
-        createVehicleModel,
-        updateVehicleModel,
-        deleteVehicleModel,
-        setVehicleModel } = useVehicleModel();
+        loadStationById,
+        createStation,
+        updateStation,
+        deleteStation,
+        setStation,
+    } = useAdminStation();
 
     const handleConfirmDelete = async () => {
         handleCloseModal();
-        if (!modelId) return;
+        if (!stationId) return;
 
-        const toastId = toast.loading("Đang xóa mẫu xe...");
+        const toastId = toast.loading("Đang xóa trạm xe...");
 
-        const res = await deleteVehicleModel(Number(modelId));
+        const res = await deleteStation(Number(stationId));
 
         if (res.success) {
             toast.update(toastId, {
@@ -63,39 +54,31 @@ const AdminVehicleModelDetail = () => {
     };
 
     useEffect(() => {
-        if (!isCreateMode && modelId) {
-            loadVehicleModelById(Number(modelId));
+        if (!isCreateMode && stationId) {
+            loadStationById(Number(stationId));
         } else {
-            setVehicleModel(undefined);
+            setStation(undefined);
         }
-    }, [isCreateMode, loadVehicleModelById, modelId, setVehicleModel]);
-
-
+    }, [isCreateMode, loadStationById, stationId, setStation]);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        const seatingCapacityStr = String(formData.get("seatingCapacity")).trim();
-        const seatingCapacity = seatingCapacityStr
-            ? parseInt(seatingCapacityStr, 10)
-            : 0;
 
-        const batteryStr = String(formData.get("batteryCapacity")).trim();
-        const batteryCapacity = batteryStr ? parseFloat(batteryStr) : "null";
-
-        const modelData = {
-            modelName: String(formData.get("modelName")),
-            manufacturer: String(formData.get("manufacturer")),
-            batteryCapacity: batteryCapacity,
-            seatingCapacity: isNaN(seatingCapacity) ? 0 : seatingCapacity,
+        const stationData: StationRequest = {
+            name: String(formData.get("name")),
+            location: String(formData.get("location")),
+            latitude: parseFloat(String(formData.get("latitude")) || "0"),
+            longitude: parseFloat(String(formData.get("longitude")) || "0"),
+            carNumber: parseInt(String(formData.get("carNumber")) || "0", 10),
+            status: String(formData.get("status") || "ACTIVE"),
         };
-
         if (
-            !modelData.modelName ||
-            !modelData.manufacturer ||
-            modelData.seatingCapacity <= 0
+            !stationData.name ||
+            !stationData.location ||
+            stationData.carNumber <= 0
         ) {
-            toast.error("Vui lòng nhập Tên, Hãng và Số chỗ hợp lệ.");
+            toast.error("Vui lòng nhập Tên, Địa chỉ và Số lượng xe hợp lệ (> 0).");
             return;
         }
 
@@ -106,23 +89,21 @@ const AdminVehicleModelDetail = () => {
         try {
             let res;
             if (isCreateMode) {
-                res = await createVehicleModel(modelData as VehicleModelRequest);
-
+                res = await createStation(stationData);
             } else {
-                if (!modelId) {
+                if (!stationId) {
                     toast.update(toastId, {
-                        render: "Không tìm thấy Id",
+                        render: "Không tìm thấy Id trạm xe",
                         type: "error",
                         isLoading: false,
                         autoClose: 3000,
-                    })
-
+                    });
                     navigate(-1);
                     return;
-                };
-                res = await updateVehicleModel(
-                    Number(modelId),
-                    modelData as Partial<VehicleModelRequest>
+                }
+                res = await updateStation(
+                    Number(stationId),
+                    stationData as Partial<StationRequest>
                 );
             }
 
@@ -152,14 +133,14 @@ const AdminVehicleModelDetail = () => {
         }
     };
 
-    if (isLoading && !vehicleModel && !isCreateMode) {
+    if (isLoading && !station && !isCreateMode) {
         return (
             <div
                 className="d-flex justify-content-center align-items-center"
                 style={{ height: 200 }}
             >
                 <Spinner animation="border" variant="primary" />
-                <span className="ms-3">Đang tải chi tiết mẫu xe...</span>
+                <span className="ms-3">Đang tải chi tiết trạm xe...</span>
             </div>
         );
     }
@@ -179,28 +160,26 @@ const AdminVehicleModelDetail = () => {
         );
     }
 
-
     return (
         <Container className="my-4">
             <Card>
                 <Card.Header>
-                    <h2>{isCreateMode ? "Tạo mới Mẫu xe" : "Chi tiết Mẫu xe"}</h2>
+                    <h2>{isCreateMode ? "Tạo mới Trạm xe" : "Chi tiết Trạm xe"}</h2>
                 </Card.Header>
                 <Card.Body>
                     <Form
-                        // Quan trọng: Dùng key để reset form khi vehicleModel thay đổi
-                        key={vehicleModel?.modelId || "create"}
+                        key={station?.stationId || "create"} 
                         onSubmit={handleSubmit}
                     >
                         {!isCreateMode && (
-                            <Form.Group as={Row} className="mb-3" controlId="formModelId">
+                            <Form.Group as={Row} className="mb-3" controlId="formStationId">
                                 <Form.Label column sm={3}>
-                                    Model ID
+                                    Station ID
                                 </Form.Label>
                                 <Col sm={6}>
                                     <Form.Control
                                         type="text"
-                                        defaultValue={vehicleModel?.modelId}
+                                        defaultValue={station?.stationId}
                                         readOnly
                                         disabled
                                     />
@@ -208,76 +187,97 @@ const AdminVehicleModelDetail = () => {
                             </Form.Group>
                         )}
 
-                        <Form.Group as={Row} className="mb-3" controlId="formModelName">
+                        <Form.Group as={Row} className="mb-3" controlId="formName">
                             <Form.Label column sm={3}>
-                                Tên mẫu xe (modelName) <span className="text-danger">*</span>
+                                Tên trạm <span className="text-danger">*</span>
                             </Form.Label>
                             <Col sm={6}>
                                 <Form.Control
                                     type="text"
-                                    name="modelName"
-                                    defaultValue={vehicleModel?.modelName ?? ""}
+                                    name="name"
+                                    defaultValue={station?.name ?? ""} // <-- Thay đổi
                                     required
                                 />
                             </Col>
                         </Form.Group>
 
-                        <Form.Group as={Row} className="mb-3" controlId="formManufacturer">
+                        <Form.Group as={Row} className="mb-3" controlId="formLocation">
                             <Form.Label column sm={3}>
-                                Hãng (manufacturer) <span className="text-danger">*</span>
+                                Địa chỉ <span className="text-danger">*</span>
                             </Form.Label>
                             <Col sm={6}>
                                 <Form.Control
                                     type="text"
-                                    name="manufacturer"
-                                    defaultValue={vehicleModel?.manufacturer ?? ""}
+                                    name="location"
+                                    defaultValue={station?.location ?? ""} // <-- Thay đổi
                                     required
                                 />
                             </Col>
                         </Form.Group>
 
-                        <Form.Group
-                            as={Row}
-                            className="mb-3"
-                            controlId="formBatteryCapacity"
-                        >
+                        <Form.Group as={Row} className="mb-3" controlId="formLatitude">
                             <Form.Label column sm={3}>
-                                Dung lượng Pin (kWh)
+                                Vĩ độ (Latitude) <span className="text-danger">*</span>
                             </Form.Label>
                             <Col sm={6}>
                                 <Form.Control
                                     type="number"
-                                    name="batteryCapacity"
-                                    step="0.1"
-                                    placeholder="Bỏ trống nếu không áp dụng"
-                                    // Sửa: Dùng ?? "" để xử lý giá trị 0 hoặc null
-                                    defaultValue={vehicleModel?.batteryCapacity ?? ""}
+                                    name="latitude"
+                                    step="any"
+                                    defaultValue={station?.latitude ?? ""} // <-- Thay đổi
+                                    required
                                 />
                             </Col>
                         </Form.Group>
 
-                        <Form.Group
-                            as={Row}
-                            className="mb-3"
-                            controlId="formSeatingCapacity"
-                        >
+                        <Form.Group as={Row} className="mb-3" controlId="formLongitude">
                             <Form.Label column sm={3}>
-                                Số chỗ (seatingCapacity) <span className="text-danger">*</span>
+                                Kinh độ (Longitude) <span className="text-danger">*</span>
                             </Form.Label>
                             <Col sm={6}>
                                 <Form.Control
                                     type="number"
-                                    name="seatingCapacity"
+                                    name="longitude"
+                                    step="any"
+                                    defaultValue={station?.longitude ?? ""} // <-- Thay đổi
+                                    required
+                                />
+                            </Col>
+                        </Form.Group>
+
+                        <Form.Group as={Row} className="mb-3" controlId="formCarNumber">
+                            <Form.Label column sm={3}>
+                                Số lượng xe (Tổng) <span className="text-danger">*</span>
+                            </Form.Label>
+                            <Col sm={6}>
+                                <Form.Control
+                                    type="number"
+                                    name="carNumber" // Gửi đi là carNumber
                                     min="1"
-                                    defaultValue={vehicleModel?.seatingCapacity ?? ""}
+                                    defaultValue={station?.capacity ?? ""} // Lấy về là capacity
                                     required
                                 />
+                            </Col>
+                        </Form.Group>
+
+                        <Form.Group as={Row} className="mb-3" controlId="formStatus">
+                            <Form.Label column sm={3}>
+                                Trạng thái
+                            </Form.Label>
+                            <Col sm={6}>
+                                <Form.Select
+                                    name="status"
+                                    defaultValue={station?.status ?? "ACTIVE"} // <-- Thay đổi
+                                >
+                                    <option value="ACTIVE">Hoạt động (ACTIVE)</option>
+                                    <option value="INACTIVE">Ngừng (INACTIVE)</option>
+                                    <option value="MAINTENANCE">Bảo trì (MAINTENANCE)</option>
+                                </Form.Select>
                             </Col>
                         </Form.Group>
 
                         <Row className="mt-4">
                             <Col sm={{ span: 9, offset: 3 }} className="d-flex">
-                                {/* Nút Submit */}
                                 <Button variant="primary" type="submit" disabled={isLoading}>
                                     {isLoading ? (
                                         <Spinner as="span" animation="border" size="sm" />
@@ -289,7 +289,6 @@ const AdminVehicleModelDetail = () => {
                                     </span>
                                 </Button>
 
-                                {/* Nút Xóa (chỉ khi update) */}
                                 {!isCreateMode && (
                                     <Button
                                         variant="danger"
@@ -302,7 +301,6 @@ const AdminVehicleModelDetail = () => {
                                     </Button>
                                 )}
 
-                                {/* Nút Quay lại (đẩy sang phải) */}
                                 <Button
                                     variant="secondary"
                                     className="ms-auto"
@@ -324,9 +322,9 @@ const AdminVehicleModelDetail = () => {
                     <Modal.Title>Xác nhận Xóa</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    Bạn có chắc chắn muốn xóa mẫu xe này không?
+                    Bạn có chắc chắn muốn xóa trạm xe này không?
                     <br />
-                    (Model: <strong>{vehicleModel?.modelName}</strong>)
+                    (Trạm: <strong>{station?.name}</strong>) {/* <-- Thay đổi */}
                     <br />
                     <small className="text-danger">Hành động này không thể hoàn tác.</small>
                 </Modal.Body>
@@ -340,8 +338,7 @@ const AdminVehicleModelDetail = () => {
                 </Modal.Footer>
             </Modal>
         </Container>
-    )
+    );
+};
 
-}
-
-export default AdminVehicleModelDetail
+export default AdminStationDetail;
