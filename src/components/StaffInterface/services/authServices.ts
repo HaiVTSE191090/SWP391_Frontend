@@ -16,7 +16,13 @@ export const staffLogin = async (email: string, password: string) => {
 }
 
 // Hàm đăng xuất nhân viên, xóa Token khỏi localStorage
-export const staffLogout = () => {
+export const staffLogout = async () => {
+    
+    await axios.post("http://localhost:8080/api/auth/logout/staff", null, {
+        headers: {
+            Authorization: `Bearer ` +localStorage.getItem("token")
+        }
+    });
     localStorage.removeItem('token');
     localStorage.removeItem('name');
 };
