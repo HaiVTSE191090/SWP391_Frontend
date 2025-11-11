@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Container, Row, Col, Card, Button, Form, Spinner, Alert, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Form, Spinner, Alert, Badge, Modal } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 // Import API services
@@ -56,6 +56,8 @@ const PhotoCapturePage: React.FC = () => {
     const [checklist, setChecklist] = useState<ImageChecklist | null>(null);
     const [loadingData, setLoadingData] = useState(true);
     const [errorLoadingData, setErrorLoadingData] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<{ tempId: number; isRequired: boolean } | null>(null);
 
     // Xác định tiêu đề trang dựa vào image type
     const getPageTitle = () => {
@@ -107,8 +109,8 @@ const PhotoCapturePage: React.FC = () => {
                         const data = checklistRes.data.data;
                         setChecklist(data);
 
-                        // Tạo danh sách required từ API
-                        if (data.requiredComponents) {
+                        // Chỉ tạo danh sách required khi KHÔNG phải DAMAGE
+                        if (type !== 'DAMAGE' && data.requiredComponents) {
                             const items = data.requiredComponents.map((name: string) => 
                                 createRequiredDetail(name)
                             );
@@ -116,16 +118,18 @@ const PhotoCapturePage: React.FC = () => {
                         }
                     }
                 } catch (error) {
-                    // Nếu API checklist fail, dùng mock data tạm
-                    const mockData: ImageChecklist = {
-                        requiredComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
-                        missingComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
-                        capturedComponents: [],
-                        completionPercentage: 0,
-                        isComplete: false
-                    };
-                    setChecklist(mockData);
-                    setRequiredList(mockData.requiredComponents.map(createRequiredDetail));
+                    // Nếu API checklist fail và KHÔNG phải DAMAGE, dùng mock data
+                    if (type !== 'DAMAGE') {
+                        const mockData: ImageChecklist = {
+                            requiredComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
+                            missingComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
+                            capturedComponents: [],
+                            completionPercentage: 0,
+                            isComplete: false
+                        };
+                        setChecklist(mockData);
+                        setRequiredList(mockData.requiredComponents.map(createRequiredDetail));
+                    }
                 }
 
             } catch (error) {
@@ -182,12 +186,28 @@ const PhotoCapturePage: React.FC = () => {
         setOptionalList(prev => prev.filter(item => item.tempId !== tempId));
     };
 
-    // Xóa ảnh đã upload - gọi API xóa trên server
-    const handleRemovePhoto = async (tempId: number, isRequired: boolean) => {
+    // Hiển thị modal xác nhận xóa
+    const handleRemovePhotoClick = (tempId: number, isRequired: boolean) => {
         const allItems = [...requiredList, ...optionalList];
         const currentItem = allItems.find(item => item.tempId === tempId);
         
-        if (!currentItem?.imageId || !window.confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
+        if (!currentItem?.imageId) return;
+        
+        setDeleteTarget({ tempId, isRequired });
+        setShowDeleteModal(true);
+    };
+
+    // Xóa ảnh đã upload - gọi API xóa trên server
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+
+        const { tempId, isRequired } = deleteTarget;
+        const allItems = [...requiredList, ...optionalList];
+        const currentItem = allItems.find(item => item.tempId === tempId);
+        
+        if (!currentItem?.imageId) return;
+
+        setShowDeleteModal(false);
 
         try {
             await deleteBookingImage(parseInt(bookingId!), currentItem.imageId);
@@ -201,6 +221,8 @@ const PhotoCapturePage: React.FC = () => {
         } catch (error) {
             console.error('Lỗi khi xóa ảnh:', error);
             toast.error('Không thể xóa ảnh. Vui lòng thử lại.');
+        } finally {
+            setDeleteTarget(null);
         }
     };
 
@@ -220,6 +242,12 @@ const PhotoCapturePage: React.FC = () => {
             return;
         }
 
+        // Kiểm tra phải nhập description trước khi upload
+        if (!currentItem.description || currentItem.description.trim() === '') {
+            toast.warning('Vui lòng nhập MÔ TẢ trước khi upload ảnh!');
+            return;
+        }
+
         // Đánh dấu đang upload
         setList(prev => prev.map(item =>
             item.tempId === tempId ? { ...item, photoFile: file, isUploading: true, photoUrl: '' } : item
@@ -230,7 +258,7 @@ const PhotoCapturePage: React.FC = () => {
             parseInt(bookingId!),
             type!,
             currentItem.itemId,
-            currentItem.description || 'Chưa có mô tả',
+            currentItem.description.trim(),
             file
         );
 
@@ -412,7 +440,7 @@ const PhotoCapturePage: React.FC = () => {
                         <Button
                             variant="warning"
                             size="sm"
-                            onClick={() => handleRemovePhoto(detail.tempId, isRequired)}
+                            onClick={() => handleRemovePhotoClick(detail.tempId, isRequired)}
                             disabled={loading || detail.isUploading}
                         >
                             Xóa Ảnh
@@ -441,7 +469,7 @@ const PhotoCapturePage: React.FC = () => {
                 <Col>
                     <h2 className="text-center fw-bold text-primary">Ghi Nhận Chi Tiết Xe {pageTitle}</h2>
                     <p className="text-center text-muted">Booking ID: {bookingId} | Image Type: <strong>{type}</strong></p>
-                    {checklist && (
+                    {checklist && type !== 'DAMAGE' && (
                         <div className="text-center">
                             <Badge bg={checklist.isComplete ? "success" : "warning"} className="fs-6">
                                 Tiến độ: {checklist.completionPercentage}% ({checklist.capturedComponents.length}/{checklist.requiredComponents.length})
@@ -450,6 +478,20 @@ const PhotoCapturePage: React.FC = () => {
                     )}
                 </Col>
             </Row>
+
+            {/* Modal xác nhận xóa ảnh */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton className="bg-warning">
+                    <Modal.Title>Xác nhận xóa ảnh</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p className="mb-0">Bạn có chắc chắn muốn xóa ảnh này?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Hủy</Button>
+                    <Button variant="danger" onClick={handleConfirmDelete}>Xóa</Button>
+                </Modal.Footer>
+            </Modal>
 
             {/* Phần 1: Hạng mục BẮT BUỘC */}
             {requiredList.length > 0 && (

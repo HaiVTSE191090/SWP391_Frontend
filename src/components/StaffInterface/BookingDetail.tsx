@@ -68,6 +68,8 @@ function BookingDetail() {
     // State cho Modal xác nhận
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [checklistData, setChecklistData] = useState<any>(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<{ imageId: number; imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL' } | null>(null);
     
     // Ref cho input file ẩn (dùng cho update ảnh)
     const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
@@ -165,9 +167,19 @@ function BookingDetail() {
         navigate(`/staff/booking/${booking.bookingId}/photo/${targetImageType}`);
     };
 
+    // Hiển thị modal xác nhận xóa
+    const handleDeleteImageClick = (imageId: number, imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL') => {
+        if (!booking) return;
+        setDeleteTarget({ imageId, imageType });
+        setShowDeleteModal(true);
+    };
+
     // Handler xóa ảnh
-    const handleDeleteImage = async (imageId: number, imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL') => {
-        if (!booking || !window.confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
+    const handleConfirmDeleteImage = async () => {
+        if (!booking || !deleteTarget) return;
+
+        const { imageId, imageType } = deleteTarget;
+        setShowDeleteModal(false);
 
         try {
             setDeletingImageId(imageId);
@@ -186,6 +198,7 @@ function BookingDetail() {
             toast.error('Không thể xóa ảnh. Vui lòng thử lại.');
         } finally {
             setDeletingImageId(null);
+            setDeleteTarget(null);
         }
     };
 
@@ -535,7 +548,7 @@ function BookingDetail() {
                                                     <Button 
                                                         variant="danger" 
                                                         size="sm"
-                                                        onClick={() => handleDeleteImage(img.imageId, 'BEFORE_RENTAL')}
+                                                        onClick={() => handleDeleteImageClick(img.imageId, 'BEFORE_RENTAL')}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
                                                     >
                                                         {deletingImageId === img.imageId ? (
@@ -617,7 +630,7 @@ function BookingDetail() {
                                                     <Button 
                                                         variant="danger" 
                                                         size="sm"
-                                                        onClick={() => handleDeleteImage(img.imageId, 'AFTER_RENTAL')}
+                                                        onClick={() => handleDeleteImageClick(img.imageId, 'AFTER_RENTAL')}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
                                                     >
                                                         {deletingImageId === img.imageId ? (
@@ -687,6 +700,20 @@ function BookingDetail() {
                     <Button variant="success" onClick={handleConfirmFromModal}>
                         OK
                     </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Modal xác nhận xóa ảnh */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton className="bg-warning">
+                    <Modal.Title>Xác nhận xóa ảnh</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p className="mb-0">Bạn có chắc chắn muốn xóa ảnh này?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Hủy</Button>
+                    <Button variant="danger" onClick={handleConfirmDeleteImage}>Xóa</Button>
                 </Modal.Footer>
             </Modal>
         </Container>
