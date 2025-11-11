@@ -263,6 +263,36 @@ export default function RentalHistoryPage() {
     }
   };
 
+  const handleConfirmImage = async (img: any) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.patch(
+        `http://localhost:8080/api/bookings/images/${img.imageId}/confirm`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("✅ Đã xác nhận ảnh!");
+
+      // ✅ Update UI
+      setSelectedBooking((prev: any) => ({
+        ...prev,
+        bookingImages: prev.bookingImages.map((i: any) =>
+          i.imageId === img.imageId ? { ...i, confirmed: true } : i
+        ),
+      }));
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Lỗi khi xác nhận ảnh!");
+    }
+  };
+
+
   return (
     <div className="container py-4">
       <h3 className="fw-bold text-center mb-4">Lịch sử thuê xe của người dùng</h3>
@@ -549,6 +579,7 @@ export default function RentalHistoryPage() {
                       const imagesOfType = selectedBooking.bookingImages?.filter(
                         (img) => img.imageType === type
                       );
+
                       if (!imagesOfType || imagesOfType.length === 0) return null;
 
                       const typeTitle: Record<string, string> = {
@@ -558,39 +589,59 @@ export default function RentalHistoryPage() {
                         OTHER: "🗂️ Ảnh khác",
                       };
 
+                      // ✅ Số ảnh confirm
+                      const confirmedCount = imagesOfType.filter((img) => img.confirmed).length;
+
                       return (
                         <div key={type} className="mb-4">
-                          <h6 className="fw-bold text-secondary mb-3">{typeTitle[type]}</h6>
-                          <div className="row booking-images-container">
+
+                          <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h6 className="fw-bold text-secondary">{typeTitle[type]}</h6>
+
+                            <span className="badge bg-primary fs-6">
+                              ✅ Đã xác nhận: {confirmedCount}/{imagesOfType.length}
+                            </span>
+                          </div>
+
+                          <div className="booking-images-list">
                             {imagesOfType.map((img) => (
                               <div
                                 key={img.imageId}
-                                className="col-12 col-sm-6 col-md-4 mb-4 text-center"
+                                className="d-flex align-items-center p-2 border rounded shadow-sm mb-2"
+                                style={{ gap: "12px" }}
                               >
                                 <img
                                   src={img.imageUrl}
                                   alt={img.description || "Hình ảnh xe"}
-                                  className="img-fluid rounded shadow-sm"
                                   style={{
-                                    maxHeight: "160px",
+                                    width: "150px",
+                                    height: "110px",
                                     objectFit: "cover",
+                                    borderRadius: "6px",
                                     border: "1px solid #ddd",
                                   }}
                                 />
-                                <div className="mt-2 small text-muted">
+
+                                <div className="flex-grow-1 small text-muted">
                                   <p className="mb-1">
-                                    <strong>Mô tả:</strong>{" "}
-                                    {img.description || "Không có mô tả"}
+                                    <strong>Mô tả:</strong> {img.description || "Không có mô tả"}
                                   </p>
                                   <p className="mb-1">
-                                    <strong>Hạng mục:</strong>{" "}
-                                    {img.vehicleComponent || "Không rõ"}
+                                    <strong>Hạng mục:</strong> {img.vehicleComponent || "Không rõ"}
                                   </p>
-                                  <p className="mb-0">
+                                  <p className="mb-2">
                                     <strong>Tạo lúc:</strong>{" "}
                                     {new Date(img.createdAt || "").toLocaleString("vi-VN")}
                                   </p>
                                 </div>
+
+                                <button
+                                  className={`btn ${img.confirmed ? "btn-success disabled" : "btn-outline-primary"
+                                    }`}
+                                  onClick={() => !img.confirmed && handleConfirmImage(img)}
+                                >
+                                  {img.confirmed ? "✅ Đã xác nhận" : "Xác nhận"}
+                                </button>
                               </div>
                             ))}
                           </div>
@@ -599,6 +650,7 @@ export default function RentalHistoryPage() {
                     })}
                   </>
                 )}
+
               </div>
             )}
           </Modal.Body>

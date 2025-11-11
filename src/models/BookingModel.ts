@@ -28,4 +28,5 @@ export interface BookingImage {
   createdAt?: string;
   imageType?: string;
   vehicleComponent?: string;
+  confirmed?: boolean;
 }
