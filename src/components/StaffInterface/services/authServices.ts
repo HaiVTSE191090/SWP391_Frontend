@@ -366,3 +366,23 @@ export const getBookingDetail = async (bookingId: number) => {
         console.error('Lỗi khi lấy chi tiết booking:', error);
     }
 };
+
+// Xác nhận ảnh trước khi thuê và chuyển trạng thái booking sang IN_USE
+export const confirmBeforeRentalAndStartBooking = async (bookingId: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.put(
+            `${baseURL}/api/bookings/${bookingId}/status/in-use`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi xác nhận và bắt đầu booking:', error);
+        throw error;
+    }
+};
