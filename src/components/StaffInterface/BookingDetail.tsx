@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Button, Table, Spinner, Alert, Form, Modal }
 import { useParams, useNavigate } from 'react-router-dom';
 import { getBookingDetail, deleteBookingImage, uploadCarImage, confirmBeforeRentalAndStartBooking, getImageChecklist } from './services/authServices';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+
 
 // Interface cho dữ liệu booking theo cấu trúc API mới
 interface BookingDetailResponse {

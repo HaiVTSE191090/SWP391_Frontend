@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Button, Form, Spinner, Alert, Badge } from '
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 // Import API services
-import { getVehicleComponents, getImageTypes, getImageChecklist, uploadCarImage } from './services/authServices'; 
+import { getVehicleComponents, getImageTypes, getImageChecklist, uploadCarImage, deleteBookingImage } from './services/authServices'; 
 
 // Interface cho một dòng chi tiết
 interface DamageDetail {
@@ -14,6 +14,7 @@ interface DamageDetail {
     description: string;
     isUploading: boolean;
     isRequired?: boolean; // Đánh dấu item bắt buộc
+    imageId?: number; // ID của ảnh trên server
 }
 
 // Interface cho checklist response
@@ -168,6 +169,9 @@ const PhotoCapturePage: React.FC = () => {
         }
     };
 
+    
+
+
     // Thêm một hạng mục tùy chọn mới
     const handleAddOptionalDetail = () => {
         setOptionalList(prev => [...prev, createNewDamageDetail(false)]);
@@ -178,12 +182,26 @@ const PhotoCapturePage: React.FC = () => {
         setOptionalList(prev => prev.filter(item => item.tempId !== tempId));
     };
 
-    // Xóa ảnh đã upload (nếu upload lộn)
-    const handleRemovePhoto = (tempId: number, isRequired: boolean) => {
-        const setList = isRequired ? setRequiredList : setOptionalList;
-        setList(prev => prev.map(item =>
-            item.tempId === tempId ? { ...item, photoUrl: '', photoFile: null } : item
-        ));
+    // Xóa ảnh đã upload - gọi API xóa trên server
+    const handleRemovePhoto = async (tempId: number, isRequired: boolean) => {
+        const allItems = [...requiredList, ...optionalList];
+        const currentItem = allItems.find(item => item.tempId === tempId);
+        
+        if (!currentItem?.imageId || !window.confirm('Bạn có chắc chắn muốn xóa ảnh này?')) return;
+
+        try {
+            await deleteBookingImage(parseInt(bookingId!), currentItem.imageId);
+            
+            const setList = isRequired ? setRequiredList : setOptionalList;
+            setList(prev => prev.map(item =>
+                item.tempId === tempId ? { ...item, photoUrl: '', photoFile: null, imageId: undefined } : item
+            ));
+            
+            toast.success('Đã xóa ảnh thành công!');
+        } catch (error) {
+            console.error('Lỗi khi xóa ảnh:', error);
+            toast.error('Không thể xóa ảnh. Vui lòng thử lại.');
+        }
     };
 
     // Upload ảnh lên server
@@ -217,9 +235,15 @@ const PhotoCapturePage: React.FC = () => {
         );
 
         if (response?.data?.data?.imageUrl) {
-            // Upload thành công
+            // Upload thành công - lưu cả imageId từ response
             setList(prev => prev.map(item =>
-                item.tempId === tempId ? { ...item, isUploading: false, photoUrl: response.data.data.imageUrl, photoFile: file } : item
+                item.tempId === tempId ? { 
+                    ...item, 
+                    isUploading: false, 
+                    photoUrl: response.data.data.imageUrl, 
+                    photoFile: file,
+                    imageId: response.data.data.imageId // Lưu imageId từ server
+                } : item
             ));
             toast.success('Upload ảnh thành công!');
         } else {
