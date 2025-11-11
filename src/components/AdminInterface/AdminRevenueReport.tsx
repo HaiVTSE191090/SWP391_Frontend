@@ -1,6 +1,4 @@
 import React, { useMemo, useState } from "react";
-import { Chart, ChartData } from "chart.js";
-import { Bar } from "react-chartjs-2";
 import { useReportService } from "../../hooks/useReportService";
 import {
     RevenueReportDto,
@@ -8,6 +6,7 @@ import {
 } from "../../models/ReportModel";
 import { Button, Col, Form, Row, Spinner } from "react-bootstrap";
 import { ReportCard } from "./ReportCard";
+import { ChartData } from "chart.js";
 
 const getTodayString = () => {
     const today = new Date();
@@ -46,9 +45,9 @@ const AdminRevenueReport = () => {
         }
         const labels = reportData.revenueByDate.map((item) => item.date);
         const revenueData = reportData.revenueByDate.map((item) => item.revenue);
-        const bookingData = reportData.revenueByDate.map(
-            (item) => item.bookingCount
-        );
+        // const bookingData = reportData.revenueByDate.map(
+        //     (item) => item.bookingCount
+        // );
 
         return {
             labels: labels,

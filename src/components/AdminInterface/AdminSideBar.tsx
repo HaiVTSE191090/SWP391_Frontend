@@ -13,7 +13,6 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import userImage from "../../images/User_Icon.png";
 import "./AdminSideBar.css";
-import path from "path";
 
 export const AdminSideBar = () => {
     const location = useLocation();
