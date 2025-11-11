@@ -1,60 +1,120 @@
-import React from 'react'
-import Chart from 'chart.js/auto';
-import { CategoryScale } from 'chart.js';
-import { Bar } from 'react-chartjs-2'
-Chart.register(CategoryScale);
+import React, { useEffect, useState } from "react";
+import { Container, Row, Col, Card, Spinner } from "react-bootstrap";
+import { useReportService } from "../../hooks/useReportService";
+import { DashboardReportDto } from "../../models/ReportModel";
+import AdminRevenueReport from "./AdminRevenueReport";
+import {
+    Chart,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    PointElement,
+    LineElement,
+    ArcElement,
+} from "chart.js";
+import AdminBookingReport from "./AdminBookingReport";
+import AdminVehicleReport from "./AdminVehicleReport";
+import AdminStationReport from "./AdminStationReport";
+Chart.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    PointElement,
+    LineElement, 
+    ArcElement,
+);
 
+const KpiCard = ({ title, value, bg, isLoading }: any) => (
+    <Card bg={bg} text="white" className="mb-3">
+        <Card.Body>
+            <Card.Title as="h5">{title}</Card.Title>
+            <Card.Text as="h3">
+                {isLoading ? <Spinner size="sm" /> : value}
+            </Card.Text>
+        </Card.Body>
+    </Card>
+);
 
 const AdminDashBoard = () => {
-    return (
-        <div className='DashBoard'>
-            <div>
-                <Bar
-                    data={{
-                        labels: ["A", "B", "C"],
-                        datasets: [
-                            {
-                                label: "Revenue",
-                                data: [200, 320, 410, 500, 620, 710],
-                            },
-                            {
-                                label: "Information",
-                                data: [233, 123, 543, 412, 380, 460],
-                            },
-                            {
-                                label: "Profit",
-                                data: [120, 210, 300, 380, 460, 520],
-                            },
-                            {
-                                label: "Orders",
-                                data: [50, 85, 110, 150, 180, 230],
-                            },
-                            {
-                                label: "Customers",
-                                data: [40, 70, 100, 130, 160, 210],
-                            },
-                            {
-                                label: "Expenses",
-                                data: [100, 130, 160, 190, 230, 260],
-                            },
-                            {
-                                label: "Refunds",
-                                data: [8, 12, 15, 10, 9, 14],
-                            },
-                            {
-                                label: "Growth",
-                                data: [5, 9, 14, 18, 22, 27],
-                            },
-                            {
-                                label: "Conversion Rate",
-                                data: [2.5, 3.1, 3.8, 4.5, 5.2, 5.8],
-                            },
-                        ]
-                    }}
-                />
-            </div>
-        </div>
-    )
-}
+    const { getDashboardReport, isLoading } = useReportService();
+    const [kpi, setKpi] = useState<DashboardReportDto | null>(null);
 
-export default AdminDashBoard
+    useEffect(() => {
+        const loadData = async () => {
+            const data = await getDashboardReport();
+            if (data) setKpi(data);
+        };
+        loadData();
+    }, [getDashboardReport]);
+
+    return (
+        <Container fluid className="my-4">
+            <h2>Tổng quan</h2>
+
+            {/* CÁC THẺ KPI GIỐNG HÌNH MẪU */}
+            <Row>
+                <Col md={3}>
+                    <KpiCard
+                        title="Doanh thu tháng này"
+                        value={kpi?.revenueThisMonth.toLocaleString() + " VND"}
+                        bg="primary" // Xanh dương
+                        isLoading={isLoading}
+                    />
+                </Col>
+                <Col md={3}>
+                    <KpiCard
+                        title="Booking tháng này"
+                        value={kpi?.bookingsThisMonth}
+                        bg="warning" // Vàng
+                        isLoading={isLoading}
+                    />
+                </Col>
+                <Col md={3}>
+                    <KpiCard
+                        title="Tổng số xe"
+                        value={kpi?.totalVehicles}
+                        bg="success" // Xanh lá
+                        isLoading={isLoading}
+                    />
+                </Col>
+                <Col md={3}>
+                    <KpiCard
+                        title="Thành viên"
+                        value={kpi?.activeRenters}
+                        bg="danger" // Đỏ
+                        isLoading={isLoading}
+                    />
+                </Col>
+            </Row>
+
+            <hr />
+
+            <Row className="mt-4">
+                <Col md={12}>
+                    <AdminRevenueReport />
+                </Col>
+                {/* Cột phụ cho Pie chart */}
+                <Col md={12} className="mt-4">
+                    <AdminBookingReport />
+                </Col>
+                <Col md={12} className="mt-4">
+                    <AdminVehicleReport />
+                </Col>
+                <Col md={12} className="mt-4">
+                    <AdminStationReport />
+                </Col>
+            </Row>
+
+            
+
+        </Container>
+    );
+};
+
+export default AdminDashBoard;

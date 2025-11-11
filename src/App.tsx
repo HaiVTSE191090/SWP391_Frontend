@@ -60,6 +60,7 @@ function removeExpiredToken() {
   if (currentTime > payload.exp) {
     alert("Hết phiên đăng nhập")
     localStorage.removeItem("token");
+    window.location.reload();
   }
 }
 
@@ -123,9 +124,6 @@ const App = () => {
                 <Route path="station" element={<AdminStation/>}/>
                 <Route path="station/detail/:stationId" element={<AdminStationDetail />} />
                 <Route path="station/detail" element={<AdminStationDetail />} />
-
-
-                {/* <Route path="station/:stationId" element={<AdminStationDetail/>}/> */}
               </Route>
             </Route>
           </Routes >
