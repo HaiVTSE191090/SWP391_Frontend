@@ -4,7 +4,9 @@ import { useAdminStation } from "../../hooks/useAdminStation";
 import { toast } from "react-toastify";
 import { StationRequest } from "../../models/StationModel";
 import { Container, Alert, Button, Card, Col, Form, Modal, Row, Spinner } from "react-bootstrap";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Send } from "lucide-react";
+import { useStaffDispatch } from "../../hooks/useDispatchStaff";
+import { StaffResponse } from "../../models/StaffModel";
 
 const AdminStationDetail = () => {
     const { stationId } = useParams<{ stationId: string }>();
@@ -12,12 +14,15 @@ const AdminStationDetail = () => {
 
     const navigate = useNavigate();
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showDispatchModal, setShowDispatchModal] = useState(false);
+    const [selectedStaff, setSelectedStaff] = useState<StaffResponse | null>(null);
 
     const handleCloseModal = () => setShowConfirmModal(false);
     const handleShowModal = () => setShowConfirmModal(true);
 
     const {
         station,
+        stations,
         error,
         isLoading,
         loadStationById,
@@ -25,7 +30,16 @@ const AdminStationDetail = () => {
         updateStation,
         deleteStation,
         setStation,
+        loadAllStations,
     } = useAdminStation();
+
+    const {
+        staffList,
+        isLoading: isStaffLoading,
+        error: staffError,
+        loadStaffList,
+        dispatchStaff,
+    } = useStaffDispatch();
 
     const handleConfirmDelete = async () => {
         handleCloseModal();
@@ -56,10 +70,11 @@ const AdminStationDetail = () => {
     useEffect(() => {
         if (!isCreateMode && stationId) {
             loadStationById(Number(stationId));
+            loadStaffList(Number(stationId));
         } else {
             setStation(undefined);
         }
-    }, [isCreateMode, loadStationById, stationId, setStation]);
+    }, [isCreateMode, loadStationById, stationId, setStation, loadStaffList]);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -126,6 +141,55 @@ const AdminStationDetail = () => {
         } catch (error: any) {
             toast.update(toastId, {
                 render: `Lỗi: ${error.response?.data?.message || "Lỗi không xác định"}`,
+                type: "error",
+                isLoading: false,
+                autoClose: 5000,
+            });
+        }
+    };
+
+    const handleShowDispatchModal = (staff: StaffResponse) => {
+        if (stations.length === 0) {
+            loadAllStations();
+        }
+        setSelectedStaff(staff);
+        setShowDispatchModal(true);
+    };
+
+    const handleCloseDispatchModal = () => {
+        setShowDispatchModal(false);
+        setSelectedStaff(null);
+    };
+
+    const handleDispatchSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const targetStationId = Number(formData.get("targetStationId"));
+
+        if (!targetStationId || !selectedStaff || !stationId) {
+            toast.error("Lỗi: Thiếu thông tin điều phối.");
+            return;
+        }
+
+        const toastId = toast.loading("Đang điều phối nhân viên...");
+
+        const res = await dispatchStaff({
+            staffId: selectedStaff.staffId,
+            targetStationId: targetStationId,
+        });
+
+        if (res.success) {
+            toast.update(toastId, {
+                render: res.message || "cập nhật thành công", 
+                type: "success",
+                isLoading: false,
+                autoClose: 3000,
+            });
+            handleCloseDispatchModal();
+            loadStaffList(Number(stationId));
+        } else {
+            toast.update(toastId, {
+                render: res.message,
                 type: "error",
                 isLoading: false,
                 autoClose: 5000,
@@ -316,6 +380,55 @@ const AdminStationDetail = () => {
                 </Card.Body>
             </Card>
 
+            {!isCreateMode && (
+                <Card className="mt-4">
+                    <Card.Header>
+                        <h2>Điều phối nhân viên</h2>
+                    </Card.Header>
+                    <Card.Body>
+                        {isStaffLoading ? (
+                            <Spinner animation="border" size="sm" />
+                        ) : staffError ? (
+                            <Alert variant="danger">{staffError}</Alert>
+                        ) : (
+                            <table className="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tên</th>
+                                        <th>Email</th>
+                                        <th>Hoàn thành</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {staffList.map((staff) => (
+                                        <tr key={staff.staffId}>
+                                            <td>{staff.staffId}</td>
+                                            <td>{staff.fullName}</td>
+                                            <td>{staff.email}</td>
+                                            <td>{staff.completedCount}</td>
+                                            <td>
+                                                <Button
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    onClick={() => handleShowDispatchModal(staff)}
+                                                >
+                                                    <Send size={16} className="me-1" /> Điều phối
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {staffList.length === 0 && (
+                                        <tr><td colSpan={5} className="text-center">Không có nhân viên nào tại trạm này.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+                    </Card.Body>
+                </Card>
+            )}
+
             {/* Modal Xác nhận Xóa */}
             <Modal show={showConfirmModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
@@ -336,6 +449,43 @@ const AdminStationDetail = () => {
                         Xác nhận Xóa
                     </Button>
                 </Modal.Footer>
+            </Modal>
+
+            {/* Modal Xác nhận cập nhật nhân viên */}
+            <Modal show={showDispatchModal} onHide={handleCloseDispatchModal} centered>
+                <Form onSubmit={handleDispatchSubmit}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>
+                            Điều phối: {selectedStaff?.fullName}
+                        </Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <p>
+                            Từ trạm: <strong>{station?.name}</strong>
+                        </p>
+                        <Form.Group controlId="formTargetStation">
+                            <Form.Label>Đến trạm <span className="text-danger">*</span></Form.Label>
+                            <Form.Select name="targetStationId" required>
+                                <option value="">-- Chọn trạm đến --</option>
+                                {stations
+                                    .filter(s => s.stationId !== Number(stationId))
+                                    .map(s => (
+                                        <option key={s.stationId} value={s.stationId}>
+                                            {s.name} (ID: {s.stationId})
+                                        </option>
+                                    ))}
+                            </Form.Select>
+                        </Form.Group>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={handleCloseDispatchModal}>
+                            Hủy
+                        </Button>
+                        <Button variant="primary" type="submit">
+                            Xác nhận
+                        </Button>
+                    </Modal.Footer>
+                </Form>
             </Modal>
         </Container>
     );
