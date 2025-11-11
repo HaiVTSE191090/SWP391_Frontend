@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Table, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Table, Spinner, Alert, Modal, Form } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getBookingDetail, getImageChecklist } from './services/authServices';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 // Interface cho dữ liệu booking
 interface BookingDetailResponse {
@@ -43,6 +44,17 @@ function CreateInvoice() {
     const [booking, setBooking] = useState<BookingDetailResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const [formData, setFormData] = useState({
+        batteryLevel: 100,
+        mileage: 0,
+        hasDamage: false,
+        damageDescription: '',
+        damageFee: 0,
+        notes: ''
+    });
+    const [submitting, setSubmitting] = useState(false);
+
     const [canConfirmReturn, setCanConfirmReturn] = useState(false);
     const [checkingImages, setCheckingImages] = useState(false);
 
@@ -110,16 +122,13 @@ function CreateInvoice() {
     // Handler xác nhận trả xe
     const handleConfirmReturn = () => {
         if (!booking) return;
-        
         if (!canConfirmReturn) {
             toast.error('❌ Chưa đủ ảnh BEFORE_RENTAL và AFTER_RENTAL để xác nhận trả xe!');
             return;
         }
-
-        // TODO: Navigate to create invoice page hoặc gọi API tạo invoice
-        toast.success('✅ Chuyển sang trang tạo hóa đơn...');
-        // navigate(`/staff/invoice/create/${booking.bookingId}`);
+        setShowModal(true); // mở modal nhập thông tin
     };
+
 
     // Loading/Error states
     if (loading) return <Container className="py-5 text-center"><Spinner animation="border" /> Đang tải thông tin booking...</Container>;
@@ -179,7 +188,7 @@ function CreateInvoice() {
                             <Card className={beforeImages.length > 0 ? 'border-success' : 'border-warning'}>
                                 <Card.Body>
                                     <h6 className="fw-bold">
-                                        📷 Ảnh trước khi thuê 
+                                        📷 Ảnh trước khi thuê
                                         <span className={`badge ms-2 ${beforeImages.length > 0 ? 'bg-success' : 'bg-warning'}`}>
                                             {beforeImages.length} ảnh
                                         </span>
@@ -194,7 +203,7 @@ function CreateInvoice() {
                             <Card className={afterImages.length > 0 ? 'border-success' : 'border-warning'}>
                                 <Card.Body>
                                     <h6 className="fw-bold">
-                                        📷 Ảnh sau khi trả 
+                                        📷 Ảnh sau khi trả
                                         <span className={`badge ms-2 ${afterImages.length > 0 ? 'bg-success' : 'bg-warning'}`}>
                                             {afterImages.length} ảnh
                                         </span>
@@ -248,7 +257,113 @@ function CreateInvoice() {
                 </Card.Body>
                 <Card.Footer className="text-center text-muted">Invoice Management System</Card.Footer>
             </Card>
+            <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>📋 Nhập thông tin trả xe</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mức pin hiện tại (%)</Form.Label>
+                            <Form.Control
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={formData.batteryLevel}
+                                onChange={(e) => setFormData({ ...formData, batteryLevel: Number(e.target.value) })}
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Số km đã đi</Form.Label>
+                            <Form.Control
+                                type="number"
+                                min={0}
+                                value={formData.mileage}
+                                onChange={(e) => setFormData({ ...formData, mileage: Number(e.target.value) })}
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Check
+                                type="checkbox"
+                                label="Xe có hư hại"
+                                checked={formData.hasDamage}
+                                onChange={(e) => setFormData({ ...formData, hasDamage: e.target.checked })}
+                            />
+                        </Form.Group>
+
+                        {formData.hasDamage && (
+                            <>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Mô tả hư hại</Form.Label>
+                                    <Form.Control
+                                        as="textarea"
+                                        rows={2}
+                                        value={formData.damageDescription}
+                                        onChange={(e) => setFormData({ ...formData, damageDescription: e.target.value })}
+                                    />
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Phí hư hại (VNĐ)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        min={0}
+                                        value={formData.damageFee}
+                                        onChange={(e) => setFormData({ ...formData, damageFee: Number(e.target.value) })}
+                                    />
+                                </Form.Group>
+                            </>
+                        )}
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Ghi chú thêm</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={2}
+                                value={formData.notes}
+                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            />
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowModal(false)}>Hủy</Button>
+                    <Button
+                        variant="success"
+                        onClick={async () => {
+                            setSubmitting(true);
+                            try {
+                                const response = await axios.post(
+                                    `http://localhost:8080/api/bookings/${booking?.bookingId}/return`,
+                                    formData,
+                                    {
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            Authorization: `Bearer ${localStorage.getItem("token")}`
+                                        }
+                                    }
+                                );
+                                toast.success("✅ Cập nhật thông tin xe thành công!");
+                                setShowModal(false);
+                                // navigate(`/staff/invoice/create/${booking?.bookingId}`);
+                            } catch (error) {
+                                console.error(error);
+                                toast.error("❌ Lỗi khi xác nhận trả xe!");
+                            } finally {
+                                setSubmitting(false);
+                            }
+                        }}
+                        disabled={submitting}
+                    >
+                        {submitting ? <Spinner animation="border" size="sm" /> : "Xác nhận trả xe"}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
         </Container>
+
     );
 }
 
