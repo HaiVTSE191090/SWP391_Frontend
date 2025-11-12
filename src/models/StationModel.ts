@@ -44,7 +44,9 @@ export interface StationResponse {
   latitude: number;
   longitude: number;
   capacity: number; 
-  status: string;
+  status: "ACTIVE" | "INACTIVE";
 }
 
 export type GetAllStationsResponse = ApiResponse<Station[]>;
+
+export type StationResponseDTO = Omit<Station, "vehicles"| "distance" | "availableCount"> 

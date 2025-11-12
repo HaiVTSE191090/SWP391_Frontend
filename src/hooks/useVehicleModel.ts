@@ -13,6 +13,7 @@ export function useVehicleModel() {
   );
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [modelNameAndId, setModelNameAndId] = useState<any[]>([]);
   const API_URL = "/api/vehicle-models";
 
   const loadAllVehicleModels = useCallback(async () => {
@@ -21,6 +22,7 @@ export function useVehicleModel() {
       const res = await api.get<ApiResponse<VehicleModelResponse[]>>(API_URL);
       if (res.data.status === "success") {
         setVehicleModels(res.data.data);
+        return {success: true}
       }
       return {
         success: false,
@@ -37,7 +39,7 @@ export function useVehicleModel() {
   const loadVehicleModelById = useCallback(async (modelId: number) => {
     setError("");
     setIsLoading(true);
-    setVehicleModel(undefined); // Reset state của vehicleModel cũ
+    setVehicleModel(undefined); 
     try {
       const res = await api.get<ApiResponse<VehicleModelResponse>>(
         `${API_URL}/${modelId}`
@@ -140,16 +142,43 @@ export function useVehicleModel() {
     }
   };
 
+  const getModelNameAndId = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get<ApiResponse<VehicleModelResponse[]>>(API_URL);
+      if (res.data.status === "success") {
+
+        const payload = res.data.data.map((model) => ({
+          modelId: model.modelId,
+          modalName: model.modelName
+        }));
+        setModelNameAndId(payload)
+        return { success: true };
+      }
+      return {
+        success: false,
+      };
+    } catch (err: any) {
+      const errMsg = err.response?.data?.đata || "Lỗi máy chủ khi tải mẫu xe";
+      setError(errMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  },[]);
+
+
   return {
     vehicleModel,
     vehicleModels,
     error,
     isLoading,
+    modelNameAndId,
     setVehicleModel,
     loadAllVehicleModels,
     loadVehicleModelById,
     createVehicleModel,
     updateVehicleModel,
     deleteVehicleModel,
+    getModelNameAndId,
   };
 }

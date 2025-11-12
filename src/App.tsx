@@ -47,6 +47,8 @@ import AdminVehicleModel from "./components/AdminInterface/AdminVehicleModel";
 import AdminVehicleModelDetail from "./components/AdminInterface/AdminVehicleModelDetail";
 import AdminStation from "./components/AdminInterface/AdminStation";
 import AdminStationDetail from "./components/AdminInterface/AdminStationDetail";
+import AdminVehicle from "./components/AdminInterface/AdminVehicle";
+import AdminVehicleDetail from "./components/AdminInterface/AdminVehicleDetail";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 //hàm này để trong config thì được chứ tự nhiên để đây nó bị sai logic vl
@@ -124,6 +126,12 @@ const App = () => {
                 <Route path="station" element={<AdminStation/>}/>
                 <Route path="station/detail/:stationId" element={<AdminStationDetail />} />
                 <Route path="station/detail" element={<AdminStationDetail />} />
+                <Route path="customers" element/>
+                <Route path="customers" element/>
+                <Route path="customers" element/>
+                <Route path="vehicles" element={<AdminVehicle/>}/>
+                <Route path="vehicles/details/:vehicleId" element={<AdminVehicleDetail/>}/>
+                <Route path="vehicles/details/" element={<AdminVehicleDetail/>}/>
               </Route>
             </Route>
           </Routes >

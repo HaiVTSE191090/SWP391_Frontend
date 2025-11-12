@@ -8,7 +8,8 @@ import {
     ChevronFirst,
     MonitorCog,
     CarFront,
-    EvCharger
+    EvCharger,
+    Car
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import userImage from "../../images/User_Icon.png";
@@ -25,6 +26,7 @@ export const AdminSideBar = () => {
         { icon: <MonitorCog size={20} />, text: "Thiết Lập Điều Khoản", path: "/admin/config" },
         { icon: <CarFront size={20} />, text: "Thiết Lập Mẫu Xe", path: "/admin/vehicle-model" },
         { icon: <EvCharger size={20} />, text: "Thiết Lập Trạm Xe", path: "/admin/station" },
+        { icon: <Car size={20} />, text: "Xe điện", path: "/admin/vehicles" },
 
     ];
 
