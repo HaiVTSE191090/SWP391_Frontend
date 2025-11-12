@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Button, Table, Spinner, Alert, Form, Modal } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    getBookingDetail, 
-    deleteBookingImage, 
-    uploadCarImage, 
-    confirmBeforeRentalAndStartBooking, 
+import {
+    getBookingDetail,
+    deleteBookingImage,
+    uploadCarImage,
+    confirmBeforeRentalAndStartBooking,
     getImageChecklist,
     confirmReturnVehicle
 } from './services/authServices';
@@ -23,25 +23,36 @@ interface ReturnVehicleData {
 
 // Interface cho dữ liệu booking theo cấu trúc API mới
 interface BookingDetailResponse {
-    bookingId: number;
-    renterId: number;
-    renterName: string;
-    vehicleId: number;
-    vehicleName: string;
-    staffId: number;
-    staffName: string;
-    priceSnapshotPerHour: number;
-    priceSnapshotPerDay: number;
-    startDateTime: string;
-    endDateTime: string;
-    actualReturnTime: string | null;
-    totalAmount: number;
-    status: 'RESERVED' | 'COMPLETED' | 'CANCELLED' | string;
-    depositStatus: string;
-    createdAt: string;
-    updatedAt: string;
-    bookingImages: BookingImage[];
+  bookingId: number;
+  renterId: number;
+  renterName: string;
+  vehicleId: number;
+  vehicleName: string;
+
+  // 👇 Cập nhật theo backend mới
+  staffReceiveId: number | null;
+  staffReceiveName: string;
+  staffReturnId: number | null;
+  staffReturnName: string;
+
+  priceSnapshotPerHour: number;
+  priceSnapshotPerDay: number;
+
+  startDateTime: string;
+  endDateTime: string;
+  actualReturnTime: string | null;
+
+  totalAmount: number;
+
+  status: 'PENDING' | 'RESERVED' | 'IN_USE' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED' | string;
+  depositStatus: 'PENDING' | 'PAID' | 'REFUNDED' | string;
+
+  createdAt: string;
+  updatedAt: string;
+
+  bookingImages: BookingImage[];
 }
+
 
 // Interface cho ảnh từ API
 interface BookingImage {
@@ -253,7 +264,7 @@ function BookingDetail() {
             await confirmReturnVehicle(booking.bookingId, returnFormData);
             toast.success("✅ Xác nhận trả xe thành công!");
             setShowReturnModal(false);
-            
+
             // Reload để cập nhật dữ liệu
             setTimeout(() => {
                 window.location.reload();
@@ -459,27 +470,74 @@ function BookingDetail() {
                         <Col md={6}>
                             <Table bordered hover size="sm" className="bg-white">
                                 <tbody>
-                                    <tr><td className="fw-medium">Tên Người Thuê</td><td>{booking.renterName}</td></tr>
-                                    <tr><td className="fw-medium">ID Người Thuê</td><td>{booking.renterId}</td></tr>
-                                    <tr><td className="fw-medium">Tên Nhân viên</td><td>{booking.staffName}</td></tr>
-                                    <tr><td className="fw-medium">Trạng thái</td><td><span className="badge bg-info">{booking.status}</span></td></tr>
-                                    <tr><td className="fw-medium">Trạng thái đặt cọc</td><td><span className="badge bg-success">{booking.depositStatus}</span></td></tr>
+                                    <tr>
+                                        <td className="fw-medium">Tên Người Thuê</td>
+                                        <td>{booking.renterName}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">ID Người Thuê</td>
+                                        <td>{booking.renterId}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Nhân viên bàn giao xe</td>
+                                        <td>{booking.staffReceiveName || "Chưa phân công"}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Nhân viên nhận lại xe</td>
+                                        <td>{booking.staffReturnName || "Chưa phân công"}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Trạng thái</td>
+                                        <td>
+                                            <span className="badge bg-info">{booking.status}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Trạng thái đặt cọc</td>
+                                        <td>
+                                            <span className="badge bg-success">{booking.depositStatus}</span>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </Table>
                         </Col>
+
                         <Col md={6}>
                             <Table bordered hover size="sm" className="bg-white">
                                 <tbody>
-                                    <tr><td className="fw-medium">Tên Xe</td><td>{booking.vehicleName}</td></tr>
-                                    <tr><td className="fw-medium">Bắt đầu</td><td>{new Date(booking.startDateTime).toLocaleString()}</td></tr>
-                                    <tr><td className="fw-medium">Kết thúc</td><td>{new Date(booking.endDateTime).toLocaleString()}</td></tr>
-                                    <tr><td className="fw-medium">Giá/Giờ</td><td>{formatCurrency(booking.priceSnapshotPerHour)}</td></tr>
-                                    <tr><td className="fw-medium">Giá/Ngày</td><td>{formatCurrency(booking.priceSnapshotPerDay)}</td></tr>
-                                    <tr><td className="fw-medium">Tổng tiền</td><td className="fw-bold text-danger">{formatCurrency(booking.totalAmount)}</td></tr>
+                                    <tr>
+                                        <td className="fw-medium">Tên Xe</td>
+                                        <td>{booking.vehicleName}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Bắt đầu</td>
+                                        <td>{new Date(booking.startDateTime).toLocaleString()}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Kết thúc</td>
+                                        <td>{new Date(booking.endDateTime).toLocaleString()}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Trả xe thực tế</td>
+                                        <td>{booking.actualReturnTime ? new Date(booking.actualReturnTime).toLocaleString() : "Chưa trả"}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Giá/Giờ</td>
+                                        <td>{formatCurrency(booking.priceSnapshotPerHour)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Giá/Ngày</td>
+                                        <td>{formatCurrency(booking.priceSnapshotPerDay)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="fw-medium">Tổng tiền</td>
+                                        <td className="fw-bold text-danger">{formatCurrency(booking.totalAmount)}</td>
+                                    </tr>
                                 </tbody>
                             </Table>
                         </Col>
                     </Row>
+
 
                     <h4 className="fw-bold mt-4 mb-3 border-bottom pb-2">Thủ tục Check-in/Check-out & Hành động</h4>
 

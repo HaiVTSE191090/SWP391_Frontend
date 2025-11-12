@@ -369,7 +369,7 @@ const CreateContract: React.FC = () => {
                         </Card.Header>
                         <Card.Body>
                             <ListGroup variant="flush">
-                                <ListGroup.Item><strong>Tên Staff:</strong> {bookingInfo?.staffName || 'N/A'}</ListGroup.Item>
+                                {/* <ListGroup.Item><strong>Tên Staff:</strong> {bookingInfo?.staffName || 'N/A'}</ListGroup.Item> */}
                                 <ListGroup.Item><strong>Trạng thái:</strong> {bookingInfo?.bookingStatus || 'N/A'}</ListGroup.Item>
                                 <ListGroup.Item><strong>Tên KH:</strong> {bookingInfo?.renterName || 'N/A'}</ListGroup.Item>
                                 <ListGroup.Item><strong>Email KH:</strong> {bookingInfo?.renterEmail || 'N/A'}</ListGroup.Item>
