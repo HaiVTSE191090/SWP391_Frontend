@@ -1,9 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Card, Button, Table, Spinner, Alert, Form, Modal } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getBookingDetail, deleteBookingImage, uploadCarImage, confirmBeforeRentalAndStartBooking, getImageChecklist } from './services/authServices';
+import { 
+    getBookingDetail, 
+    deleteBookingImage, 
+    uploadCarImage, 
+    confirmBeforeRentalAndStartBooking, 
+    getImageChecklist,
+    confirmReturnVehicle
+} from './services/authServices';
 import { toast } from 'react-toastify';
 
+// Interface cho dữ liệu trả xe
+interface ReturnVehicleData {
+    batteryLevel: number;
+    mileage: string;
+    hasDamage: boolean;
+    damageDescription?: string;
+    damageFee?: number;
+    notes?: string;
+}
 
 // Interface cho dữ liệu booking theo cấu trúc API mới
 interface BookingDetailResponse {
@@ -64,13 +80,25 @@ function BookingDetail() {
     const [confirmingBooking, setConfirmingBooking] = useState(false);
     const [canConfirmReturn, setCanConfirmReturn] = useState(false);
     const [checkingReturnImages, setCheckingReturnImages] = useState(false);
-    
+
     // State cho Modal xác nhận
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [checklistData, setChecklistData] = useState<any>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<{ imageId: number; imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL' } | null>(null);
-    
+
+    // State cho Modal trả xe
+    const [showReturnModal, setShowReturnModal] = useState(false);
+    const [returnFormData, setReturnFormData] = useState<ReturnVehicleData>({
+        batteryLevel: 100,
+        mileage: '0',
+        hasDamage: false,
+        damageDescription: '',
+        damageFee: 0,
+        notes: ''
+    });
+    const [submittingReturn, setSubmittingReturn] = useState(false);
+
     // Ref cho input file ẩn (dùng cho update ảnh)
     const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
@@ -126,7 +154,7 @@ function BookingDetail() {
             // Kiểm tra ảnh BEFORE_RENTAL
             const beforeChecklistRes = await getImageChecklist(bookingData.bookingId, 'BEFORE_RENTAL');
             const beforeData = beforeChecklistRes?.data?.data;
-            
+
             // Kiểm tra ảnh AFTER_RENTAL
             const afterChecklistRes = await getImageChecklist(bookingData.bookingId, 'AFTER_RENTAL');
             const afterData = afterChecklistRes?.data?.data;
@@ -184,14 +212,14 @@ function BookingDetail() {
         try {
             setDeletingImageId(imageId);
             await deleteBookingImage(booking.bookingId, imageId);
-            
+
             // Cập nhật state sau khi xóa thành công
             if (imageType === 'BEFORE_RENTAL') {
                 setBeforeImages(prev => prev.filter(img => img.imageId !== imageId));
             } else {
                 setAfterImages(prev => prev.filter(img => img.imageId !== imageId));
             }
-            
+
             toast.success('Đã xóa ảnh thành công!');
         } catch (error) {
             console.error('Lỗi khi xóa ảnh:', error);
@@ -210,10 +238,38 @@ function BookingDetail() {
         }
     };
 
+    // Handler xác nhận trả xe - Mở modal
+    const handleConfirmReturn = () => {
+        if (!booking) return;
+        setShowReturnModal(true);
+    };
+
+    // Handler submit form trả xe
+    const handleSubmitReturn = async () => {
+        if (!booking) return;
+
+        setSubmittingReturn(true);
+        try {
+            await confirmReturnVehicle(booking.bookingId, returnFormData);
+            toast.success("✅ Xác nhận trả xe thành công!");
+            setShowReturnModal(false);
+            
+            // Reload để cập nhật dữ liệu
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } catch (error) {
+            console.error('Lỗi khi xác nhận trả xe:', error);
+            toast.error("❌ Lỗi khi xác nhận trả xe!");
+        } finally {
+            setSubmittingReturn(false);
+        }
+    };
+
     // Handler upload ảnh mới (update)
     const handleUpdateImage = async (
-        imageId: number, 
-        file: File, 
+        imageId: number,
+        file: File,
         imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL',
         vehicleComponent: string,
         description: string
@@ -222,10 +278,10 @@ function BookingDetail() {
 
         try {
             setUploadingImageId(imageId);
-            
+
             // Xóa ảnh cũ trước
             await deleteBookingImage(booking.bookingId, imageId);
-            
+
             // Upload ảnh mới
             const response = await uploadCarImage(
                 booking.bookingId,
@@ -248,17 +304,17 @@ function BookingDetail() {
 
                 // Cập nhật state với ảnh mới
                 if (imageType === 'BEFORE_RENTAL') {
-                    setBeforeImages(prev => prev.map(img => 
+                    setBeforeImages(prev => prev.map(img =>
                         img.imageId === imageId ? newImage : img
                     ));
                 } else {
-                    setAfterImages(prev => prev.map(img => 
+                    setAfterImages(prev => prev.map(img =>
                         img.imageId === imageId ? newImage : img
                     ));
                 }
 
                 toast.success('Đã cập nhật ảnh thành công!');
-                
+
                 // Reload lại data để đồng bộ với server
                 window.location.reload();
             } else {
@@ -287,7 +343,7 @@ function BookingDetail() {
         try {
             // Gọi API kiểm tra checklist từ BE
             const checklistRes = await getImageChecklist(booking.bookingId, 'BEFORE_RENTAL');
-            
+
             if (!checklistRes?.data?.data) {
                 toast.error('❌ Không thể kiểm tra danh sách ảnh. Vui lòng thử lại!');
                 setConfirmingBooking(false);
@@ -312,7 +368,7 @@ function BookingDetail() {
             // Kiểm tra tất cả ảnh BEFORE_RENTAL đều có mô tả
             const beforeImages = booking.bookingImages?.filter((img: BookingImage) => img.imageType === 'BEFORE_RENTAL') || [];
             const imagesWithoutDescription = beforeImages.filter((img: BookingImage) => !img.description || img.description.trim() === '');
-            
+
             if (imagesWithoutDescription.length > 0) {
                 toast.error('❌ Tất cả ảnh BEFORE_RENTAL phải có mô tả!');
                 setConfirmingBooking(false);
@@ -341,12 +397,12 @@ function BookingDetail() {
         try {
             // Gọi API xác nhận
             await confirmBeforeRentalAndStartBooking(booking.bookingId);
-            
+
             toast.success('Đã xác nhận và bắt đầu thuê xe thành công!');
-            
+
             // Cập nhật trạng thái booking
             setBooking({ ...booking, status: 'IN_USE' });
-            
+
             // Reload để cập nhật dữ liệu
             setTimeout(() => {
                 window.location.reload();
@@ -372,12 +428,12 @@ function BookingDetail() {
     };
 
     // Handler xác nhận trả xe
-    const handleConfirmReturn = () => {
-        if (!booking) return;
-        
-        // Navigate to create invoice page
-        navigate(`/staff/booking/${booking.bookingId}/create-invoice`);
-    };
+    // const handleConfirmReturn = () => {
+    //     if (!booking) return;
+
+    //     // Navigate to create invoice page
+    //     navigate(`/staff/booking/${booking.bookingId}/create-invoice`);
+    // };
 
     // --- Hiển thị Loading/Error State ---
     if (loading) return <Container className="py-5 text-center"><Spinner animation="border" /> Đang tải thông tin booking...</Container>;
@@ -473,8 +529,8 @@ function BookingDetail() {
                     {booking && booking.status === 'RESERVED' && (
                         <Row className="mt-4 mb-3">
                             <Col xs={12} className="text-center">
-                                <Button 
-                                    variant="success" 
+                                <Button
+                                    variant="success"
                                     size="lg"
                                     onClick={handleConfirmBeforeRental}
                                     disabled={confirmingBooking}
@@ -527,11 +583,11 @@ function BookingDetail() {
                                                 <small className="text-muted d-block mb-2">
                                                     Ngày chụp: {new Date(img.createdAt).toLocaleString()}
                                                 </small>
-                                                
+
                                                 {/* Nút hành động */}
                                                 <div className="d-flex gap-2 mt-2">
-                                                    <Button 
-                                                        variant="warning" 
+                                                    <Button
+                                                        variant="warning"
                                                         size="sm"
                                                         onClick={() => handleUpdateImageClick(img.imageId)}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
@@ -545,8 +601,8 @@ function BookingDetail() {
                                                             '🔄 Cập nhật'
                                                         )}
                                                     </Button>
-                                                    <Button 
-                                                        variant="danger" 
+                                                    <Button
+                                                        variant="danger"
                                                         size="sm"
                                                         onClick={() => handleDeleteImageClick(img.imageId, 'BEFORE_RENTAL')}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
@@ -561,7 +617,7 @@ function BookingDetail() {
                                                         )}
                                                     </Button>
                                                 </div>
-                                                
+
                                                 {/* Input file ẩn cho update */}
                                                 <input
                                                     ref={(el) => { fileInputRefs.current[img.imageId] = el; }}
@@ -571,8 +627,8 @@ function BookingDetail() {
                                                     onChange={(e) => {
                                                         if (e.target.files && e.target.files[0]) {
                                                             handleUpdateImage(
-                                                                img.imageId, 
-                                                                e.target.files[0], 
+                                                                img.imageId,
+                                                                e.target.files[0],
                                                                 'BEFORE_RENTAL',
                                                                 img.vehicleComponent,
                                                                 img.description
@@ -609,11 +665,11 @@ function BookingDetail() {
                                                 <small className="text-muted d-block mb-2">
                                                     Ngày chụp: {new Date(img.createdAt).toLocaleString()}
                                                 </small>
-                                                
+
                                                 {/* Nút hành động */}
                                                 <div className="d-flex gap-2 mt-2">
-                                                    <Button 
-                                                        variant="warning" 
+                                                    <Button
+                                                        variant="warning"
                                                         size="sm"
                                                         onClick={() => handleUpdateImageClick(img.imageId)}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
@@ -627,8 +683,8 @@ function BookingDetail() {
                                                             '🔄 Cập nhật'
                                                         )}
                                                     </Button>
-                                                    <Button 
-                                                        variant="danger" 
+                                                    <Button
+                                                        variant="danger"
                                                         size="sm"
                                                         onClick={() => handleDeleteImageClick(img.imageId, 'AFTER_RENTAL')}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
@@ -643,7 +699,7 @@ function BookingDetail() {
                                                         )}
                                                     </Button>
                                                 </div>
-                                                
+
                                                 {/* Input file ẩn cho update */}
                                                 <input
                                                     ref={(el) => { fileInputRefs.current[img.imageId] = el; }}
@@ -653,8 +709,8 @@ function BookingDetail() {
                                                     onChange={(e) => {
                                                         if (e.target.files && e.target.files[0]) {
                                                             handleUpdateImage(
-                                                                img.imageId, 
-                                                                e.target.files[0], 
+                                                                img.imageId,
+                                                                e.target.files[0],
                                                                 'AFTER_RENTAL',
                                                                 img.vehicleComponent,
                                                                 img.description
@@ -685,7 +741,7 @@ function BookingDetail() {
                     </p>
                     {checklistData && (
                         <p className="mt-2 mb-0 text-muted small">
-                            Tiến độ: {checklistData.completionPercentage.toFixed(0)}% 
+                            Tiến độ: {checklistData.completionPercentage.toFixed(0)}%
                             ({checklistData.capturedComponents.length}/{checklistData.requiredComponents.length} hạng mục)
                         </p>
                     )}
@@ -714,6 +770,86 @@ function BookingDetail() {
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Hủy</Button>
                     <Button variant="danger" onClick={handleConfirmDeleteImage}>Xóa</Button>
+                </Modal.Footer>
+            </Modal>
+            {/* Modal xác nhận trả xe */}
+            <Modal show={showReturnModal} onHide={() => setShowReturnModal(false)} centered size="lg">
+                <Modal.Header closeButton className="bg-success text-white">
+                    <Modal.Title>📋 Xác nhận trả xe</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mức pin hiện tại (%)</Form.Label>
+                            <Form.Control
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={returnFormData.batteryLevel}
+                                onChange={(e) => setReturnFormData({ ...returnFormData, batteryLevel: Number(e.target.value) })}
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Số km đã đi</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={returnFormData.mileage}
+                                onChange={(e) => setReturnFormData({ ...returnFormData, mileage: e.target.value })}
+                                placeholder="Nhập số km (VD: 0)"
+                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Check
+                                type="checkbox"
+                                label="Xe có hư hại"
+                                checked={returnFormData.hasDamage}
+                                onChange={(e) => setReturnFormData({ ...returnFormData, hasDamage: e.target.checked })}
+                            />
+                        </Form.Group>
+
+                        {returnFormData.hasDamage && (
+                            <>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Mô tả hư hại</Form.Label>
+                                    <Form.Control
+                                        as="textarea"
+                                        rows={3}
+                                        value={returnFormData.damageDescription}
+                                        onChange={(e) => setReturnFormData({ ...returnFormData, damageDescription: e.target.value })}
+                                        placeholder="Mô tả chi tiết về hư hại..."
+                                    />
+                                </Form.Group>
+                            </>
+                        )}
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>Ghi chú thêm</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={2}
+                                value={returnFormData.notes}
+                                onChange={(e) => setReturnFormData({ ...returnFormData, notes: e.target.value })}
+                                placeholder="Các ghi chú khác..."
+                            />
+                        </Form.Group>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowReturnModal(false)} disabled={submittingReturn}>
+                        Hủy
+                    </Button>
+                    <Button variant="success" onClick={handleSubmitReturn} disabled={submittingReturn}>
+                        {submittingReturn ? (
+                            <>
+                                <Spinner animation="border" size="sm" className="me-2" />
+                                Đang xử lý...
+                            </>
+                        ) : (
+                            '✅ Xác nhận trả xe'
+                        )}
+                    </Button>
                 </Modal.Footer>
             </Modal>
         </Container>

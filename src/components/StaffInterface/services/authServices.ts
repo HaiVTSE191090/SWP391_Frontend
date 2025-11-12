@@ -386,3 +386,44 @@ export const confirmBeforeRentalAndStartBooking = async (bookingId: number) => {
         throw error;
     }
 };
+
+// Xác nhận trả xe
+export const confirmReturnVehicle = async (bookingId: number, data: any) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.post(
+            `${baseURL}/api/bookings/${bookingId}/return`,
+            data,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi xác nhận trả xe:', error);
+        throw error;
+    }
+};
+
+// Lấy chi tiết hóa đơn theo invoiceId
+export const getInvoiceDetail = async (invoiceId: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.get(
+            `${baseURL}/api/invoices/invoices/${invoiceId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi lấy chi tiết hóa đơn:', error);
+        throw error;
+    }
+};

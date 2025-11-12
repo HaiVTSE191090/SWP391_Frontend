@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, Spinner, Table, Alert } from "react-bootstrap";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { getInvoiceDetail } from "./services/authServices";
 
 interface InvoiceDetail {
   invoiceDetailId: number;
@@ -39,18 +39,7 @@ const InvoiceDetailPage: React.FC = () => {
     const fetchInvoiceDetail = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
-
-        const res = await axios.get(
-          `http://localhost:8080/api/invoices/invoices/${invoiceId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
+        const res = await getInvoiceDetail(Number(invoiceId));
         setInvoice(res.data.data);
       } catch (error: any) {
         console.error("❌ Lỗi khi tải hóa đơn:", error);
