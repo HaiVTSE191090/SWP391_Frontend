@@ -2,7 +2,6 @@ import { useCallback, useState } from "react";
 import { PolicyResponse, PolicyType } from "../models/PolicyModel";
 import api from "../services/apiClient";
 import { ApiResponse } from "../models/AuthModel";
-import { data } from "react-router-dom";
 
 export function usePolicy() {
   const [policy, setPolicy] = useState<PolicyResponse>();

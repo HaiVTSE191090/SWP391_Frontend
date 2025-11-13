@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
     LayoutDashboard,
     UserCircle,
@@ -14,9 +14,14 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import userImage from "../../images/User_Icon.png";
 import "./AdminSideBar.css";
+import { useAdmin } from "../../hooks/useAdmin";
 
 export const AdminSideBar = () => {
     const location = useLocation();
+    const { profile, loadAdminProfile, isLoading } = useAdmin();
+    useEffect(() => {
+        loadAdminProfile();
+    }, [loadAdminProfile]);
 
     const menuItems = [
         { icon: <LayoutDashboard size={20} />, text: "Dashboard", path: "/admin" },
@@ -51,13 +56,25 @@ export const AdminSideBar = () => {
                     ))}
                 </ul>
 
-                <div className="sidebar-footer">
-                    <img src={userImage} alt="user" className="user-img" />
+                <Link
+                    to="/admin/profile" // <-- 3. ĐẶT ĐƯỜNG DẪN CỦA BẠN
+                    className="sidebar-footer" // Giữ nguyên class
+                    style={{ textDecoration: "none" }} // 4. Bỏ gạch chân
+                >                    <img src={userImage} alt="user" className="user-img" />
                     <div className="user-info">
-                        <h4>Admin</h4>
-                        <span>admin@gmail.com</span>
+                        {isLoading || !profile ? (
+                            <>
+                                <h4>Đang tải...</h4>
+                                <span>...</span>
+                            </>
+                        ) : (
+                            <>
+                                <h4>{profile.fullName}</h4>
+                                <span>{profile.email}</span>
+                            </>
+                        )}
                     </div>
-                </div>
+                </Link>
             </nav>
         </aside>
     );

@@ -16,13 +16,11 @@ const assignStaffApi = (data: AssignStaffRequest) => {
   );
 };
 
-// Hook để quản lý logic
 export const useStaffDispatch = () => {
   const [staffList, setStaffList] = useState<StaffResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Tải danh sách staff tại trạm
   const loadStaffList = useCallback(async (stationId: number) => {
     setIsLoading(true);
     setError(null);

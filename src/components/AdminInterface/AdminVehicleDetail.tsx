@@ -86,13 +86,6 @@ const AdminVehicleDetail = () => {
         const pricePerDay = Number(formData.get('pricePerDay') || -1);
         const mileage = Number(formData.get('mileage') || -1);
 
-        // Xử lý BatteryLevel: Lấy từ form. Nếu không có thì mới dùng giá trị cũ (nếu là edit) hoặc mặc định
-        const batteryLevelInput = formData.get('batteryLevel');
-        // Nếu bạn CÓ một ô input cho batteryLevel
-        const batteryLevel = Number(batteryLevelInput !== null ? batteryLevelInput : -1);
-        // Nếu bạn KHÔNG CÓ ô input cho batteryLevel (ví dụ: form tạo mới)
-        // const batteryLevel = vehicle?.batteryLevel || 100; // Dùng logic cũ của bạn
-
         const description = String(formData.get('description') || '');
 
         // --- 2. Kiểm Tra (Validation) ---
