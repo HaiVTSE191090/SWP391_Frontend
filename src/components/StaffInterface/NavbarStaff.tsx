@@ -3,7 +3,7 @@ import logo from "../../images/favicon.png";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { LogOut, User, Bell, ChevronRight } from 'lucide-react'; // Thêm ChevronRight
 // Giả định getStaffNotifications, getUserName, staffLogout đã được export
-import { getUserName, staffLogout, getStaffNotifications } from "./services/authServices"; 
+import { getUserName, staffLogout, getStaffNotifications } from "./services/authServices";
 import { useNavigate, useLocation } from "react-router-dom";
 
 
@@ -16,7 +16,7 @@ interface Notification {
   recipientId: number;
   isRead: boolean;
   // Giả định có thêm trường thời gian (createdAt)
-  createdAt?: string; 
+  createdAt?: string;
 }
 
 const Navbar: React.FC = () => {
@@ -24,12 +24,12 @@ const Navbar: React.FC = () => {
   const [staffName, setStaffName] = useState<string>(getUserName());
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
 
   // Ref để tham chiếu container thông báo (thay thế document.getElementById)
-  const notificationRef = useRef<HTMLLIElement>(null); 
+  const notificationRef = useRef<HTMLLIElement>(null);
 
   // --- LOGIC GỌI API ---
   const fetchNotifications = useCallback(async (currentName: string) => {
@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
         const response = await getStaffNotifications();
         if (response && response.data && response.data.data) {
           // Chỉ lấy 10 thông báo gần nhất để hiển thị trong dropdown
-          setNotifications(response.data.data.slice(0, 10)); 
+          setNotifications(response.data.data.slice(0, 10));
         }
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
@@ -49,11 +49,11 @@ const Navbar: React.FC = () => {
   }, []);
 
   // --- LOGIC EFFECTS ---
-  
+
   // 1. Kiểm tra trạng thái đăng nhập VÀ LẤY THÔNG BÁO khi URL thay đổi
   useEffect(() => {
     const currentName = getUserName();
-    
+
     if (staffName !== currentName) {
       setStaffName(currentName);
     }
@@ -81,16 +81,16 @@ const Navbar: React.FC = () => {
     };
   }, [showNotificationsDropdown]);
 
-  
+
   // --- HÀM XỬ LÝ SỰ KIỆN ---
 
   const handleLogout = () => {
-    staffLogout(); 
-    setStaffName(""); 
+    staffLogout();
+    setStaffName("");
     setNotifications([]);
-    navigate("/"); 
+    navigate("/");
   };
-  
+
   const toggleNotifications = () => {
     setShowNotificationsDropdown(prev => !prev);
   };
@@ -108,66 +108,77 @@ const Navbar: React.FC = () => {
 
   // TÁCH HÀM RENDER DROPDOWN RA NGOÀI (giúp renderNavItems gọn hơn)
   const renderNotificationDropdown = () => {
-      if (!showNotificationsDropdown) return null;
+    if (!showNotificationsDropdown) return null;
 
-      return (
-        <div 
-          className="dropdown-menu dropdown-menu-end show p-3 shadow-lg"
-          style={{
-            minWidth: '350px', 
-            maxHeight: '450px',
-            overflowY: 'auto',
-            zIndex: 1050, 
-            position: 'absolute', 
-            borderRadius: '0.75rem',
-            // Thay thế cho bg-white
-            backgroundColor: '#ffffff' 
-          }}
-        >
-          <h5 className="fw-bold border-bottom pb-3 mb-3 text-dark">Thông báo ({unreadCount} chưa đọc)</h5>
-          {notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <a 
-                key={notification.notificationId} 
-                onClick={() => handleNotificationClick(notification.notificationId)}
-                // Tối ưu hóa UI: Dùng background đậm nhẹ cho item chưa đọc
-                className={`d-flex align-items-center py-2 px-3 mb-2 rounded-3 text-decoration-none transition-all ${!notification.isRead ? 'bg-light-blue fw-bold text-dark' : 'text-secondary bg-hover-light'}`}
-                style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
-              >
-                <div className="flex-grow-1">
-                  <div className="text-truncate" style={{ maxWidth: '280px', fontSize: '0.9rem' }}>
-                    {notification.title}
-                  </div>
-                  <small className={`${!notification.isRead ? 'text-primary' : 'text-muted'}`}>{notification.message}</small>
+    return (
+      <div
+        className="dropdown-menu dropdown-menu-end show p-3 shadow-lg"
+        style={{
+          minWidth: '350px',
+          maxHeight: '450px',
+          overflowY: 'auto',
+          zIndex: 1050,
+          position: 'absolute',
+          borderRadius: '0.75rem',
+          // Thay thế cho bg-white
+          backgroundColor: '#ffffff'
+        }}
+      >
+        <h5 className="fw-bold border-bottom pb-3 mb-3 text-dark">Thông báo ({unreadCount} chưa đọc)</h5>
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <a
+              key={notification.notificationId}
+              onClick={() => handleNotificationClick(notification.notificationId)}
+              // Tối ưu hóa UI: Dùng background đậm nhẹ cho item chưa đọc
+              className={`d-flex align-items-center py-2 px-3 mb-2 rounded-3 text-decoration-none transition-all ${!notification.isRead ? 'bg-light-blue fw-bold text-dark' : 'text-secondary bg-hover-light'}`}
+              style={{ cursor: 'pointer', transition: 'background-color 0.2s' }}
+            >
+              <div className="flex-grow-1">
+                <div className="text-truncate" style={{ maxWidth: '280px', fontSize: '0.9rem' }}>
+                  {notification.title}
                 </div>
-                <ChevronRight size={18} className="ms-2 flex-shrink-0 text-muted" />
-              </a>
-            ))
-          ) : (
-            <div className="text-center text-muted py-5">
-                <Bell size={36} className="mb-2" />
-                <p>Bạn không có thông báo mới nào.</p>
-            </div>
-          )}
-          
-          <div className="border-top pt-2 mt-2">
-            <button 
-                className="btn btn-sm w-100 text-primary fw-bold" 
-                onClick={() => { navigate('/staff/notifications'); setShowNotificationsDropdown(false); }}>
-              Xem tất cả
-            </button>
+                <small className={`${!notification.isRead ? 'text-primary' : 'text-muted'}`}>{notification.message}</small>
+              </div>
+              <ChevronRight size={18} className="ms-2 flex-shrink-0 text-muted" />
+            </a>
+          ))
+        ) : (
+          <div className="text-center text-muted py-5">
+            <Bell size={36} className="mb-2" />
+            <p>Bạn không có thông báo mới nào.</p>
           </div>
+        )}
+
+        <div className="border-top pt-2 mt-2">
+          <button
+            className="btn btn-sm w-100 text-primary fw-bold"
+            onClick={() => { navigate('/staff/notifications'); setShowNotificationsDropdown(false); }}>
+            Xem tất cả
+          </button>
         </div>
-      );
+      </div>
+    );
   };
 
 
   // Logic render các mục navigation dựa trên trạng thái đăng nhập
   const renderNavItems = () => {
-      if (staffName) {
-            return (
+    if (staffName) {
+      return (
         <ul className="navbar-nav ms-auto d-flex align-items-lg-center gap-3">
-          
+
+          {/* MỤC STAFF PAGE */}
+          <li className="nav-item mx-3">
+            <a
+              className="nav-link fw-bold text-primary"
+              href="/staff"
+              style={{ fontSize: "1.4rem" }}
+            >
+              Staff Page
+            </a>
+          </li>
+
           {/* MỤC THÔNG BÁO */}
           {/* Dùng ref thay cho id */}
           <li className="nav-item mx-3 position-relative" ref={notificationRef}>
@@ -177,7 +188,7 @@ const Navbar: React.FC = () => {
             >
               <Bell size={24} className="text-primary cursor-pointer" />
               {unreadCount > 0 && (
-                <span 
+                <span
                   className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                   style={{ fontSize: '0.65rem' }}
                 >
@@ -186,19 +197,19 @@ const Navbar: React.FC = () => {
                 </span>
               )}
             </button>
-            
+
             {/* GỌI HÀM RENDER DROPDOWN */}
             {renderNotificationDropdown()}
           </li>
 
           {/* HIỂN THỊ TÊN NHÂN VIÊN */}
           <li className="nav-item mx-3 d-flex align-items-center">
-             <User className="text-success me-2" size={20} />
+            <User className="text-success me-2" size={20} />
             <span className="nav-link fw-bold text-success">
               Xin chào, {staffName}!
             </span>
           </li>
-          
+
           {/* NÚT ĐĂNG XUẤT */}
           <li className="nav-item">
             <button
@@ -254,7 +265,7 @@ const Navbar: React.FC = () => {
       <nav className="navbar navbar-expand-lg bg-white border-bottom px-4">
         <div className="container-fluid">
           {/* Logo + Brand */}
-          <a className="navbar-brand d-flex align-items-center" href="#">
+          <a className="navbar-brand d-flex align-items-center" href="/staff" style={{ cursor: 'pointer' }}>
             <img
               src={logo}
               alt="EV Station"
@@ -265,7 +276,7 @@ const Navbar: React.FC = () => {
           </a>
 
           <div className="collapse navbar-collapse" id="navbarNav">
-            {renderNavItems()} 
+            {renderNavItems()}
           </div>
         </div>
       </nav>

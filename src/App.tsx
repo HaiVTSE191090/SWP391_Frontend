@@ -39,8 +39,11 @@ import StaffLogin from "./components/StaffInterface/StaffLogin";
 import Staff from "./components/StaffInterface/Staff";
 import FinalPayment from "./components/FinalPayment/FinalInvoice";
 import AdminRequireAuth from "./components/AdminInterface/services/AdminRequireAuth";
+import ChooseCar from "./components/StaffInterface/ChooseCar";
 import StaffLayout from "./components/layouts/StaffLayout";
 import InvoiceDetailPage from "./components/StaffInterface/InvoiceDetailPage";
+import PaymentPage from "./components/StaffInterface/PaymentPage";
+import CreateInvoice from "./components/StaffInterface/CreateInvoice";
 
 // Lazy load trang chính
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -92,10 +95,13 @@ const App = () => {
                 <Route path="renter/:id" element={<UserDetail />} />
                 <Route path="bookings" element={<ListBookingStaff />} />
                 <Route path="booking/:bookingId/detail" element={<StaffBookingDetail />} />
+                <Route path="vehicle/:vehicleId" element={<ChooseCar />} />
                 <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
                 <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
+                <Route path="booking/:bookingId/create-invoice" element={<CreateInvoice />} />
                 <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="booking/:invoiceId/create-invoice" element={<InvoiceDetailPage />} />
+                <Route path="invoice/:invoiceId" element={<InvoiceDetailPage />} />
+                <Route path="payment" element={<PaymentPage />} />
               </Route>
             </Route>
             {/* admin */}

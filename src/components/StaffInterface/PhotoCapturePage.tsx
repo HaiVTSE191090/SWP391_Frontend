@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Container, Row, Col, Card, Button, Form, Spinner, Alert, Badge } from 'react-bootstrap';
+import React, { useState, useEffect, useCallback } from "react";
+import { Container, Row, Col, Card, Button, Form, Spinner, Alert, Badge, Modal } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 // Import API services
-import { getVehicleComponents, getImageTypes, getImageChecklist, uploadCarImage } from './services/authServices'; 
+import { getVehicleComponents, getImageTypes, getImageChecklist, uploadCarImage, deleteBookingImage } from './services/authServices'; 
 
 // Interface cho một dòng chi tiết
 interface DamageDetail {
@@ -13,6 +14,7 @@ interface DamageDetail {
     description: string;
     isUploading: boolean;
     isRequired?: boolean; // Đánh dấu item bắt buộc
+    imageId?: number; // ID của ảnh trên server
 }
 
 // Interface cho checklist response
@@ -54,6 +56,8 @@ const PhotoCapturePage: React.FC = () => {
     const [checklist, setChecklist] = useState<ImageChecklist | null>(null);
     const [loadingData, setLoadingData] = useState(true);
     const [errorLoadingData, setErrorLoadingData] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState<{ tempId: number; isRequired: boolean } | null>(null);
 
     // Xác định tiêu đề trang dựa vào image type
     const getPageTitle = () => {
@@ -105,8 +109,8 @@ const PhotoCapturePage: React.FC = () => {
                         const data = checklistRes.data.data;
                         setChecklist(data);
 
-                        // Tạo danh sách required từ API
-                        if (data.requiredComponents) {
+                        // Chỉ tạo danh sách required khi KHÔNG phải DAMAGE
+                        if (type !== 'DAMAGE' && data.requiredComponents) {
                             const items = data.requiredComponents.map((name: string) => 
                                 createRequiredDetail(name)
                             );
@@ -114,16 +118,18 @@ const PhotoCapturePage: React.FC = () => {
                         }
                     }
                 } catch (error) {
-                    // Nếu API checklist fail, dùng mock data tạm
-                    const mockData: ImageChecklist = {
-                        requiredComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
-                        missingComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
-                        capturedComponents: [],
-                        completionPercentage: 0,
-                        isComplete: false
-                    };
-                    setChecklist(mockData);
-                    setRequiredList(mockData.requiredComponents.map(createRequiredDetail));
+                    // Nếu API checklist fail và KHÔNG phải DAMAGE, dùng mock data
+                    if (type !== 'DAMAGE') {
+                        const mockData: ImageChecklist = {
+                            requiredComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
+                            missingComponents: ["EXTERIOR_FRONT", "EXTERIOR_BACK", "EXTERIOR_LEFT", "EXTERIOR_RIGHT", "DASHBOARD", "MILEAGE_METER", "BATTERY_INDICATOR"],
+                            capturedComponents: [],
+                            completionPercentage: 0,
+                            isComplete: false
+                        };
+                        setChecklist(mockData);
+                        setRequiredList(mockData.requiredComponents.map(createRequiredDetail));
+                    }
                 }
 
             } catch (error) {
@@ -144,6 +150,32 @@ const PhotoCapturePage: React.FC = () => {
         ));
     };
 
+    // Xử lý khi user rời khỏi ô description (blur) - tự động update nếu đã có ảnh
+    const handleDescriptionBlur = async (tempId: number, isRequired: boolean) => {
+        const allItems = [...requiredList, ...optionalList];
+        const currentItem = allItems.find(item => item.tempId === tempId);
+        
+        // Nếu đã upload ảnh và có photoFile, re-upload với description mới
+        if (currentItem && currentItem.photoUrl && currentItem.photoFile) {
+            try {
+                await uploadCarImage(
+                    parseInt(bookingId!),
+                    type!,
+                    currentItem.itemId,
+                    currentItem.description || 'Chưa có mô tả',
+                    currentItem.photoFile
+                );
+                toast.info('Đã cập nhật mô tả!');
+            } catch (error) {
+                console.error('Lỗi khi cập nhật description:', error);
+                toast.error('Không thể cập nhật mô tả. Vui lòng thử lại.');
+            }
+        }
+    };
+
+    
+
+
     // Thêm một hạng mục tùy chọn mới
     const handleAddOptionalDetail = () => {
         setOptionalList(prev => [...prev, createNewDamageDetail(false)]);
@@ -152,6 +184,46 @@ const PhotoCapturePage: React.FC = () => {
     // Xóa một hạng mục tùy chọn
     const handleRemoveOptionalDetail = (tempId: number) => {
         setOptionalList(prev => prev.filter(item => item.tempId !== tempId));
+    };
+
+    // Hiển thị modal xác nhận xóa
+    const handleRemovePhotoClick = (tempId: number, isRequired: boolean) => {
+        const allItems = [...requiredList, ...optionalList];
+        const currentItem = allItems.find(item => item.tempId === tempId);
+        
+        if (!currentItem?.imageId) return;
+        
+        setDeleteTarget({ tempId, isRequired });
+        setShowDeleteModal(true);
+    };
+
+    // Xóa ảnh đã upload - gọi API xóa trên server
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+
+        const { tempId, isRequired } = deleteTarget;
+        const allItems = [...requiredList, ...optionalList];
+        const currentItem = allItems.find(item => item.tempId === tempId);
+        
+        if (!currentItem?.imageId) return;
+
+        setShowDeleteModal(false);
+
+        try {
+            await deleteBookingImage(parseInt(bookingId!), currentItem.imageId);
+            
+            const setList = isRequired ? setRequiredList : setOptionalList;
+            setList(prev => prev.map(item =>
+                item.tempId === tempId ? { ...item, photoUrl: '', photoFile: null, imageId: undefined } : item
+            ));
+            
+            toast.success('Đã xóa ảnh thành công!');
+        } catch (error) {
+            console.error('Lỗi khi xóa ảnh:', error);
+            toast.error('Không thể xóa ảnh. Vui lòng thử lại.');
+        } finally {
+            setDeleteTarget(null);
+        }
     };
 
     // Upload ảnh lên server
@@ -166,7 +238,13 @@ const PhotoCapturePage: React.FC = () => {
 
         // Kiểm tra phải chọn hạng mục trước (với optional)
         if (!isRequired && !currentItem.itemId) {
-            alert('Vui lòng chọn Hạng mục trước khi upload ảnh!');
+            toast.warning('Vui lòng chọn Hạng mục trước khi upload ảnh!');
+            return;
+        }
+
+        // Kiểm tra phải nhập description trước khi upload
+        if (!currentItem.description || currentItem.description.trim() === '') {
+            toast.warning('Vui lòng nhập MÔ TẢ trước khi upload ảnh!');
             return;
         }
 
@@ -180,18 +258,25 @@ const PhotoCapturePage: React.FC = () => {
             parseInt(bookingId!),
             type!,
             currentItem.itemId,
-            currentItem.description || 'Chưa có mô tả',
+            currentItem.description.trim(),
             file
         );
 
         if (response?.data?.data?.imageUrl) {
-            // Upload thành công
+            // Upload thành công - lưu cả imageId từ response
             setList(prev => prev.map(item =>
-                item.tempId === tempId ? { ...item, isUploading: false, photoUrl: response.data.data.imageUrl, photoFile: file } : item
+                item.tempId === tempId ? { 
+                    ...item, 
+                    isUploading: false, 
+                    photoUrl: response.data.data.imageUrl, 
+                    photoFile: file,
+                    imageId: response.data.data.imageId // Lưu imageId từ server
+                } : item
             ));
+            toast.success('Upload ảnh thành công!');
         } else {
             // Upload thất bại
-            alert('Upload ảnh thất bại. Vui lòng thử lại.');
+            toast.error('Upload ảnh thất bại. Vui lòng thử lại.');
             setList(prev => prev.map(item =>
                 item.tempId === tempId ? { ...item, isUploading: false, photoFile: null } : item
             ));
@@ -199,50 +284,52 @@ const PhotoCapturePage: React.FC = () => {
     };
 
     // Kiểm tra trạng thái form để enable/disable nút Lưu
-    const formStatus = useMemo(() => {
-        // Required: phải có đủ ảnh (mô tả không bắt buộc)
-        const hasInvalidRequired = requiredList.some(item => !item.photoUrl);
+    const checkFormValid = () => {
+        // Required: phải có đủ ảnh VÀ mô tả
+        const hasInvalidRequired = requiredList.some(item => !item.photoUrl || !item.description.trim());
         
-        // Optional: nếu đã chọn hạng mục thì phải có ảnh (mô tả không bắt buộc)
-        const hasInvalidOptional = optionalList.some(item => item.itemId && !item.photoUrl);
+        // Optional: nếu đã chọn hạng mục thì phải có ảnh VÀ mô tả
+        const hasInvalidOptional = optionalList.some(item => item.itemId && (!item.photoUrl || !item.description.trim()));
         
         // Có item nào đang upload không
         const isStillUploading = [...requiredList, ...optionalList].some(item => item.isUploading);
 
         return { hasInvalidRequired, hasInvalidOptional, isStillUploading };
-    }, [requiredList, optionalList]);
+    };
 
 
     // Xác nhận và quay về trang booking detail
     const handleSubmit = () => {
-        // Validate: Required items phải có ảnh
-        if (requiredList.length > 0 && formStatus.hasInvalidRequired) {
-            alert("Vui lòng upload ảnh cho TẤT CẢ các hạng mục BẮT BUỘC.");
+        const formValid = checkFormValid();
+
+        // Validate: Required items phải có ảnh VÀ mô tả
+        if (requiredList.length > 0 && formValid.hasInvalidRequired) {
+            toast.error("Vui lòng upload ảnh VÀ nhập mô tả cho TẤT CẢ các hạng mục BẮT BUỘC.");
             return;
         }
 
-        // Validate: Optional items đã chọn phải có ảnh
-        if (formStatus.hasInvalidOptional) {
-            alert("Vui lòng upload ảnh cho các hạng mục tùy chọn đã chọn.");
+        // Validate: Optional items đã chọn phải có ảnh VÀ mô tả
+        if (formValid.hasInvalidOptional) {
+            toast.error("Vui lòng upload ảnh VÀ nhập mô tả cho các hạng mục tùy chọn đã chọn.");
             return;
         }
 
         // Validate: Đợi upload xong
-        if (formStatus.isStillUploading) {
-            alert("Vui lòng đợi quá trình upload ảnh hoàn tất.");
+        if (formValid.isStillUploading) {
+            toast.warning("Vui lòng đợi quá trình upload ảnh hoàn tất.");
             return;
         }
 
         // Phải có ít nhất 1 item
-        const validOptional = optionalList.filter(item => item.itemId && item.photoUrl);
+        const validOptional = optionalList.filter(item => item.itemId && item.photoUrl && item.description.trim());
         if (requiredList.length === 0 && validOptional.length === 0) {
-            alert("Vui lòng thêm ít nhất một hạng mục để lưu.");
+            toast.error("Vui lòng thêm ít nhất một hạng mục để lưu.");
             return;
         }
 
         // Tất cả ảnh đã được upload lên server rồi
         const totalUploaded = requiredList.length + validOptional.length;
-        alert(`Đã upload thành công ${totalUploaded} ảnh!`);
+        toast.success(`Đã upload thành công ${totalUploaded} ảnh!`);
         navigate(`/staff/booking/${bookingId}/detail`);
     };
 
@@ -332,25 +419,46 @@ const PhotoCapturePage: React.FC = () => {
                 <Form.Control
                     as="textarea"
                     rows={1}
-                    placeholder="Mô tả tình trạng"
+                    placeholder="Mô tả tình trạng (Bắt buộc)"
                     value={detail.description}
                     onChange={(e) => handleDetailChange(detail.tempId, 'description', e.target.value, isRequired)}
+                    onBlur={() => handleDescriptionBlur(detail.tempId, isRequired)}
                     disabled={loading || detail.isUploading}
+                    required
+                    isInvalid={!!detail.photoUrl && !detail.description.trim()}
                 />
+                <Form.Control.Feedback type="invalid">
+                    Vui lòng nhập mô tả
+                </Form.Control.Feedback>
             </td>
             
             {/* Cột Hành động */}
             <td className="text-center">
-                {!isRequired && (
-                    <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleRemoveOptionalDetail(detail.tempId)}
-                        disabled={loading || detail.isUploading}
-                    >
-                        Xóa
-                    </Button>
-                )}
+                <div className="d-flex flex-column gap-2">
+                    {/* Nút xóa ảnh (nếu đã upload) */}
+                    {detail.photoUrl && (
+                        <Button
+                            variant="warning"
+                            size="sm"
+                            onClick={() => handleRemovePhotoClick(detail.tempId, isRequired)}
+                            disabled={loading || detail.isUploading}
+                        >
+                            Xóa Ảnh
+                        </Button>
+                    )}
+                    
+                    {/* Nút xóa hạng mục (chỉ cho optional) */}
+                    {!isRequired && (
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleRemoveOptionalDetail(detail.tempId)}
+                            disabled={loading || detail.isUploading}
+                        >
+                            Xóa Mục
+                        </Button>
+                    )}
+                </div>
             </td>
         </tr>
     );
@@ -361,7 +469,7 @@ const PhotoCapturePage: React.FC = () => {
                 <Col>
                     <h2 className="text-center fw-bold text-primary">Ghi Nhận Chi Tiết Xe {pageTitle}</h2>
                     <p className="text-center text-muted">Booking ID: {bookingId} | Image Type: <strong>{type}</strong></p>
-                    {checklist && (
+                    {checklist && type !== 'DAMAGE' && (
                         <div className="text-center">
                             <Badge bg={checklist.isComplete ? "success" : "warning"} className="fs-6">
                                 Tiến độ: {checklist.completionPercentage}% ({checklist.capturedComponents.length}/{checklist.requiredComponents.length})
@@ -370,6 +478,20 @@ const PhotoCapturePage: React.FC = () => {
                     )}
                 </Col>
             </Row>
+
+            {/* Modal xác nhận xóa ảnh */}
+            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+                <Modal.Header closeButton className="bg-warning">
+                    <Modal.Title>Xác nhận xóa ảnh</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p className="mb-0">Bạn có chắc chắn muốn xóa ảnh này?</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Hủy</Button>
+                    <Button variant="danger" onClick={handleConfirmDelete}>Xóa</Button>
+                </Modal.Footer>
+            </Modal>
 
             {/* Phần 1: Hạng mục BẮT BUỘC */}
             {requiredList.length > 0 && (
@@ -445,31 +567,38 @@ const PhotoCapturePage: React.FC = () => {
             {/* Nút lưu */}
             <Card className="shadow">
                 <Card.Body>
-                    {requiredList.length > 0 && (
-                        <Alert variant={formStatus.hasInvalidRequired ? "danger" : "success"} className="mb-3">
-                            {formStatus.hasInvalidRequired 
-                                ? "Vui lòng upload ảnh cho TẤT CẢ hạng mục BẮT BUỘC trước khi lưu!"
-                                : "Tất cả hạng mục bắt buộc đã upload xong. Bạn có thể lưu dữ liệu."
-                            }
-                        </Alert>
-                    )}
-                    
-                    <Button
-                        variant="success"
-                        size="lg"
-                        className="w-100 d-flex align-items-center justify-content-center"
-                        onClick={handleSubmit}
-                        disabled={
-                            loading || 
-                            formStatus.isStillUploading ||
-                            (requiredList.length > 0 && formStatus.hasInvalidRequired) ||
-                            formStatus.hasInvalidOptional
-                        }
-                    >
-                        {loading && <Spinner animation="border" size="sm" className="me-2" />}
-                        LƯU DỮ LIỆU 
-                        {requiredList.length > 0 && ` (${requiredList.length} bắt buộc + ${optionalList.filter(item => item.itemId).length} tùy chọn)`}
-                    </Button>
+                    {(() => {
+                        const formValid = checkFormValid();
+                        return (
+                            <>
+                                {requiredList.length > 0 && (
+                                    <Alert variant={formValid.hasInvalidRequired ? "danger" : "success"} className="mb-3">
+                                        {formValid.hasInvalidRequired 
+                                            ? "Vui lòng upload ảnh VÀ nhập mô tả cho TẤT CẢ hạng mục BẮT BUỘC trước khi lưu!"
+                                            : "Tất cả hạng mục bắt buộc đã upload xong. Bạn có thể lưu dữ liệu."
+                                        }
+                                    </Alert>
+                                )}
+                                
+                                <Button
+                                    variant="success"
+                                    size="lg"
+                                    className="w-100 d-flex align-items-center justify-content-center"
+                                    onClick={handleSubmit}
+                                    disabled={
+                                        loading || 
+                                        formValid.isStillUploading ||
+                                        (requiredList.length > 0 && formValid.hasInvalidRequired) ||
+                                        formValid.hasInvalidOptional
+                                    }
+                                >
+                                    {loading && <Spinner animation="border" size="sm" className="me-2" />}
+                                    LƯU DỮ LIỆU 
+                                    {requiredList.length > 0 && ` (${requiredList.length} bắt buộc + ${optionalList.filter(item => item.itemId).length} tùy chọn)`}
+                                </Button>
+                            </>
+                        );
+                    })()}
                 </Card.Body>
             </Card>
         </Container>

@@ -244,8 +244,9 @@ export default function Staff() {
                               variant="outline-primary"
                               size="sm"
                               className="w-100 mb-2"
-                              onClick={() => {
-                                handleShowBookingDetail();
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/staff/vehicle/${car.vehicleId}`);
                               }}
                             >
                               Xem chi tiết
