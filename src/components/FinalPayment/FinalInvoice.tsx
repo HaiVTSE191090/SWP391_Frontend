@@ -256,7 +256,7 @@ const FinalPayment: React.FC = () => {
               <p><strong>Tiền thuê xe:</strong> {breakdown?.rentalAmount.toLocaleString()} VND</p>
               <p><strong>Tổng tiền của hóa đơn:</strong> {invoice.totalAmount.toLocaleString()} VND</p>
               <p><strong>Đã đặt cọc:</strong> {invoice.depositAmount.toLocaleString()} VND</p>
-              <p><strong>Hoàn tiền:</strong> {invoice.refundAmount ? invoice.refundAmount.toLocaleString() + " VND" : "Không có"}</p>
+              <p><strong>Hoàn tiền:</strong> {breakdown.amountToRefund ? breakdown.amountToRefund.toLocaleString() + " VND" : "Không có"}</p>
             </Col>
             <Col md={6}>
               <p><strong>Số tiền còn lại:</strong> <span className="text-danger fw-bold">{breakdown?.amountToPay.toLocaleString()} VND</span></p>
