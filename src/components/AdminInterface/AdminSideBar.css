@@ -384,3 +384,58 @@
         transform: translateY(0);
     }
 }
+/* ... (CSS cũ của bạn) ... */
+
+/* SỬA .notification-bell:
+  Đổi từ 'a' (Link) thành 'button'
+*/
+.notification-bell {
+    /* Reset style của button */
+    background: none;
+    border: none;
+    padding: 8px;
+    /* Giữ padding cũ */
+    margin: 0;
+    cursor: pointer;
+
+    /* Style cũ */
+    position: relative;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.notification-bell:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.notification-badge {
+    /* (Giữ nguyên CSS cũ) */
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-primary);
+}
+
+/* THÊM MỚI: Style cho item chưa đọc trong Modal
+*/
+.notification-item-unread {
+    background-color: #f8f9fa;
+    /* Màu nền xám rất nhạt */
+}
+
+.notification-item-unread strong {
+    font-weight: 700 !important;
+    /* Đậm hơn */
+}
