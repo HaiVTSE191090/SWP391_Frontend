@@ -45,10 +45,9 @@ export default function RentalHistoryPage() {
       try {
         const token = localStorage.getItem("token");
         setLoading(true);
-
         const res = await axios.get("http://localhost:8080/api/renter/bookings", {
           headers: { Authorization: `Bearer ${token}` },
-        });
+        }); 
         const data = res.data.data;
         setBookings(data);
 

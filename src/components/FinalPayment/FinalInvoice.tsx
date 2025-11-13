@@ -8,6 +8,7 @@ import "./FinalPayment.css";
 const FinalPayment: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const [invoice, setInvoice] = useState<any | null>(null);
+  const [breakdown, setBreakdown] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedMethod, setSelectedMethod] = useState<string>("MOMO");
   const navigate = useNavigate();
@@ -33,6 +34,19 @@ const FinalPayment: React.FC = () => {
             autoClose: 3000,
           });
         }
+
+        const detailRes = await axios.get(
+          `http://localhost:8080/api/invoices/invoices/${finalInvoice.invoiceId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setInvoice(detailRes.data?.data);
+
+        const breakdownRes = await axios.get(
+          `http://localhost:8080/api/invoices/invoices/${finalInvoice.invoiceId}/amount-breakdown`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setBreakdown(breakdownRes.data?.data);
+
       } catch (error) {
         console.error("❌ Lỗi khi tải hóa đơn:", error);
         toast.error("Không thể tải thông tin hóa đơn. Vui lòng thử lại sau.", {
@@ -79,7 +93,7 @@ const FinalPayment: React.FC = () => {
 
       const res = await axios.post(
         url,
-        { amount: invoice.amountRemaining },
+        { amount: breakdown?.amountToPay },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -187,64 +201,71 @@ const FinalPayment: React.FC = () => {
 
         <hr />
 
+        <h5 className="fw-bold text-secondary mb-3">📋 Chi tiết hóa đơn</h5>
+        {invoice.details && invoice.details.length > 0 ? (
+          <table className="table table-hover align-middle">
+            <thead className="table-light">
+              <tr>
+                <th>Mã chi tiết</th>
+                <th>Loại</th>
+                <th>ID bảng giá</th>
+                <th>Tên hạng mục</th>
+                <th>Mô tả</th>
+                <th>Số lượng</th>
+                <th>Đơn giá (VND)</th>
+                <th>Thành tiền (VND)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoice.details.map((d: any, idx: number) => (
+                <tr key={idx}>
+                  <td>{d.invoiceDetailId}</td>
+                  <td>
+                    <Badge
+                      bg={
+                        d.type === "SPAREPART"
+                          ? "info"
+                          : d.type === "DAMAGE"
+                            ? "danger"
+                            : "secondary"
+                      }
+                    >
+                      {d.type}
+                    </Badge>
+                  </td>
+                  <td>{d.priceListId || "-"}</td>
+                  <td>{d.itemName || "-"}</td>
+                  <td>{d.description || "-"}</td>
+                  <td>{d.quantity}</td>
+                  <td>{d.unitPrice?.toLocaleString() || 0}</td>
+                  <td className="fw-bold text-danger">{d.lineTotal?.toLocaleString() || 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="text-muted fst-italic">Không có chi tiết phát sinh trong hóa đơn này.</p>
+        )}
+
+        <hr />
+
         <div className="invoice-summary mt-3">
           <h5 className="fw-bold text-secondary mb-3">💰 Thông tin thanh toán</h5>
           <Row>
             <Col md={6}>
-              <p>
-                <strong>Tổng tiền thuê xe:</strong>{" "}
-                {invoice.totalAmount.toLocaleString()} VND
-              </p>
-              <p>
-                <strong>Đã đặt cọc:</strong>{" "}
-                {invoice.depositAmount.toLocaleString()} VND
-              </p>
+              <p><strong>Tiền thuê xe:</strong> {breakdown?.rentalAmount.toLocaleString()} VND</p>
+              <p><strong>Tổng tiền của hóa đơn:</strong> {invoice.totalAmount.toLocaleString()} VND</p>
+              <p><strong>Đã đặt cọc:</strong> {invoice.depositAmount.toLocaleString()} VND</p>
+              <p><strong>Hoàn tiền:</strong> {invoice.refundAmount ? invoice.refundAmount.toLocaleString() + " VND" : "Không có"}</p>
             </Col>
             <Col md={6}>
-              <p>
-                <strong>Số tiền còn lại:</strong>{" "}
-                <span className="text-danger fw-bold">
-                  {invoice.amountRemaining.toLocaleString()} VND
-                </span>
-              </p>
-              <p>
-                <strong>Ghi chú:</strong>{" "}
-                {invoice.notes || "Không có ghi chú"}
-              </p>
+              <p><strong>Số tiền còn lại:</strong> <span className="text-danger fw-bold">{breakdown?.amountToPay.toLocaleString()} VND</span></p>
+              <p><strong>Ghi chú:</strong> {invoice.notes || "Không có ghi chú"}</p>
             </Col>
           </Row>
         </div>
 
-        {invoice.details && invoice.details.length > 0 && (
-          <>
-            <hr />
-            <h5 className="fw-bold text-secondary mb-3">
-              🧾 Chi tiết các khoản phát sinh
-            </h5>
-            <table className="table table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>Hạng mục</th>
-                  <th>Mô tả</th>
-                  <th>Số lượng</th>
-                  <th>Đơn giá (VND)</th>
-                  <th>Thành tiền (VND)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.details.map((d: any, index: number) => (
-                  <tr key={index}>
-                    <td>{d.itemName}</td>
-                    <td>{d.description || "-"}</td>
-                    <td>{d.quantity}</td>
-                    <td>{d.unitPrice.toLocaleString()}</td>
-                    <td className="fw-bold">{d.lineTotal.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
+
 
         <div className="text-center mt-4">
           <Button
@@ -258,7 +279,9 @@ const FinalPayment: React.FC = () => {
                     : "outline-primary"
             }
             size="lg"
-            disabled={invoice.status === "PAID"}
+            disabled={invoice.status === "PAID" || !breakdown 
+              || breakdown.amountToPay <= 0
+            }
             onClick={handlePayment}
           >
             {invoice.status === "PAID"

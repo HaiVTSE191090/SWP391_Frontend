@@ -246,7 +246,9 @@ const Navbar: React.FC = () => {
                   </li>
 
                   <li className="nav-item">
-                    <button className="btn btn-link text-decoration-none">
+                    <button className="btn btn-link text-decoration-none"
+                      onClick={() => navigate("/profile")}>
+                      <i className="fas fa-user-circle   me-2"></i>
                       Tài khoản của tôi
                     </button>
                   </li>
