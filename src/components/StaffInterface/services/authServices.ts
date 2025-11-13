@@ -529,3 +529,23 @@ export const refundToCash = async (invoiceId: number, amount: number, reason: st
         throw error;
     }
 };
+
+// Hoàn thành booking (chuyển trạng thái sang COMPLETED)
+export const completeBooking = async (bookingId: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.put(
+            `${baseURL}/api/bookings/${bookingId}/status/completed`,
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi hoàn thành booking:', error);
+        throw error;
+    }
+};

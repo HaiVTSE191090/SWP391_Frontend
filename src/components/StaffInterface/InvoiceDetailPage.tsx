@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, Spinner, Table, Alert, Button, Form, Row, Col, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { getInvoiceDetail, getSpareParts, addInvoiceDetail, refundToWallet, refundToCash } from "./services/authServices";
+import { getInvoiceDetail, getSpareParts, addInvoiceDetail, refundToWallet, refundToCash, completeBooking } from "./services/authServices";
 
 interface SparePart {
   priceId: number;
@@ -42,6 +42,7 @@ interface Invoice {
 
 const InvoiceDetailPage: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
+  const navigate = useNavigate();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,10 @@ const InvoiceDetailPage: React.FC = () => {
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [refunding, setRefunding] = useState(false);
   const [refundReason, setRefundReason] = useState("");
+  
+  // State cho completing booking
+  const [completing, setCompleting] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,6 +134,29 @@ const InvoiceDetailPage: React.FC = () => {
       toast.error(`❌ ${errorMsg}`);
     } finally {
       setAdding(false);
+    }
+  };
+
+  // Handler hoàn thành booking
+  const handleCompleteBooking = async () => {
+    if (!invoice) return;
+
+    setCompleting(true);
+    try {
+      await completeBooking(invoice.bookingId);
+      toast.success("✅ Đã hoàn thành booking thành công!");
+      setShowCompleteModal(false);
+      
+      // Chuyển về trang danh sách booking
+      setTimeout(() => {
+        navigate('/staff/bookings');
+      }, 1500);
+      
+    } catch (error: any) {
+      console.error("❌ Lỗi khi hoàn thành booking:", error);
+      const errorMsg = error.response?.data?.message || "Không thể hoàn thành booking!";
+      toast.error(`❌ ${errorMsg}`);
+      setCompleting(false);
     }
   };
 
@@ -223,45 +251,48 @@ const InvoiceDetailPage: React.FC = () => {
             const rentalTotal = invoice.totalAmount - sparePartTotal;
             
             return (
-              <>
+              <div className="border-start border-primary border-4 ps-3 py-2 bg-light">
                 {rentalTotal > 0 && (
-                  <p>
+                  <p className="mb-2">
                     <strong>Tiền thuê xe:</strong>{" "}
-                    {rentalTotal.toLocaleString("vi-VN")} VND
+                    <span className="text-dark fw-bold fs-5">
+                      {rentalTotal.toLocaleString("vi-VN")} VND
+                    </span>
                   </p>
                 )}
                 {sparePartTotal > 0 && (
-                  <p>
+                  <p className="mb-2">
                     <strong>Tiền phụ tùng:</strong>{" "}
-                    <span className="text-danger fw-bold">
+                    <span className="text-danger fw-bold fs-5">
                       {sparePartTotal.toLocaleString("vi-VN")} VND
                     </span>
                   </p>
                 )}
-                <p>
+                <p className="mb-2">
                   <strong>Tổng tiền:</strong>{" "}
-                  <span className="text-success fw-bold fs-5">
+                  <span className="text-success fw-bold fs-4">
                     {invoice.totalAmount.toLocaleString("vi-VN")} VND
                   </span>
                 </p>
-              </>
+                {invoice.depositAmount > 0 && (
+                  <p className="mb-2">
+                    <strong>Tiền cọc:</strong>{" "}
+                    <span className="text-info fw-bold fs-5">
+                      {invoice.depositAmount.toLocaleString("vi-VN")} VND
+                    </span>
+                  </p>
+                )}
+                {invoice.refundAmount > 0 && (
+                  <p className="mb-0">
+                    <strong>Số tiền hoàn lại:</strong>{" "}
+                    <span className="text-primary fw-bold fs-5">
+                      {invoice.refundAmount.toLocaleString("vi-VN")} VND
+                    </span>
+                  </p>
+                )}
+              </div>
             );
           })()}
-          
-          {invoice.depositAmount > 0 && (
-            <p>
-              <strong>Tiền cọc:</strong>{" "}
-              {invoice.depositAmount.toLocaleString("vi-VN")} VND
-            </p>
-          )}
-          {invoice.refundAmount > 0 && (
-            <p>
-              <strong>Số tiền hoàn lại:</strong>{" "}
-              <span className="text-primary fw-bold">
-                {invoice.refundAmount.toLocaleString("vi-VN")} VND
-              </span>
-            </p>
-          )}
           <p>
             <strong>Ghi chú:</strong> {invoice.notes || "Không có ghi chú"}
           </p>
@@ -404,6 +435,25 @@ const InvoiceDetailPage: React.FC = () => {
                 </Button>
               </Form>
             )}
+            
+            {/* Nút Complete Booking - hiện khi invoice đã thanh toán */}
+            {invoice.status === 'PAID' && (
+              <div className="mt-4">
+                <hr />
+                <Alert variant="info" className="small mb-3">
+                  ℹ️ Hóa đơn đã thanh toán. Bấm nút bên dưới để hoàn thành booking.
+                </Alert>
+                <Button
+                  variant="success"
+                  size="lg"
+                  className="w-100"
+                  onClick={() => setShowCompleteModal(true)}
+                  disabled={completing}
+                >
+                  ✅ Hoàn thành Booking
+                </Button>
+              </div>
+            )}
           </Card>
         </Col>
       </Row>
@@ -475,6 +525,61 @@ const InvoiceDetailPage: React.FC = () => {
             disabled={refunding}
           >
             Hủy
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal xác nhận hoàn thành booking */}
+      <Modal
+        show={showCompleteModal}
+        onHide={() => !completing && setShowCompleteModal(false)}
+        centered
+        backdrop={completing ? "static" : true}
+        size="lg"
+      >
+        <Modal.Header closeButton={!completing} className="bg-warning">
+          <Modal.Title className="fs-4 fw-bold">⚠️ Xác nhận hoàn thành Booking</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-4">
+          <Alert variant="warning" className="mb-4">
+            <div className="d-flex align-items-center">
+              <span className="fs-3 me-2">⚠️</span>
+              <div>
+                <strong className="fs-5">Cảnh báo:</strong>
+                <p className="mb-0 mt-1">Hành động này không thể hoàn tác!</p>
+              </div>
+            </div>
+          </Alert>
+          <p className="fs-5 mb-3">
+            Bạn có chắc chắn muốn đánh dấu <strong className="text-primary">Booking #{invoice?.bookingId}</strong> là hoàn thành không?
+          </p>
+          <p className="text-muted mb-0 fs-6">
+            Sau khi hoàn thành, trạng thái booking sẽ được chuyển sang <span className="badge bg-success fs-6">COMPLETED</span> và bạn sẽ được chuyển về trang danh sách booking.
+          </p>
+        </Modal.Body>
+        <Modal.Footer className="p-3">
+          <Button 
+            variant="secondary" 
+            size="lg"
+            onClick={() => setShowCompleteModal(false)}
+            disabled={completing}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="success"
+            size="lg"
+            onClick={handleCompleteBooking}
+            disabled={completing}
+          >
+            {completing ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Đang xử lý...
+              </>
+            ) : (
+              "✅ Xác nhận hoàn thành"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>
