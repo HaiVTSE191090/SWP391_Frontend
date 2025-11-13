@@ -74,7 +74,7 @@ const App = () => {
                 <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
                 <Route path="booking/:bookingId/create-invoice" element={<CreateInvoice />} />
                 <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="booking/:invoiceId/invoice" element={<InvoiceDetailPage />} />
+                <Route path="invoice/:invoiceId" element={<InvoiceDetailPage />} />
                 <Route path="payment" element={<PaymentPage />} />
               </Route>
             </Route>

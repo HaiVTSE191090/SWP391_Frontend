@@ -7,7 +7,8 @@ import {
     uploadCarImage,
     confirmBeforeRentalAndStartBooking,
     getImageChecklist,
-    confirmReturnVehicle
+    confirmReturnVehicle,
+    createFinalInvoice
 } from './services/authServices';
 import { toast } from 'react-toastify';
 
@@ -109,6 +110,9 @@ function BookingDetail() {
         notes: ''
     });
     const [submittingReturn, setSubmittingReturn] = useState(false);
+    
+    // State cho tạo hóa đơn
+    const [creatingInvoice, setCreatingInvoice] = useState(false);
 
     // Ref cho input file ẩn (dùng cho update ảnh)
     const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
@@ -274,6 +278,45 @@ function BookingDetail() {
             toast.error("❌ Lỗi khi xác nhận trả xe!");
         } finally {
             setSubmittingReturn(false);
+        }
+    };
+
+    // Handler tạo hóa đơn cuối cùng
+    const handleCreateInvoice = async () => {
+        if (!booking) return;
+
+        // Kiểm tra xem đã có đủ ảnh trước và sau thuê chưa
+        if (!canConfirmReturn) {
+            toast.error("❌ Vui lòng chụp đủ ảnh trước thuê và sau thuê trước khi tạo hóa đơn!");
+            return;
+        }
+
+        // Kiểm tra trạng thái booking trước khi tạo invoice
+        console.log('📋 Booking info:', {
+            bookingId: booking.bookingId,
+            status: booking.status
+        });
+
+        setCreatingInvoice(true);
+        try {
+            const response = await createFinalInvoice(booking.bookingId);
+            console.log('✅ Invoice response:', response.data);
+            
+            const invoiceId = response.data?.data?.invoiceId;
+
+            if (invoiceId) {
+                toast.success("✅ Đã tạo hóa đơn thành công!");
+                // Chuyển hướng sang trang chi tiết hóa đơn
+                navigate(`/staff/invoice/${invoiceId}`);
+            } else {
+                toast.error("❌ Không thể lấy ID hóa đơn!");
+            }
+        } catch (error: any) {
+            console.error('❌ Lỗi chi tiết:', error.response?.data);
+            const errorMsg = error.response?.data?.message || error.message || "Lỗi khi tạo hóa đơn!";
+            toast.error(`❌ ${errorMsg}`);
+        } finally {
+            setCreatingInvoice(false);
         }
     };
 
@@ -560,9 +603,25 @@ function BookingDetail() {
                         </Col>
                     </Row>
 
+                    {/* Thông báo trạng thái ảnh */}
+                    {checkingReturnImages ? (
+                        <Alert variant="info" className="text-center">
+                            <Spinner animation="border" size="sm" className="me-2" />
+                            Đang kiểm tra ảnh...
+                        </Alert>
+                    ) : !canConfirmReturn ? (
+                        <Alert variant="warning" className="text-center">
+                            ⚠️ Chưa đủ ảnh trước thuê và sau thuê. Vui lòng chụp đầy đủ trước khi tạo hóa đơn!
+                        </Alert>
+                    ) : (
+                        <Alert variant="success" className="text-center">
+                            ✅ Đã có đủ ảnh trước và sau thuê. Có thể tạo hóa đơn!
+                        </Alert>
+                    )}
+
                     {/* HÀNG NÚT HÀNH ĐỘNG THỨ HAI */}
                     <Row className="mb-4 justify-content-center">
-                        <Col xs={12} md={6} className="mb-2">
+                        <Col xs={12} md={4} className="mb-2">
                             <Button
                                 variant="success"
                                 className="w-100"
@@ -571,7 +630,25 @@ function BookingDetail() {
                                 ✅ Xác nhận trả xe
                             </Button>
                         </Col>
-                        <Col xs={12} md={6} className="mb-2">
+                        <Col xs={12} md={4} className="mb-2">
+                            <Button
+                                variant="primary"
+                                className="w-100"
+                                onClick={handleCreateInvoice}
+                                disabled={creatingInvoice || !canConfirmReturn || checkingReturnImages}
+                                title={!canConfirmReturn ? "Cần chụp đủ ảnh trước và sau thuê" : ""}
+                            >
+                                {creatingInvoice ? (
+                                    <>
+                                        <Spinner animation="border" size="sm" className="me-2" />
+                                        Đang tạo...
+                                    </>
+                                ) : (
+                                    '🧾 Tạo hóa đơn'
+                                )}
+                            </Button>
+                        </Col>
+                        <Col xs={12} md={4} className="mb-2">
                             <Button
                                 variant="danger"
                                 className="w-100"

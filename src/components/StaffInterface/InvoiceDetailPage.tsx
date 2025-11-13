@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Spinner, Table, Alert } from "react-bootstrap";
+import { Card, Spinner, Table, Alert, Button, Form, Row, Col, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { getInvoiceDetail } from "./services/authServices";
+import { getInvoiceDetail, getSpareParts, addInvoiceDetail, refundToWallet, refundToCash } from "./services/authServices";
+
+interface SparePart {
+  priceId: number;
+  itemName: string;
+  description: string;
+  unitPrice: number;
+  stockQuantity: number;
+  sparePartType: string;
+}
 
 interface InvoiceDetail {
   invoiceDetailId: number;
@@ -21,6 +30,7 @@ interface Invoice {
   type: string;
   depositAmount: number;
   totalAmount: number;
+  refundAmount: number;
   amountRemaining: number;
   status: string;
   paymentMethod: string;
@@ -33,18 +43,39 @@ interface Invoice {
 const InvoiceDetailPage: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [spareParts, setSpareParts] = useState<SparePart[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // State cho form thêm spare part
+  const [selectedPartId, setSelectedPartId] = useState<number>(0);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [adding, setAdding] = useState(false);
+  
+  // State cho modal hoàn tiền
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [refunding, setRefunding] = useState(false);
+  const [refundReason, setRefundReason] = useState("");
 
   useEffect(() => {
-    const fetchInvoiceDetail = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await getInvoiceDetail(Number(invoiceId));
-        setInvoice(res.data.data);
+        
+        // Fetch invoice detail
+        const invoiceRes = await getInvoiceDetail(Number(invoiceId));
+        setInvoice(invoiceRes.data.data);
+        
+        // Fetch spare parts list
+        const sparePartsRes = await getSpareParts();
+        console.log('📦 Spare parts response:', sparePartsRes.data);
+        const parts = sparePartsRes.data.data || [];
+        console.log('📦 Spare parts array:', parts);
+        setSpareParts(parts);
+        
       } catch (error: any) {
-        console.error("❌ Lỗi khi tải hóa đơn:", error);
+        console.error("❌ Lỗi khi tải dữ liệu:", error);
         toast.error(
-          error.response?.data?.message || "Không thể tải thông tin hóa đơn!",
+          error.response?.data?.message || "Không thể tải thông tin!",
           { position: "top-right", autoClose: 3000 }
         );
       } finally {
@@ -52,8 +83,85 @@ const InvoiceDetailPage: React.FC = () => {
       }
     };
 
-    fetchInvoiceDetail();
+    fetchData();
   }, [invoiceId]);
+
+  // Handler thêm spare part vào hóa đơn
+  const handleAddSparePart = async () => {
+    if (!selectedPartId || quantity <= 0) {
+      toast.warning("Vui lòng chọn phụ tùng và nhập số lượng hợp lệ!");
+      return;
+    }
+
+    if (!selectedPart) {
+      toast.error("Không tìm thấy thông tin phụ tùng!");
+      return;
+    }
+
+    try {
+      setAdding(true);
+      
+      // Tạo payload theo API spec
+      const detail = {
+        type: "SPAREPART",
+        priceListId: selectedPartId,
+        description: selectedPart.description,
+        quantity: quantity,
+        unitPrice: selectedPart.unitPrice
+      };
+      
+      // Gọi API thêm spare part vào invoice
+      await addInvoiceDetail(Number(invoiceId), detail);
+      
+      toast.success("✅ Đã thêm phụ tùng vào hóa đơn!");
+      
+      // Reload lại invoice
+      const res = await getInvoiceDetail(Number(invoiceId));
+      setInvoice(res.data.data);
+      
+      // Reset form
+      setSelectedPartId(0);
+      setQuantity(1);
+      
+    } catch (error: any) {
+      console.error("❌ Lỗi khi thêm spare part:", error);
+      const errorMsg = error.response?.data?.message || "Không thể thêm phụ tùng!";
+      toast.error(`❌ ${errorMsg}`);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  // Handler hoàn tiền
+  const handleRefund = async (method: 'WALLET' | 'CASH') => {
+    if (!invoice) return;
+    
+    if (!refundReason.trim()) {
+      toast.warning("⚠️ Vui lòng nhập lý do hoàn tiền!");
+      return;
+    }
+
+    setRefunding(true);
+    try {
+      const refundFunc = method === 'WALLET' ? refundToWallet : refundToCash;
+      await refundFunc(invoice.invoiceId, invoice.refundAmount, refundReason.trim());
+      
+      toast.success(`✅ Đã hoàn tiền ${method === 'WALLET' ? 'vào ví' : 'mặt'} thành công!`);
+      setShowRefundModal(false);
+      setRefundReason("");
+      
+      // Reload invoice
+      const res = await getInvoiceDetail(Number(invoiceId));
+      setInvoice(res.data.data);
+      
+    } catch (error: any) {
+      console.error("❌ Lỗi khi hoàn tiền:", error);
+      const errorMsg = error.response?.data?.message || "Không thể hoàn tiền!";
+      toast.error(`❌ ${errorMsg}`);
+    } finally {
+      setRefunding(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -72,12 +180,17 @@ const InvoiceDetailPage: React.FC = () => {
     );
   }
 
+  const selectedPart = spareParts.find(part => part.priceId === selectedPartId);
+
   return (
-    <div className="container py-4">
-      <Card className="shadow-sm p-4">
-        <h4 className="fw-bold text-center mb-3">
-          🧾 Chi tiết hóa đơn #{invoice.invoiceId}
-        </h4>
+    <div className="container-fluid py-4">
+      <Row>
+        {/* Cột trái - Chi tiết hóa đơn */}
+        <Col md={8}>
+          <Card className="shadow-sm p-4">
+            <h4 className="fw-bold text-center mb-3">
+              🧾 Chi tiết hóa đơn #{invoice.invoiceId}
+            </h4>
 
         <div className="mb-3">
           <p>
@@ -101,26 +214,71 @@ const InvoiceDetailPage: React.FC = () => {
               {invoice.status}
             </span>
           </p>
-          <p>
-            <strong>Phương thức thanh toán:</strong> {invoice.paymentMethod}
-          </p>
-          <p>
-            <strong>Tổng tiền:</strong>{" "}
-            {invoice.totalAmount.toLocaleString("vi-VN")} VND
-          </p>
-          <p>
-            <strong>Còn lại phải thanh toán:</strong>{" "}
-            {invoice.amountRemaining.toLocaleString("vi-VN")} VND
-          </p>
+          
+          {/* Tính tổng tiền phụ tùng */}
+          {(() => {
+            const sparePartTotal = invoice.details
+              ?.filter(item => item.type === 'SPAREPART')
+              .reduce((sum, item) => sum + item.lineTotal, 0) || 0;
+            const rentalTotal = invoice.totalAmount - sparePartTotal;
+            
+            return (
+              <>
+                {rentalTotal > 0 && (
+                  <p>
+                    <strong>Tiền thuê xe:</strong>{" "}
+                    {rentalTotal.toLocaleString("vi-VN")} VND
+                  </p>
+                )}
+                {sparePartTotal > 0 && (
+                  <p>
+                    <strong>Tiền phụ tùng:</strong>{" "}
+                    <span className="text-danger fw-bold">
+                      {sparePartTotal.toLocaleString("vi-VN")} VND
+                    </span>
+                  </p>
+                )}
+                <p>
+                  <strong>Tổng tiền:</strong>{" "}
+                  <span className="text-success fw-bold fs-5">
+                    {invoice.totalAmount.toLocaleString("vi-VN")} VND
+                  </span>
+                </p>
+              </>
+            );
+          })()}
+          
           {invoice.depositAmount > 0 && (
             <p>
               <strong>Tiền cọc:</strong>{" "}
               {invoice.depositAmount.toLocaleString("vi-VN")} VND
             </p>
           )}
+          {invoice.refundAmount > 0 && (
+            <p>
+              <strong>Số tiền hoàn lại:</strong>{" "}
+              <span className="text-primary fw-bold">
+                {invoice.refundAmount.toLocaleString("vi-VN")} VND
+              </span>
+            </p>
+          )}
           <p>
             <strong>Ghi chú:</strong> {invoice.notes || "Không có ghi chú"}
           </p>
+          
+          {/* Nút hoàn tiền */}
+          {invoice.refundAmount > 0 && invoice.status !== 'PAID' && (
+            <div className="mt-3">
+              <Button 
+                variant="success" 
+                size="lg" 
+                className="w-100"
+                onClick={() => setShowRefundModal(true)}
+              >
+                💰 Hoàn tiền {invoice.refundAmount.toLocaleString("vi-VN")} VND
+              </Button>
+            </div>
+          )}
           <p className="text-muted small">
             <strong>Ngày tạo:</strong>{" "}
             {new Date(invoice.createdAt).toLocaleString("vi-VN")}
@@ -160,7 +318,166 @@ const InvoiceDetailPage: React.FC = () => {
         ) : (
           <p className="text-muted fst-italic">Không có chi tiết hóa đơn.</p>
         )}
-      </Card>
+          </Card>
+        </Col>
+
+        {/* Cột phải - Form thêm spare parts */}
+        <Col md={4}>
+          <Card className="shadow-sm p-4 sticky-top" style={{ top: '20px' }}>
+            <h5 className="fw-bold mb-3">🔧 Thêm phụ tùng</h5>
+            
+            {spareParts.length === 0 ? (
+              <Alert variant="warning">
+                Không có phụ tùng nào trong hệ thống.
+              </Alert>
+            ) : (
+              <Form>
+                {/* Dropdown chọn tên phụ tùng */}
+                <Form.Group className="mb-3">
+                  <Form.Label>Tên phụ tùng</Form.Label>
+                  <Form.Select
+                    value={selectedPartId || 0}
+                    onChange={(e) => setSelectedPartId(Number(e.target.value))}
+                    disabled={adding}
+                  >
+                    <option value={0}>-- Chọn phụ tùng --</option>
+                    {spareParts.map((part) => (
+                      <option key={part.priceId} value={part.priceId}>
+                        {part.itemName}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+
+                {/* Ô hiển thị giá (readonly) */}
+                <Form.Group className="mb-3">
+                  <Form.Label>Đơn giá</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={selectedPart ? `${selectedPart.unitPrice.toLocaleString("vi-VN")} VND` : ''}
+                    readOnly
+                    disabled
+                    placeholder="Chọn phụ tùng để xem giá"
+                  />
+                </Form.Group>
+
+                {/* Ô nhập số lượng */}
+                <Form.Group className="mb-3">
+                  <Form.Label>Số lượng</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min={1}
+                    max={selectedPart?.stockQuantity || 999}
+                    value={quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    disabled={adding || !selectedPart}
+                    placeholder="Nhập số lượng"
+                  />
+                  {selectedPart && (
+                    <Form.Text className="text-muted">
+                      Còn lại: {selectedPart.stockQuantity} cái
+                    </Form.Text>
+                  )}
+                </Form.Group>
+
+              {selectedPart && quantity > 0 && (
+                <Alert variant="success" className="small">
+                  <strong>Thành tiền:</strong>{" "}
+                  {(selectedPart.unitPrice * quantity).toLocaleString("vi-VN")} VND
+                </Alert>
+              )}
+
+                <Button
+                  variant="primary"
+                  className="w-100"
+                  onClick={handleAddSparePart}
+                  disabled={selectedPartId === 0 || quantity <= 0 || adding}
+                >
+                  {adding ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Đang thêm...
+                    </>
+                  ) : (
+                    "➕ Thêm vào hóa đơn"
+                  )}
+                </Button>
+              </Form>
+            )}
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Modal chọn phương thức hoàn tiền */}
+      <Modal 
+        show={showRefundModal} 
+        onHide={() => !refunding && setShowRefundModal(false)}
+        centered
+        backdrop={refunding ? "static" : true}
+      >
+        <Modal.Header closeButton={!refunding} className="bg-success text-white">
+          <Modal.Title>💰 Hoàn tiền cho khách hàng</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert variant="info">
+            <strong>Số tiền hoàn lại:</strong>{" "}
+            <span className="fs-5 fw-bold">
+              {invoice?.refundAmount.toLocaleString("vi-VN")} VND
+            </span>
+          </Alert>
+
+          <Form.Group className="mb-3">
+            <Form.Label>Lý do hoàn tiền <span className="text-danger">*</span></Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              placeholder="Nhập lý do hoàn tiền..."
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              disabled={refunding}
+            />
+          </Form.Group>
+
+          <p className="text-muted mb-3">Chọn phương thức hoàn tiền:</p>
+          
+          <div className="d-grid gap-2">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => handleRefund('WALLET')}
+              disabled={refunding || !refundReason.trim()}
+            >
+              {refunding ? (
+                <><Spinner animation="border" size="sm" className="me-2" />Đang xử lý...</>
+              ) : (
+                <>🏦 Hoàn vào Ví điện tử</>
+              )}
+            </Button>
+            
+            <Button
+              variant="success"
+              size="lg"
+              onClick={() => handleRefund('CASH')}
+              disabled={refunding || !refundReason.trim()}
+            >
+              {refunding ? (
+                <><Spinner animation="border" size="sm" className="me-2" />Đang xử lý...</>
+              ) : (
+                <>💵 Hoàn bằng Tiền mặt</>
+              )}
+            </Button>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowRefundModal(false)}
+            disabled={refunding}
+          >
+            Hủy
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

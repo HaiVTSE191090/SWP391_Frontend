@@ -427,3 +427,105 @@ export const getInvoiceDetail = async (invoiceId: number) => {
         throw error;
     }
 };
+
+// Lấy danh sách spare parts
+export const getSpareParts = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.get(
+            `${baseURL}/api/invoices/spare-parts`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi lấy danh sách spare parts:', error);
+        throw error;
+    }
+};
+
+// Tạo hóa đơn cuối cùng (final invoice) cho booking
+export const createFinalInvoice = async (bookingId: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.post(
+            `${baseURL}/api/invoices/bookings/${bookingId}/invoices/final`,
+            null,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi tạo hóa đơn cuối cùng:', error);
+        throw error;
+    }
+};
+
+// Thêm spare part vào hóa đơn
+export const addInvoiceDetail = async (invoiceId: number, detail: any) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.post(
+            `${baseURL}/api/invoices/invoices/${invoiceId}/details`,
+            detail,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi thêm chi tiết hóa đơn:', error);
+        throw error;
+    }
+};
+
+// Hoàn tiền qua ví
+export const refundToWallet = async (invoiceId: number, amount: number, reason: string) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.post(
+            `${baseURL}/api/payments/invoice/${invoiceId}/refund/wallet`,
+            { amount, reason },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi hoàn tiền vào ví:', error);
+        throw error;
+    }
+};
+
+// Hoàn tiền mặt
+export const refundToCash = async (invoiceId: number, amount: number, reason: string) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.post(
+            `${baseURL}/api/payments/invoice/${invoiceId}/refund/cash`,
+            { amount, reason },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi hoàn tiền mặt:', error);
+        throw error;
+    }
+};

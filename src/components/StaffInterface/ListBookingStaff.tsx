@@ -109,7 +109,7 @@ const ListBookingStaff: React.FC = () => {
     // Hàm lấy text cho nút hành động
     const getButtonText = (contractStatus: string) => {
         if (contractStatus === 'NOT_CREATED') return 'Tạo Hợp đồng';
-        if (contractStatus === 'PENDING_ADMIN_SIGNATURE') return 'Thực hiện/Ký hợp đồng';
+        if (contractStatus === 'PENDING_ADMIN_SIGNATURE') return 'Xem chi tiết';
         return 'Xem Chi tiết';
     };
 
