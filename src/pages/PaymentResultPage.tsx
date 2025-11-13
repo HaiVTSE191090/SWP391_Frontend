@@ -65,7 +65,7 @@ export default function PaymentResultPage() {
         };
 
         processIpn();
-    }, []);
+    }, [params]);
 
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', {

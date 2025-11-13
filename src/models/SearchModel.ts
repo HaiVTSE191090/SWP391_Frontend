@@ -53,8 +53,8 @@ export const getDateAfterDays = (days: number): string => {
 };
 
 export const getDefaultTimeSelection = (): TimeSelection => {
-  const sevenDaysLater = getDateAfterDays(7);
-  const eightDaysLater = getDateAfterDays(8);
+  const sevenDaysLater = getDateAfterDays(0);
+  const eightDaysLater = getDateAfterDays(0);
   return {
     mode: "day",
     startDate: sevenDaysLater,

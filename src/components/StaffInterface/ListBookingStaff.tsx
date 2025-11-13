@@ -144,7 +144,7 @@ const ListBookingStaff: React.FC = () => {
         <Container fluid className="mt-4">
             {/* Header */}
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Danh Sách Booking Chưa Tạo Hợp Đồng</h2>
+                <h2>Danh Sách Booking Tại Trạm</h2>
                 <Button variant="primary" onClick={fetchBooking}>
                     <i className="bi bi-arrow-clockwise"></i> Làm mới
                 </Button>
@@ -290,7 +290,7 @@ const ListBookingStaff: React.FC = () => {
 
             {bookings.length > 0 && (
                 <div className="text-muted">
-                    <small>Tổng số booking chưa tạo hợp đồng: {bookings.length}</small>
+                    <small>Tổng số booking: {bookings.length}</small>
                 </div>
             )}
 

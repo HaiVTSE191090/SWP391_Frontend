@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { TimeSelection, getDateAfterDays } from "../../models/SearchModel";
 import { closeModal } from "../../controller/SearchController";
+import { usePolicy } from "../../hooks/usePolicy";
 
 type Props = {
-  current: TimeSelection;
+  current: TimeSelection ;
   onSave: (val: TimeSelection) => void;
 };
 
@@ -12,21 +13,31 @@ export default function TimeModal({ current, onSave }: Props) {
   const [endDate, setEndDate] = useState(current.endDate);
   const [startTime, setStartTime] = useState(current.startTime);
   const [endTime, setEndTime] = useState(current.endTime);
+  const [minStart, setMinStart] = useState<number>(0);
+  const [maxStart, setMaxStart] = useState<number>(0);
+  const [maxEnd, setMaxEnd] = useState<number>(0);
+  const { fetchPolicyDay } = usePolicy();
+
+
 
   useEffect(() => {
+    const fetchData =async () => {
+      const data = await fetchPolicyDay();
+      setMinStart(Number(data.minStartDay));
+      setMaxStart(Number(data.maxStartDay));
+      setMaxEnd(Number(data.maxEndDay));
+    }
+    fetchData()
     const nextDay = new Date(startDate);
     nextDay.setDate(nextDay.getDate() + 1);
     setEndDate(nextDay.toISOString().slice(0, 10));
-  }, [startDate]);
+  }, [fetchPolicyDay, startDate]);
 
-  const minStartDate = useMemo(() => getDateAfterDays(7), []);
-  const maxStartDate = useMemo(() => getDateAfterDays(14), []);
 
-  const maxEndDate = useMemo(() => {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + 37);
-    return date.toISOString().slice(0, 10);
-  }, [startDate]);
+
+  const minStartDate = useMemo(() => getDateAfterDays(minStart), [minStart]);
+  const maxStartDate = useMemo(() => getDateAfterDays(maxStart), [maxStart]);
+  const maxEndDate = useMemo(() => getDateAfterDays(maxEnd), [maxEnd]);
 
 
   const minEndDate = useMemo(() => {
@@ -40,14 +51,14 @@ export default function TimeModal({ current, onSave }: Props) {
     setEndTime(newStartTime);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (startDate < minStartDate) {
-      alert(`Ngày nhận xe phải từ ${minStartDate} trở đi (7 ngày sau hôm nay)`);
+      alert(`Ngày nhận xe phải từ ${minStartDate} trở đi`);
       return;
     }
 
     if (startDate > maxStartDate) {
-      alert(`Ngày nhận xe không được quá ${maxStartDate} (14 ngày kể từ hôm nay)`);
+      alert(`Ngày nhận xe không được quá ${maxStartDate}`);
       return;
     }
 
@@ -57,7 +68,7 @@ export default function TimeModal({ current, onSave }: Props) {
     }
 
     if (endDate > maxEndDate) {
-      alert(`Ngày trả xe không được quá ${maxEndDate} (30 ngày kể từ ngày nhận)`);
+      alert(`Ngày trả xe không được quá ${maxEndDate}`);
       return;
     }
 
@@ -167,7 +178,6 @@ function DayModeForm({
             value={startDate}
             onChange={(e) => onStartDateChange(e.target.value)}
           />
-          <small className="text-muted">7-14 ngày kể từ hôm nay</small>
         </div>
         <div className="col-md-6">
           <label className="form-label small">Ngày trả</label>
