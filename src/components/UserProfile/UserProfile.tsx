@@ -358,9 +358,6 @@ const UserProfile: React.FC = () => {
                   <th>Số tiền (VND)</th>
                   <th>Trạng thái</th>
                   <th>Ngày giao dịch</th>
-                  <th>Mã hóa đơn</th>
-                  <th>Loại hóa đơn</th>
-                  <th>Ghi chú</th>
                 </tr>
               </thead>
               <tbody>
@@ -396,9 +393,6 @@ const UserProfile: React.FC = () => {
                       </span>
                     </td>
                     <td>{new Date(tx.createdAt).toLocaleString("vi-VN")}</td>
-                    <td>#{tx.invoiceId || "-"}</td>
-                    <td>{tx.invoiceType || "-"}</td>
-                    <td>{tx.notes || "-"}</td>
                   </tr>
                 ))}
               </tbody>

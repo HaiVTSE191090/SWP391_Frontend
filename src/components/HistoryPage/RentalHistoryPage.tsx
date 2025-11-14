@@ -624,30 +624,7 @@ export default function RentalHistoryPage() {
                 >
                   💳 Xem chi tiết hóa đơn
                 </Button>
-                <button
-                  onClick={async () => {
-                    const token = localStorage.getItem("token");
-                    const res = await axios.get(
-                      `http://localhost:8080/api/invoices/bookings/${selectedBooking.bookingId}/invoices`,
-                      {
-                        headers: { Authorization: `Bearer ${token}` },
-                      }
-                    );
-                    const invoices = res.data?.data || [];
-                    const finalInvoice = invoices.find((inv : any) => inv.type === "FINAL");
-
-                    if (finalInvoice) {
-                      navigate(`/final-invoice/booking/${selectedBooking.bookingId}`);
-                    } else {
-                      toast.info("📄 Hiện chưa có hóa đơn tổng cho đơn này.", {
-                        position: "top-right",
-                        autoClose: 3000,
-                      });
-                    }
-                  }}
-                >
-                  xem chi tiết
-                </button>
+            
 
                 {/* 🖼️ Hình ảnh xe */}
                 {selectedBooking.bookingImages && selectedBooking.bookingImages.length > 0 && (
