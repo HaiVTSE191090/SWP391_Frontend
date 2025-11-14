@@ -527,7 +527,7 @@ export default function RentalHistoryPage() {
 
 
                 {/* ✅ Nút Hủy đơn (ẩn khi hợp đồng FULLY_SIGNED hoặc CANCELLED) */}
-                {b.status === "RESERVED" &&
+                {(b.status === "RESERVED" || b.status === "PENDING") &&
                   contractStatus !== "FULLY_SIGNED" &&
                   contractStatus !== "CANCELLED" && (
                     <Button
