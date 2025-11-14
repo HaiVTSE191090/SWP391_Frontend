@@ -26,6 +26,9 @@ interface ImageChecklist {
     isComplete: boolean;
 }
 
+// Constants
+const DEFAULT_DESCRIPTION = 'Chưa có mô tả';
+
 const createNewDamageDetail = (isRequired: boolean = false): DamageDetail => ({
     tempId: Date.now() + Math.random(), // ID tạm thời duy nhất
     itemId: '',
@@ -150,22 +153,52 @@ const PhotoCapturePage: React.FC = () => {
         ));
     };
 
-    // Xử lý khi user rời khỏi ô description (blur) - tự động update nếu đã có ảnh
+    // Xử lý khi user rời khỏi ô description (blur) - tự động xóa và re-upload với mô tả mới
     const handleDescriptionBlur = async (tempId: number, isRequired: boolean) => {
         const allItems = [...requiredList, ...optionalList];
         const currentItem = allItems.find(item => item.tempId === tempId);
         
-        // Nếu đã upload ảnh và có photoFile, re-upload với description mới
-        if (currentItem && currentItem.photoUrl && currentItem.photoFile) {
+        // Nếu chưa có ảnh hoặc chưa có mô tả mới, bỏ qua
+        if (!currentItem || !currentItem.photoUrl || !currentItem.photoFile) {
+            return;
+        }
+
+        // Nếu description trống, cảnh báo
+        if (!currentItem.description.trim()) {
+            toast.warning('Vui lòng nhập mô tả cho ảnh này!');
+            return;
+        }
+
+        // Nếu description mới khác default và có imageId, xóa ảnh cũ rồi upload lại
+        if (currentItem.imageId && currentItem.description.trim() !== DEFAULT_DESCRIPTION) {
             try {
-                await uploadCarImage(
+                toast.info('Đang cập nhật mô tả...');
+                
+                // Bước 1: Xóa ảnh cũ
+                await deleteBookingImage(parseInt(bookingId!), currentItem.imageId);
+                
+                // Bước 2: Upload lại với mô tả mới
+                const response = await uploadCarImage(
                     parseInt(bookingId!),
                     type!,
                     currentItem.itemId,
-                    currentItem.description || 'Chưa có mô tả',
+                    currentItem.description.trim(),
                     currentItem.photoFile
                 );
-                toast.info('Đã cập nhật mô tả!');
+
+                if (response?.data?.data?.imageUrl) {
+                    const setList = isRequired ? setRequiredList : setOptionalList;
+                    setList(prev => prev.map(item =>
+                        item.tempId === tempId ? { 
+                            ...item, 
+                            photoUrl: response.data.data.imageUrl,
+                            imageId: response.data.data.imageId
+                        } : item
+                    ));
+                    toast.success('Đã cập nhật mô tả thành công!');
+                } else {
+                    toast.error('Lỗi khi cập nhật mô tả. Vui lòng thử lại.');
+                }
             } catch (error) {
                 console.error('Lỗi khi cập nhật description:', error);
                 toast.error('Không thể cập nhật mô tả. Vui lòng thử lại.');
@@ -242,23 +275,19 @@ const PhotoCapturePage: React.FC = () => {
             return;
         }
 
-        // Kiểm tra phải nhập description trước khi upload
-        if (!currentItem.description || currentItem.description.trim() === '') {
-            toast.warning('Vui lòng nhập MÔ TẢ trước khi upload ảnh!');
-            return;
-        }
-
         // Đánh dấu đang upload
         setList(prev => prev.map(item =>
             item.tempId === tempId ? { ...item, photoFile: file, isUploading: true, photoUrl: '' } : item
         ));
 
-        // Gọi API upload
+        // Gọi API upload - dùng description nếu có, không thì dùng default
+        const description = currentItem.description.trim() || DEFAULT_DESCRIPTION;
+        
         const response = await uploadCarImage(
             parseInt(bookingId!),
             type!,
             currentItem.itemId,
-            currentItem.description.trim(),
+            description,
             file
         );
 
@@ -273,7 +302,7 @@ const PhotoCapturePage: React.FC = () => {
                     imageId: response.data.data.imageId // Lưu imageId từ server
                 } : item
             ));
-            toast.success('Upload ảnh thành công!');
+            toast.success('Upload ảnh thành công! Vui lòng nhập mô tả.');
         } else {
             // Upload thất bại
             toast.error('Upload ảnh thất bại. Vui lòng thử lại.');
@@ -419,16 +448,16 @@ const PhotoCapturePage: React.FC = () => {
                 <Form.Control
                     as="textarea"
                     rows={1}
-                    placeholder="Mô tả tình trạng (Bắt buộc)"
+                    placeholder={detail.photoUrl ? "Nhập mô tả tình trạng (Bắt buộc)" : "Upload ảnh trước, sau đó nhập mô tả"}
                     value={detail.description}
                     onChange={(e) => handleDetailChange(detail.tempId, 'description', e.target.value, isRequired)}
                     onBlur={() => handleDescriptionBlur(detail.tempId, isRequired)}
-                    disabled={loading || detail.isUploading}
+                    disabled={loading || detail.isUploading || !detail.photoUrl}
                     required
                     isInvalid={!!detail.photoUrl && !detail.description.trim()}
                 />
                 <Form.Control.Feedback type="invalid">
-                    Vui lòng nhập mô tả
+                    Vui lòng nhập mô tả sau khi upload ảnh
                 </Form.Control.Feedback>
             </td>
             

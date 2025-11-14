@@ -8,7 +8,8 @@ import {
     confirmBeforeRentalAndStartBooking,
     getImageChecklist,
     confirmReturnVehicle,
-    createFinalInvoice
+    createFinalInvoice,
+    getBookingImages
 } from './services/authServices';
 import { toast } from 'react-toastify';
 
@@ -63,6 +64,7 @@ interface BookingImage {
     createdAt: string;
     imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL' | 'DAMAGE';
     vehicleComponent: string; // Tên phụ tùng
+    confirmed?: boolean; // true = đã confirmed, false = chưa confirmed
 }
 
 interface FinalInvoice {
@@ -92,6 +94,7 @@ function BookingDetail() {
     const [confirmingBooking, setConfirmingBooking] = useState(false);
     const [canConfirmReturn, setCanConfirmReturn] = useState(false);
     const [checkingReturnImages, setCheckingReturnImages] = useState(false);
+    const [allAfterImagesConfirmed, setAllAfterImagesConfirmed] = useState(false);
 
     // State cho Modal xác nhận
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -136,17 +139,38 @@ function BookingDetail() {
                 const response = await getBookingDetail(bookingIdNumber);
                 if (response?.data?.data) {
                     const bookingData = response.data.data;
-                    setBooking(bookingData);
 
-                    // Phân loại ảnh theo imageType
-                    const before = bookingData.bookingImages.filter((img: BookingImage) => img.imageType === 'BEFORE_RENTAL');
-                    const after = bookingData.bookingImages.filter((img: BookingImage) => img.imageType === 'AFTER_RENTAL');
+                    // Gọi API riêng để lấy ảnh AFTER_RENTAL với field confirmed
+                    const afterImagesResp = await getBookingImages(bookingIdNumber, 'AFTER_RENTAL');
+                    const afterImagesWithConfirmed = afterImagesResp?.data?.data || [];
+                    
+                    // Cập nhật lại bookingImages với data có confirmed field
+                    const updatedBookingImages = bookingData.bookingImages.map((img: BookingImage) => {
+                        if (img.imageType === 'AFTER_RENTAL') {
+                            const confirmedImg = afterImagesWithConfirmed.find((afterImg: BookingImage) => afterImg.imageId === img.imageId);
+                            return confirmedImg || img;
+                        }
+                        return img;
+                    });
+                    
+                    // Cập nhật booking data với images có confirmed field
+                    const updatedBookingData = { ...bookingData, bookingImages: updatedBookingImages };
+                    setBooking(updatedBookingData);
+
+                    // Phân loại ảnh theo imageType (sử dụng updatedBookingImages)
+                    const before = updatedBookingImages.filter((img: BookingImage) => img.imageType === 'BEFORE_RENTAL');
+                    const after = updatedBookingImages.filter((img: BookingImage) => img.imageType === 'AFTER_RENTAL');
 
                     setBeforeImages(before);
                     setAfterImages(after);
+                    
+                    // Kiểm tra tất cả ảnh AFTER_RENTAL đã confirmed chưa
+                    const allConfirmed = afterImagesWithConfirmed.length > 0 && 
+                                        afterImagesWithConfirmed.every((img: BookingImage) => img.confirmed === true);
+                    setAllAfterImagesConfirmed(allConfirmed);
 
                     // Kiểm tra ảnh trước và sau thuê để enable nút xác nhận trả xe
-                    checkReturnImages(bookingData);
+                    checkReturnImages(updatedBookingData);
 
                 } else {
                     setError("Không thể tải chi tiết Booking. Vui lòng thử lại.");
@@ -194,6 +218,12 @@ function BookingDetail() {
     const handleUploadPhoto = (type: 'before' | 'after') => {
         if (!booking) return;
 
+        // Kiểm tra: Chỉ cho phép chụp ảnh AFTER_RENTAL khi đã xác nhận trả xe
+        if (type === 'after' && !booking.actualReturnTime) {
+            toast.warning('⚠️ Vui lòng XÁC NHẬN TRẢ XE trước khi chụp ảnh sau trả!');
+            return;
+        }
+
         const typeMapping: { [key: string]: string } = {
             'before': 'BEFORE_RENTAL',
             'after': 'AFTER_RENTAL'
@@ -213,6 +243,13 @@ function BookingDetail() {
     // Hiển thị modal xác nhận xóa
     const handleDeleteImageClick = (imageId: number, imageType: 'BEFORE_RENTAL' | 'AFTER_RENTAL') => {
         if (!booking) return;
+
+        // Kiểm tra: Chỉ cho phép xóa ảnh AFTER_RENTAL khi đã xác nhận trả xe
+        if (imageType === 'AFTER_RENTAL' && !booking.actualReturnTime) {
+            toast.warning('⚠️ Chỉ có thể xóa ảnh sau trả khi đã xác nhận trả xe!');
+            return;
+        }
+
         setDeleteTarget({ imageId, imageType });
         setShowDeleteModal(true);
     };
@@ -246,7 +283,15 @@ function BookingDetail() {
     };
 
     // Handler mở dialog chọn file để update ảnh
-    const handleUpdateImageClick = (imageId: number) => {
+    const handleUpdateImageClick = (imageId: number, imageType?: 'BEFORE_RENTAL' | 'AFTER_RENTAL') => {
+        if (!booking) return;
+
+        // Kiểm tra: Chỉ cho phép update ảnh AFTER_RENTAL khi đã xác nhận trả xe
+        if (imageType === 'AFTER_RENTAL' && !booking.actualReturnTime) {
+            toast.warning('⚠️ Chỉ có thể cập nhật ảnh sau trả khi đã xác nhận trả xe!');
+            return;
+        }
+
         const inputRef = fileInputRefs.current[imageId];
         if (inputRef) {
             inputRef.click();
@@ -285,7 +330,16 @@ function BookingDetail() {
     const handleCreateInvoice = async () => {
         if (!booking) return;
 
-        // Kiểm tra xem đã có đủ ảnh trước và sau thuê chưa
+        // Kiểm tra 1: Tất cả ảnh AFTER_RENTAL phải có confirmed = true
+        const afterRentalImages = booking.bookingImages.filter(img => img.imageType === 'AFTER_RENTAL');
+        const hasUnconfirmedAfterImages = afterRentalImages.some(img => img.confirmed !== true);
+        
+        if (hasUnconfirmedAfterImages) {
+            toast.error("❌ Tất cả ảnh sau trả xe phải được confirmed trước khi tạo hóa đơn!");
+            return;
+        }
+
+        // Kiểm tra 2: Đã có đủ ảnh trước và sau thuê chưa
         if (!canConfirmReturn) {
             toast.error("❌ Vui lòng chụp đủ ảnh trước thuê và sau thuê trước khi tạo hóa đơn!");
             return;
@@ -406,18 +460,6 @@ function BookingDetail() {
 
             const checklist = checklistRes.data.data;
 
-            // Kiểm tra xem đã hoàn thành chưa
-            if (!checklist.isComplete) {
-                const missingList = checklist.missingComponents.join(', ');
-                toast.error(
-                    `❌ Chưa đủ ảnh BEFORE_RENTAL!\n\n` +
-                    `Còn thiếu: ${missingList}\n\n` +
-                    `Tiến độ: ${checklist.completionPercentage.toFixed(0)}% ` +
-                    `(${checklist.capturedComponents.length}/${checklist.requiredComponents.length})`
-                );
-                setConfirmingBooking(false);
-                return;
-            }
 
             // Kiểm tra tất cả ảnh BEFORE_RENTAL đều có mô tả
             const beforeImages = booking.bookingImages?.filter((img: BookingImage) => img.imageType === 'BEFORE_RENTAL') || [];
@@ -597,8 +639,15 @@ function BookingDetail() {
                             </Button>
                         </Col>
                         <Col xs={12} md={4} className="mb-2">
-                            <Button variant="secondary" className="w-100" onClick={() => handleUploadPhoto('after')}>
+                            <Button 
+                                variant="secondary" 
+                                className="w-100" 
+                                onClick={() => handleUploadPhoto('after')}
+                                disabled={!booking.actualReturnTime}
+                                title={!booking.actualReturnTime ? "Cần xác nhận trả xe trước" : ""}
+                            >
                                 <b>Ảnh chụp sau khi trả</b>
+                                {!booking.actualReturnTime && <small className="d-block">(Chưa xác nhận trả)</small>}
                             </Button>
                         </Col>
                     </Row>
@@ -635,8 +684,12 @@ function BookingDetail() {
                                 variant="primary"
                                 className="w-100"
                                 onClick={handleCreateInvoice}
-                                disabled={creatingInvoice || !canConfirmReturn || checkingReturnImages}
-                                title={!canConfirmReturn ? "Cần chụp đủ ảnh trước và sau thuê" : ""}
+                                disabled={creatingInvoice || !canConfirmReturn || checkingReturnImages || !allAfterImagesConfirmed}
+                                title={
+                                    !allAfterImagesConfirmed ? "Tất cả ảnh sau trả phải được confirmed" :
+                                    !canConfirmReturn ? "Cần chụp đủ ảnh trước và sau thuê" : 
+                                    ""
+                                }
                             >
                                 {creatingInvoice ? (
                                     <>
@@ -644,7 +697,10 @@ function BookingDetail() {
                                         Đang tạo...
                                     </>
                                 ) : (
-                                    '🧾 Tạo hóa đơn'
+                                    <>
+                                        🧾 Tạo hóa đơn
+                                        {!allAfterImagesConfirmed && afterImages.length > 0 && <small className="d-block">(Ảnh chưa confirmed)</small>}
+                                    </>
                                 )}
                             </Button>
                         </Col>
@@ -724,7 +780,7 @@ function BookingDetail() {
                                                     <Button
                                                         variant="warning"
                                                         size="sm"
-                                                        onClick={() => handleUpdateImageClick(img.imageId)}
+                                                        onClick={() => handleUpdateImageClick(img.imageId, 'BEFORE_RENTAL')}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
                                                     >
                                                         {uploadingImageId === img.imageId ? (
@@ -806,7 +862,7 @@ function BookingDetail() {
                                                     <Button
                                                         variant="warning"
                                                         size="sm"
-                                                        onClick={() => handleUpdateImageClick(img.imageId)}
+                                                        onClick={() => handleUpdateImageClick(img.imageId, 'AFTER_RENTAL')}
                                                         disabled={uploadingImageId === img.imageId || deletingImageId === img.imageId}
                                                     >
                                                         {uploadingImageId === img.imageId ? (
@@ -874,12 +930,6 @@ function BookingDetail() {
                     <p className="mb-0">
                         Xác nhận đã kiểm tra đầy đủ ảnh trước khi thuê và bắt đầu cho thuê xe?
                     </p>
-                    {checklistData && (
-                        <p className="mt-2 mb-0 text-muted small">
-                            Tiến độ: {checklistData.completionPercentage.toFixed(0)}%
-                            ({checklistData.capturedComponents.length}/{checklistData.requiredComponents.length} hạng mục)
-                        </p>
-                    )}
                     <p className="mt-2 mb-0 text-muted small">
                         Booking sẽ chuyển sang trạng thái IN_USE.
                     </p>

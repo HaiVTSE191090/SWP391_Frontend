@@ -2,6 +2,7 @@ import React from "react";
 import logo from "../../images/favicon.png";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { LogOut, User, Bell, ChevronRight } from 'lucide-react'; // Thêm ChevronRight
+import { Button } from 'react-bootstrap';
 // Giả định getStaffNotifications, getUserName, staffLogout đã được export
 import { getUserName, staffLogout, getStaffNotifications } from "./services/authServices";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -30,6 +31,12 @@ const Navbar: React.FC = () => {
 
   // Ref để tham chiếu container thông báo (thay thế document.getElementById)
   const notificationRef = useRef<HTMLLIElement>(null);
+
+  // Hàm xử lý khi click nút hamburger - dispatch custom event
+  const handleMenuToggle = () => {
+    const event = new CustomEvent('toggleStaffMenu');
+    window.dispatchEvent(event);
+  };
 
   // --- LOGIC GỌI API ---
   const fetchNotifications = useCallback(async (currentName: string) => {
@@ -264,6 +271,13 @@ const Navbar: React.FC = () => {
       `}</style>
       <nav className="navbar navbar-expand-lg bg-white border-bottom px-4">
         <div className="container-fluid">
+          {/* Hamburger Menu Button - chỉ hiển thị khi đã đăng nhập và đang ở trang /staff */}
+          {staffName && location.pathname === '/staff' && (
+            <Button variant="primary" onClick={handleMenuToggle} className="me-3">
+              ☰
+            </Button>
+          )}
+
           {/* Logo + Brand */}
           <a className="navbar-brand d-flex align-items-center" href="/staff" style={{ cursor: 'pointer' }}>
             <img

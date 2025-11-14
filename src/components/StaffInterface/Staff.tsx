@@ -1,10 +1,11 @@
 // Xóa logic render BookingDetail qua callback, khôi phục SPA truyền thống
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Navbar, Nav, Offcanvas, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Nav, Offcanvas, Button } from 'react-bootstrap';
 import ListRenter from './ListRenter';
 import ChooseCar from './ChooseCar';
 import { useNavigate } from 'react-router-dom';
 import { getCarDetails, getStaffStation, getUserName, staffLogout } from './services/authServices';
+
 
 
 interface StationVehicle {
@@ -44,6 +45,23 @@ export default function Staff() {
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+
+  useEffect(() => {
+    fetchStationData();
+  }, []);
+
+  // Lắng nghe custom event từ NavbarStaff
+  useEffect(() => {
+    const handleToggleMenu = () => {
+      setShow(prev => !prev);
+    };
+
+    window.addEventListener('toggleStaffMenu', handleToggleMenu);
+    
+    return () => {
+      window.removeEventListener('toggleStaffMenu', handleToggleMenu);
+    };
+  }, []);
 
   useEffect(() => {
     fetchStationData();
@@ -174,13 +192,6 @@ export default function Staff() {
 
   return (
     <div className="staff-interface">
-      {/* Navigation Bar với Hamburger Menu */}
-      <Navbar className="px-3">
-        <Button variant="primary" onClick={handleShow} className="me-3">
-          ☰
-        </Button>
-      </Navbar>
-
       {/* Hamburger Menu - Offcanvas */}
       <Offcanvas show={show} onHide={handleClose} placement="start">
         <Offcanvas.Header closeButton>
