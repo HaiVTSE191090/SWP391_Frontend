@@ -86,7 +86,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       const resp = await staffLogin(email, password)
       if (resp.status === "success") {
         setToken(resp.data.token)
-        localStorage.setItem("staffToken",resp.data.token)
+        localStorage.setItem("token",resp.data.token)
       }
       return {
         success: true,
@@ -225,7 +225,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setToken(null);
     setUser(null);
     authController.clearAuthData();
-    localStorage.removeItem("staffToken")
+    localStorage.removeItem("token")
     localStorage.removeItem('rememberedEmail');
     localStorage.removeItem('rememberedPassword');
     localStorage.removeItem('staffRememberedEmail');

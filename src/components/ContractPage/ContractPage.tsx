@@ -1,127 +1,341 @@
-import React, { useState, useEffect } from "react";
-import { Button, Alert, Spinner } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Button, Spinner, Card, Form } from "react-bootstrap";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./Contract.css";
+import { Booking } from "../../models/BookingModel";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-export default function ContractOtpPage() {
+
+export default function ContractPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const contract = location.state?.contract;
+  console.log("📄 Contract data:", contract);
+
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loadingBooking, setLoadingBooking] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [loadingView, setLoadingView] = useState(false);
+  const [loadingOtp, setLoadingOtp] = useState(false);
+  const [loadingSign, setLoadingSign] = useState(false);
+  const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [countdown, setCountdown] = useState(0);
-
-  const mockData = {
-    renterName: "Nguyễn Văn A",
-    renterAddress: "123 Nguyễn Huệ, Quận 1, TP.HCM",
-    renterCccd: "079123456789",
-    vehicleName: "VinFast Evo200",
-    plateNumber: "59A-123.45",
-    startDate: "08:00 30/09/2025",
-    endDate: "18:00 30/09/2025",
-    totalPrice: "400.000 VND",
-    companyName: "CÔNG TY TNHH EV Rental",
-    representative: "Dangdangdang – Giám đốc",
-  };
 
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
+    const fetchBooking = async () => {
+      if (!contract?.bookingId) {
+        setErrorMsg("Không tìm thấy ID đơn đặt xe trong hợp đồng.");
+        setLoadingBooking(false);
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `http://localhost:8080/api/bookings/${contract.bookingId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setBooking(res.data.data);
+      } catch (err) {
+        console.error("❌ Lỗi khi tải booking:", err);
+        setErrorMsg("Không thể tải thông tin đơn đặt xe.");
+      } finally {
+        setLoadingBooking(false);
+      }
+    };
+
+    fetchBooking();
+  }, [contract?.bookingId]);
+
+  const handleViewContract = async () => {
+    try {
+      setLoadingView(true);
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get(
+        `http://localhost:8080/api/contracts/view/${contract.contractId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
+
+      const fileURL = URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      window.open(fileURL, "_blank");
+    } catch (error) {
+      console.error("❌ Lỗi khi xem hợp đồng:", error);
+      alert("Không thể tải file hợp đồng.");
+    } finally {
+      setLoadingView(false);
     }
-  }, [countdown]);
+  };
 
-  const handleSendOtp = () => {
-    setLoading(true);
-    setTimeout(() => {
-      const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      setOtpCode(randomOtp);
+  const handleSendOtp = async (): Promise<void> => {
+    try {
+      setLoadingOtp(true);
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        `http://localhost:8080/api/renter/contracts/send-otp`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { bookingId: contract.bookingId },
+        }
+      );
+
       setOtpSent(true);
-      setCountdown(180); // 3 phút
-      setLoading(false);
-    }, 1500);
+      toast.success("✅ Mã OTP đã được gửi đến email của bạn!");
+    } catch (error: any) {
+      console.error("❌ Lỗi gửi OTP:", error);
+      toast.error(
+        error.response?.data?.data ||
+        "⚠️ Không thể gửi mã OTP. Vui lòng thử lại."
+      );
+    } finally {
+      setLoadingOtp(false);
+    }
   };
 
-  const handleDownloadPDF = () => {
-    alert("📄 Giả lập tải file PDF hợp đồng thuê xe...");
+  const handleSignContract = async (): Promise<void> => {
+    if (!otp.trim()) {
+      toast.warning("⚠️ Vui lòng nhập mã OTP trước khi ký.");
+    }
+
+    try {
+      setLoadingSign(true);
+      const token = localStorage.getItem("token");
+
+      const response = await axios.post(
+        `http://localhost:8080/api/renter/contracts/verify-sign`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            bookingId: contract.bookingId,
+            otpCode: otp,
+          },
+        }
+      );
+
+      if (response.data) {
+        setOtp("");
+        toast.success("✅ Hợp đồng đã được ký thành công!");
+        setTimeout(() => navigate(-1), 2000);
+      }
+    } catch (error) {
+      console.error("❌ Lỗi khi ký hợp đồng:", error);
+      toast.error("❌ Mã OTP không hợp lệ hoặc hợp đồng không thể ký.");
+    } finally {
+      setLoadingSign(false);
+    }
   };
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}:${s < 10 ? "0" : ""}${s}`;
-  };
+  if (!contract) {
+    return <p className="text-danger text-center mt-5">❌ Không tìm thấy thông tin hợp đồng.</p>;
+  }
 
   return (
-    <div className="contract-otp container mt-5 p-5 shadow-sm bg-white">
-      {/* Header */}
-      <div className="text-center">
-        <h6 className="fw-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h6>
-        <p>Độc lập - Tự do - Hạnh phúc</p>
-        <hr className="divider" />
-        <h4 className="fw-bold my-3">HỢP ĐỒNG THUÊ XE ĐIỆN TỬ</h4>
-      </div>
+    <div className="container mt-5 p-5 shadow-sm bg-white rounded-4">
+      <ToastContainer position="top-center" autoClose={2500} />
+      <h3 className="text-center mb-4 fw-bold text-primary"> HỢP ĐỒNG THUÊ XE</h3>
 
-      {/* Thông tin hợp đồng */}
-      <div className="card p-4 mb-4">
-        <h6 className="fw-bold">Bên A (Người thuê xe)</h6>
-        <p>Họ tên: {mockData.renterName}</p>
-        <p>Địa chỉ: {mockData.renterAddress}</p>
-        <p>Số CCCD/CMND: {mockData.renterCccd}</p>
-
-        <h6 className="fw-bold mt-3">Bên B (Bên cho thuê xe)</h6>
-        <p>{mockData.companyName}</p>
-        <p>Đại diện: {mockData.representative}</p>
-
-        <h6 className="fw-bold mt-4">Thông tin xe thuê</h6>
-        <ul>
-          <li>Xe: {mockData.vehicleName}</li>
-          <li>Biển số: {mockData.plateNumber}</li>
-          <li>Thời gian thuê: {mockData.startDate} → {mockData.endDate}</li>
-          <li>Tổng giá trị hợp đồng: {mockData.totalPrice}</li>
-        </ul>
-
-        <h6 className="fw-bold mt-4">Điều khoản chính</h6>
-        <ul>
-          <li>Bên A có trách nhiệm giữ gìn tài sản thuê cẩn thận.</li>
-          <li>Bên B bàn giao xe đúng tình trạng hoạt động tốt.</li>
-          <li>Hợp đồng có hiệu lực khi OTP được xác nhận bởi nhân viên trạm.</li>
-        </ul>
-      </div>
-
-      {/* Gửi OTP */}
-      <div className="text-center">
-        {!otpSent ? (
-          <>
-            <Button variant="success" size="lg" onClick={handleSendOtp} disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : "Gửi mã OTP"}
-            </Button>
-            <p className="mt-3 text-muted">
-              Mã OTP sẽ được gửi đến email hoặc số điện thoại bạn đã đăng ký.
-            </p>
-          </>
-        ) : (
-          <div className="otp-box text-center">
-            <Alert variant="info">
-              <strong>Mã OTP:</strong>{" "}
-              <span className="otp-code">{otpCode}</span> <br />
-              OTP còn hiệu lực trong {formatTime(countdown)} phút.
-            </Alert>
-            <p className="text-muted">
-              👉 Vui lòng đọc mã OTP này cho nhân viên trạm để hoàn tất ký hợp đồng.
-            </p>
-            {countdown <= 0 && (
-              <Button variant="outline-primary" onClick={handleSendOtp}>
-                Gửi lại OTP
-              </Button>
-            )}
+      <Card className="border-0 shadow mb-4">
+        <Card.Body className="p-4">
+          <div className="d-flex align-items-center mb-4 pb-3 border-bottom border-2">
+            <div className="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+              <i className="bi bi-file-text-fill text-primary fs-3"></i>
+            </div>
+            <div>
+              <h5 className="fw-bold mb-1 text-dark">Thông tin đơn đặt xe</h5>
+              <p className="text-muted mb-0">Mã đơn: <span className="fw-semibold text-dark">{booking?.bookingId}</span></p>
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Nút tải hợp đồng */}
-      <div className="text-center mt-5">
-        <Button variant="primary" onClick={handleDownloadPDF}>
-          📄 Tải hợp đồng PDF
+          <div className="row g-4">
+            <div className="col-12">
+              <div className="bg-light rounded-3 p-3">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-calendar-range text-primary fs-4 me-3"></i>
+                  <div className="flex-grow-1">
+                    <small className="text-muted d-block mb-1">Thời gian thuê xe</small>
+                    <div className="d-flex align-items-center flex-wrap">
+                      <span className="fw-bold text-dark me-2">
+                        {booking?.startDateTime?.replace("T", " ")}
+                      </span>
+                      <i className="bi bi-arrow-right text-primary mx-2"></i>
+                      <span className="fw-bold text-dark">
+                        {booking?.endDateTime?.replace("T", " ")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className="border border-2 rounded-3 p-3 h-100">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-car-front-fill text-primary fs-4 me-3"></i>
+                  <div>
+                    <small className="text-muted d-block mb-1">Phương tiện</small>
+                    <span className="fw-bold text-dark fs-6">{booking?.vehicleName}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className="border border-2 rounded-3 p-3 h-100 bg-success bg-opacity-10">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-cash-stack text-success fs-4 me-3"></i>
+                  <div>
+                    <small className="text-muted d-block mb-1">Đơn giá theo ngày</small>
+                    <span className="fw-bold text-success fs-5">
+                      {booking?.priceSnapshotPerDay?.toLocaleString()} VND
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className="border border-2 rounded-3 p-3 h-100">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-check-circle-fill text-info fs-4 me-3"></i>
+                  <div>
+                    <small className="text-muted d-block mb-1">Trạng thái đơn</small>
+                    <span className="badge bg-info fs-6 px-3 py-2">{booking?.status}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6">
+              <div className="border border-2 rounded-3 p-3 h-100">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-piggy-bank-fill text-warning fs-4 me-3"></i>
+                  <div>
+                    <small className="text-muted d-block mb-1">Tình trạng đặt cọc</small>
+                    <span className="badge bg-warning text-dark fs-6 px-3 py-2">
+                      {booking?.depositStatus}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card.Body>
+      </Card>
+
+      {/* Nút xem hợp đồng */}
+      <div className="text-center mb-4">
+        <Button variant="info" size="lg" onClick={handleViewContract} disabled={loadingView}>
+          {loadingView ? (
+            <>
+              <Spinner animation="border" size="sm" /> Đang tải...
+            </>
+          ) : (
+            "Xem hợp đồng"
+          )}
         </Button>
       </div>
+
+      {/* Hiển thị OTP & Ký hợp đồng chỉ khi contract.status === "ADMIN_SIGNED" */}
+      {contract.status === "ADMIN_SIGNED" && (
+        <div className="text-center mt-4">
+          <h5 className="fw-bold mb-3 text-success">Xác thực ký hợp đồng</h5>
+
+          {/* 6 ô nhập OTP */}
+          <div className="d-flex justify-content-center gap-2 mb-3">
+            {otp.split("").concat(Array(6 - otp.length).fill("")).map((digit, index) => (
+              <input
+                key={index}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!/^\d?$/.test(val)) return;
+                  const newOtp =
+                    otp.substring(0, index) + val + otp.substring(index + 1);
+                  setOtp(newOtp);
+                  if (val && index < 5) {
+                    const next = document.getElementById(`otp-${index + 1}`);
+                    (next as HTMLInputElement)?.focus();
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && !otp[index] && index > 0) {
+                    const prev = document.getElementById(`otp-${index - 1}`);
+                    (prev as HTMLInputElement)?.focus();
+                  }
+                }}
+                id={`otp-${index}`}
+                className="form-control text-center fw-bold fs-4"
+                style={{ width: "50px", height: "60px", fontSize: "24px" }}
+              />
+            ))}
+          </div>
+
+          {/* Button gửi lại OTP */}
+          <div className="mb-3">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={handleSendOtp}
+              disabled={loadingOtp}
+            >
+              {loadingOtp ? "Đang gửi..." : "Gửi mã OTP"}
+            </Button>
+            <div className="mt-2">
+              <span className="text-muted">Không nhận được mã? </span>
+              <Button
+                variant="link"
+                className="p-0 text-decoration-none"
+                onClick={handleSendOtp}
+                disabled={loadingOtp}
+              >
+                Gửi lại
+              </Button>
+            </div>
+          </div>
+
+          {/* Button ký hợp đồng */}
+          <div className="text-center">
+            <Button
+              variant="success"
+              size="lg"
+              className="fw-semibold"
+              onClick={handleSignContract}
+              disabled={loadingSign || otp.length < 6}
+            >
+              {loadingSign ? (
+                <>
+                  <Spinner animation="border" size="sm" /> Đang ký...
+                </>
+              ) : (
+                "Xác nhận ký"
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+
+      {/* Nếu FULLY_SIGNED thì chỉ xem hợp đồng, không hiển thị OTP */}
+      {contract.status === "FULLY_SIGNED" && (
+        <p className="text-success text-center fw-bold mt-3">
+          ✅ Hợp đồng đã được ký hoàn tất.
+        </p>
+      )}
     </div>
   );
 }

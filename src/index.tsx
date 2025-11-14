@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import App from './App';
+import { BrowserRouter } from 'react-router-dom';
+import "react-datepicker/dist/react-datepicker.css";
 
 
 console.log('API URL:', process.env.REACT_APP_API_URL);
@@ -12,7 +14,9 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <App/>
+    <BrowserRouter>
+      <App /> 
+    </BrowserRouter>
   </React.StrictMode>
 );
 

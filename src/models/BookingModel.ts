@@ -1,19 +1,32 @@
 export interface Booking {
-  bookingId: number;              
-  renterId: number;              
-  renterName: string;             
-  vehicleId: number;              
-  vehicleName: string;            
-  staffId: number;                
-  staffName: string;              
-  priceSnapshotPerHour: number;   
-  priceSnapshotPerDay: number;    
-  startDateTime: string;         
-  endDateTime: string;            
-  actualReturnTime?: string | null; 
-  totalAmount: number;           
-  status: string;                
-  depositStatus: string;          
-  createdAt: string;             
-  updatedAt?: string | null;  
+  bookingId: number;
+  renterId: number;
+  renterName: string;
+  vehicleId: number;
+  vehicleName: string;
+  staffId: number;
+  staffName: string;
+  priceSnapshotPerHour: number;
+  priceSnapshotPerDay: number;
+  startDateTime: string;
+  endDateTime: string;
+  actualReturnTime?: string | null;
+  totalAmount: number;
+  status: string;
+  depositStatus: string;
+  createdAt: string;
+  updatedAt?: string | null;
+
+  // 🆕 Thêm phần này
+  bookingImages?: BookingImage[];
+}
+
+export interface BookingImage {
+  imageId: number;
+  imageUrl: string;
+  description?: string | null;
+  createdAt?: string;
+  imageType?: string;
+  vehicleComponent?: string;
+  confirmed?: boolean;
 }

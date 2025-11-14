@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Table, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import UserDetail from './UserDetail';
+import OTPModal from './OTPModal';
 import { getListRenter } from '../StaffInterface/services/authServices';
 import { useNavigate } from 'react-router-dom';
-
 // Cập nhật Interface Renter để khớp với API data
 interface Renter {
-	renterId: string | number;
+	renterId: number;
 	fullName: string;
 	phoneNumber: string;
 	status: 'VERIFIED' | 'PENDING_VERIFICATION' | string;
@@ -16,9 +16,9 @@ const ListRenter: React.FC = () => {
 	const [renters, setRenters] = useState<Renter[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string>('');
-	const [selectedRenterId, setSelectedRenterId] = useState<string | number | null>(null);
-	
+	const [selectedRenterId, setSelectedRenterId] = useState<number | null>(null);
 	const navigate = useNavigate();
+
 	// Fetch data từ API
 	useEffect(() => {
 		fetchRenters()
@@ -28,10 +28,9 @@ const ListRenter: React.FC = () => {
 		setLoading(true);
 		setError('');
 
-		try { // Thêm try-catch vào đây cũng là một ý hay
+		try { 
 			const renterData = await getListRenter();
 
-			// getListRenter() trả về Axios Response => renterData là { data: { status: 'success', data: [ { renterId: 1, ... } ] } }
 			// cần truy cập 2 lần .data để lấy mảng người thuê
 			setRenters(renterData?.data?.data || []);
 
@@ -56,7 +55,7 @@ const ListRenter: React.FC = () => {
 	};
 
 	// Handler cho nút Verification Status
-	const handleVerificationStatus = async (renterId: string | number) => {
+	const handleVerificationStatus = async (renterId: number) => {
 		// TODO: Thêm logic gọi API kiểm tra trạng thái xác minh
 		console.log('Check verification status for renter:', renterId);
 		alert(`Kiểm tra trạng thái xác minh cho Renter ID: ${renterId}`);
@@ -64,19 +63,20 @@ const ListRenter: React.FC = () => {
 
 	// State cho OTP Modal
 	const [showOTPModal, setShowOTPModal] = useState(false);
-	const [otpRenterId, setOtpRenterId] = useState<string | number | null>(null);
+	const [otpRenterId, setOtpRenterId] = useState<number | null>(null);
 
 	// Handler cho nút Verify OTP link
-	const handleVerifyOTP = (renterId: string | number) => {
+	const handleVerifyOTP = (renterId:number) => {
 		setOtpRenterId(renterId);
 		setShowOTPModal(true);
 	};
 
-
-	// Handler cho nút Details
-	const handleViewDetails = (renterId: string | number) => {
-		setSelectedRenterId(renterId);
-		navigate(`/staff/renterDetail/${renterId}`); // Chuyển hướng đến trang chi tiết với renterId
+	// Xử lý submit OTP
+	const handleSubmitOTP = (otp: string) => {
+		// TODO: Gọi API xác thực OTP với otpRenterId và otp
+		setShowOTPModal(false);
+		setOtpRenterId(null);
+		alert(`OTP xác thực thành công cho Renter ID: ${otpRenterId}, mã OTP: ${otp}`);
 	};
 
 	// Handler để quay lại danh sách
@@ -87,7 +87,7 @@ const ListRenter: React.FC = () => {
 
 	// Nếu đang xem chi tiết, hiển thị UserDetail
 	if (selectedRenterId !== null) {
-		return <UserDetail renterId={selectedRenterId} onBack={handleBack} />;
+		return <UserDetail onBack={handleBack}/>;
 	}
 
 	if (loading) {
@@ -131,7 +131,7 @@ const ListRenter: React.FC = () => {
 							<th>ID</th>
 							<th>Name</th>
 							<th>Phone Number</th>
-							<th>Status</th>
+							<th>Verification Status</th>
 							<th>Details</th>
 						</tr>
 					</thead>
@@ -148,16 +148,17 @@ const ListRenter: React.FC = () => {
 									<td>{renter.phoneNumber}</td>
 
 									<td>
-										{/* Badge hiển thị trạng thái đã xác minh/chờ */}
+										{/* Trạng thái trong BE là 'status' */}
 										{renderStatusBadge(renter.status)}
 									</td>
+
 									{/* 5. Nút Xem chi tiết */}
 									<td>
 										<Button
 											variant="primary"
 											size="sm"
 											// Dùng key chính xác là renterId, KHÔNG PHẢI renter_id
-											onClick={() => handleViewDetails(renter.renterId)}
+											onClick={() => navigate(`/staff/renter/${renter.renterId}`)}
 										>
 											Xem chi tiết
 										</Button>
@@ -180,6 +181,12 @@ const ListRenter: React.FC = () => {
 					<small>Tổng số người thuê: {renters.length}</small>
 				</div>
 			)}
+			{/* Popup OTP nhập mã OTP */}
+			<OTPModal
+				show={showOTPModal}
+				onSubmit={handleSubmitOTP}
+				onCancel={() => { setShowOTPModal(false); setOtpRenterId(null); }}
+			/>
 		</Container>
 	);
 };

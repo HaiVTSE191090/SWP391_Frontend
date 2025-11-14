@@ -14,6 +14,8 @@ import NotFoundPage from "../components/404/NotFoundPage";
 import UserProfilePage from "../pages/UserProfilePage";
 import PaymentResult from "../pages/PaymentResultPage";
 import PaymentResultPage from "../pages/PaymentResultPage";
+import FinalPayment from "../components/FinalPayment/FinalInvoice";
+
 
 
 // Lazy load các trang (tối ưu bundle)
@@ -33,12 +35,13 @@ const router = createBrowserRouter([
             { path: "/kyc-verification", element: <KycVerificationPage /> },
             { path: "/xac-nhan-dat-xe/:bookingId", element: <DepositPage /> },
             { path: "/rental-history", element: <RentalHistoryPage /> },
-            { path: "/contract-preview", element: <ContractPreviewPage /> },
+            { path: "/contract-preview/:bookingId", element: <ContractPreviewPage /> },
             { path: "/vehicles", element: <VehiclesPage /> },
             { path: "/vehicles/:id", element: <VehicleDetailPage /> },
             { path: "/profile", element: <UserProfilePage /> },
             { path: "/xac-nhan-dat-xe/:bookingId", element: <DepositPage /> },
             { path: "/payment-result", element: <PaymentResultPage/>},
+            { path: "final-invoice/booking/:bookingId", element: <FinalPayment /> },
             // 404 bắt mọi thứ còn lại
             { path: "*", element: <NotFoundPage /> },
         ],

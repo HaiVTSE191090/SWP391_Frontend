@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import "./HeroCarousel.css";
 
 type Slide = {
   src: string;       

@@ -3,7 +3,7 @@ import { useVehicle } from "../../hooks/useVehicle";
 import VehicleCard from "./VehicleCard";
 
 interface VehicleListProps {
-  stationId?: number;
+  stationId?: number | null;
   showStation?: boolean;
   title?: string;
 }

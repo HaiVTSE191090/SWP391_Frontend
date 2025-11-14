@@ -1,29 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert, Image } from 'react-bootstrap';
-import axios from 'axios';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Badge, ListGroup } from 'react-bootstrap';
+import { useParams } from 'react-router-dom';
 import ConfirmationPopup from './ConfirmationPopup';
-// import OTPModal from './OTPModal';
+import { deleteRenter, getRenterDetails, verifyRenter } from './services/authServices';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
-// Thông tin chi tiết người thuê
+interface DocumentDetail {
+  documentNumber: string;
+  fullName: string;
+  type: 'NATIONAL_ID' | 'DRIVER_LICENSE' | string;
+  issueDate: string;
+  expiryDate: string;
+  verifiedAt: string | null;
+}
+
 interface RenterDetail {
   renterId: number;
-  name: string;
-  birth: string;
-  phone: string;
+  fullName: string;
+  dateOfBirth: string;
+  phoneNumber: string;
   email: string;
   address: string;
-  identityCard: string;
-  license: string;
-  avatarUrl: string;
+  status: 'VERIFIED' | 'PENDING_VERIFICATION' | string;
+  cccd: DocumentDetail;
+  gplx: DocumentDetail;
 }
 
-// Props của component
-interface UserDetailProps {
-  renterId: string | number;
-  onBack?: () => void;
-}
-
-const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
+const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+  const { id } = useParams(); //  lấy id từ URL
+  const renterId = Number(id);
   const [detail, setDetail] = useState<RenterDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,84 +37,74 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
   const [popupConfig, setPopupConfig] = useState({
     title: '',
     message: '',
-    type: 'success' as 'success' | 'danger' | 'warning' | 'info'
+    type: 'success' as 'success' | 'danger' | 'warning' | 'info',
   });
-  // const [showOTPModal, setShowOTPModal] = useState(false);
-
-  // Tự động load data khi vào trang
-  useEffect(() => {
-    fetchDetail();
-    // eslint-disable-next-line
+  const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const userData = await getRenterDetails(renterId);
+      if (userData && userData.data && userData.data.status === 'success') {
+        setDetail(userData.data.data);
+      } else {
+        setError(userData?.data?.message || 'Không thể tải dữ liệu renter.');
+        setDetail(null);
+      }
+    } catch (err: any) {
+      console.error("Lỗi khi fetch chi tiết renter:", err);
+      setError(err.response?.data?.message || err.message || 'Lỗi mạng hoặc máy chủ.');
+      setDetail(null);
+    } finally {
+      setLoading(false);
+    }
   }, [renterId]);
 
-  // Hàm tải thông tin chi tiết
-  const fetchDetail = async () => {
+  useEffect(() => {
+    fetchDetail();
+  }, [fetchDetail]); // chạy lại khi id đổi
+
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
     try {
-      setLoading(true);
-      setError('');
-      
-      // TODO: Thay bằng API thật
-      // const res = await axios.get(`/api/renters/${renterId}`);
-      // setDetail(res.data);
-      
-      // Mock data để test
-      setTimeout(() => {
-        setDetail({
-          renterId: 1,
-          name: 'Nguyễn Văn A',
-          birth: '1999-01-01',
-          phone: '0912345678',
-          email: 'nguyenvana@gmail.com',
-          address: '123 Đường ABC, Quận 1, TP.HCM',
-          identityCard: '123456789',
-          license: 'B2-123456',
-          avatarUrl: 'https://i.pravatar.cc/120?u=' + renterId
-        });
-        setLoading(false);
-      }, 800);
-    } catch (err: any) {
-      setError('Không thể tải thông tin người dùng!');
-      setLoading(false);
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
+    } catch {
+      return dateString; // Trả về chuỗi gốc nếu format lỗi
     }
   };
 
-  // Xử lý khi bấm Verify
-
   const handleVerify = async () => {
     try {
-      // TODO: Gọi API xác thực
-      // await axios.post(`/api/renters/${renterId}/verify`);
-      
-      setPopupConfig({
-        title: 'Success',
-        message: 'The account has been successfully verified',
-        type: 'success'
-      });
-      setShowPopup(true);
+      const resp = await verifyRenter(renterId);
+      if (resp?.data?.status === 'success') {
+        setPopupConfig({
+          title: 'Success',
+          message: 'The account has been successfully verified',
+          type: 'success',
+        });
+        setShowPopup(true)
+      }
     } catch (err) {
       setPopupConfig({
         title: 'Error',
         message: 'Failed to verify account',
-        type: 'danger'
+        type: 'danger',
       });
       setShowPopup(true);
     }
   };
 
-  // Xử lý khi bấm Delete
   const handleDelete = async () => {
     try {
-      // TODO: Gọi API xóa
-      // await axios.delete(`/api/renters/${renterId}`);
-      
-      setPopupConfig({
-        title: 'Success',
-        message: 'The account has been successfully deleted',
-        type: 'success'
-      });
+      const resp = await deleteRenter(renterId);
+      if (resp?.data?.status === 'success') {
+        setPopupConfig({
+          title: 'Success',
+          message: 'The account has been successfully deleted',
+          type: 'success',
+        });
+      }
       setShowPopup(true);
-      
-      // Sau 2 giây tự động quay lại
       setTimeout(() => {
         if (onBack) onBack();
       }, 2000);
@@ -116,13 +112,12 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
       setPopupConfig({
         title: 'Error',
         message: 'Failed to delete account',
-        type: 'danger'
+        type: 'danger',
       });
       setShowPopup(true);
     }
   };
 
-  // Đang loading
   if (loading) {
     return (
       <Container className="py-5 text-center">
@@ -132,7 +127,6 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
     );
   }
 
-  // Có lỗi
   if (error) {
     return (
       <Container className="py-5 text-center">
@@ -142,72 +136,130 @@ const UserDetail: React.FC<UserDetailProps> = ({ renterId, onBack }) => {
     );
   }
 
-  // Hiển thị giao diện
   return (
-    <Container className="py-4 d-flex flex-column align-items-center">
-      {/* Card thông tin */}
-      <Card className="p-4 shadow" style={{ borderRadius: 24, minWidth: 400, maxWidth: 600, width: '100%' }}>
-        <Row className="align-items-center">
-          {/* Avatar */}
-          <Col xs={4} className="d-flex justify-content-center">
-            <Image 
-              src={detail?.avatarUrl}
-              roundedCircle
-              width={90} 
-              height={90} 
-              alt="avatar" 
-            />
-          </Col>
-          
-          {/* Thông tin chi tiết */}
-          <Col xs={8}>
-            <Row>
-              <Col xs={6} className="mb-2">
-                <strong>Name:</strong> {detail?.name}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Birth:</strong> {detail?.birth}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Phone:</strong> {detail?.phone}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Email:</strong> {detail?.email}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Address:</strong> {detail?.address}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Identity Card:</strong> {detail?.identityCard}
-              </Col>
-              <Col xs={12} className="mb-2">
-                <strong>License:</strong> {detail?.license}
-              </Col>
-            </Row>
-          </Col>
-        </Row>
-      </Card>
-      
-
-      {/* 2 nút Verify và Delete */}
-      <div className="d-flex justify-content-center gap-4 mt-4">
-        <Button variant="success" size="lg" onClick={handleVerify}>
-          Verify
-        </Button>
-        <Button variant="danger" size="lg" onClick={handleDelete}>
-          Delete
-        </Button>
-      </div>
-      
-      {/* Nút quay lại */}
+    <Container className="py-4">
+      {/* Nút quay lại (di chuyển lên trên) */}
       {onBack && (
-        <Button variant="link" className="mt-3" onClick={onBack}>
-          Quay lại danh sách
+        <Button variant="link" onClick={onBack} className="mb-2 p-0">
+          &larr; Quay lại danh sách
         </Button>
       )}
 
-      {/* Popup OTP đã chuyển sang ListRenter */}
-      {/* Popup thông báo */}
+      <Card className="shadow-sm">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <div>
+            <Card.Title as="h4" className="mb-0">
+              {detail?.fullName} (ID: {detail?.renterId})
+            </Card.Title>
+            <Card.Subtitle className="text-muted">Chi tiết Renter</Card.Subtitle>
+          </div>
+          <Badge
+            bg={detail?.status === 'VERIFIED' ? 'success' : 'warning'}
+            className="p-2"
+          >
+            {detail?.status === 'VERIFIED' ? 'Đã xác thực' : 'Chờ xác thực'}
+          </Badge>
+        </Card.Header>
+
+        <Card.Body>
+          {/* ---- THÔNG TIN CÁ NHÂN ---- */}
+          <Row className="mb-4">
+            <h5 className="mb-3 border-bottom pb-2">Thông tin cá nhân</h5>
+            <Col md={6}>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Ngày sinh:</strong> {formatDate(detail?.dateOfBirth)}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Số điện thoại:</strong> {detail?.phoneNumber}
+                </ListGroup.Item>
+              </ListGroup>
+            </Col>
+            <Col md={6}>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Email:</strong> {detail?.email}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Địa chỉ:</strong> {detail?.address}
+                </ListGroup.Item>
+              </ListGroup>
+            </Col>
+          </Row>
+
+          {/* ---- THÔNG TIN GIẤY TỜ ---- */}
+          <Row>
+            <h5 className="mb-3 border-bottom pb-2">Thông tin giấy tờ</h5>
+            {/* Cột CCCD */}
+            <Col md={6}>
+              <Card>
+                <Card.Header className="bg-light">
+                  <i className="bi bi-person-vcard-fill me-2"></i>
+                  Căn cước công dân (CCCD)
+                </Card.Header>
+                <ListGroup variant="flush">
+                  <ListGroup.Item>
+                    <strong>Số CCCD:</strong> {detail?.cccd?.documentNumber || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Họ tên:</strong> {detail?.cccd?.fullName || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày cấp:</strong> {formatDate(detail?.cccd?.issueDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày hết hạn:</strong> {formatDate(detail?.cccd?.expiryDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Xác thực lúc:</strong> {formatDate(detail?.cccd?.verifiedAt) || 'Chưa xác thực'}
+                  </ListGroup.Item>
+                </ListGroup>
+              </Card>
+            </Col>
+
+            {/* Cột GPLX */}
+            <Col md={6} className="mt-3 mt-md-0">
+              <Card>
+                <Card.Header className="bg-light">
+                  <i className="bi bi-car-front-fill me-2"></i>
+                  Giấy phép lái xe (GPLX)
+                </Card.Header>
+                <ListGroup variant="flush">
+                  <ListGroup.Item>
+                    <strong>Số GPLX:</strong> {detail?.gplx?.documentNumber || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Họ tên:</strong> {detail?.gplx?.fullName || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày cấp:</strong> {formatDate(detail?.gplx?.issueDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày hết hạn:</strong> {formatDate(detail?.gplx?.expiryDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Xác thực lúc:</strong> {formatDate(detail?.gplx?.verifiedAt) || 'Chưa xác thực'}
+                  </ListGroup.Item>
+                </ListGroup>
+              </Card>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+
+      {detail?.status === 'PENDING_VERIFICATION' && (
+        <div className="d-flex justify-content-center gap-4 mt-4">
+          <Button variant="success" size="lg" onClick={handleVerify}>
+            <i className="bi bi-check-circle-fill me-2"></i>
+            Verify
+          </Button>
+          <Button variant="danger" size="lg" onClick={handleDelete}>
+            <i className="bi bi-trash-fill me-2"></i>
+            Delete
+          </Button>
+        </div>
+      )}
+
       <ConfirmationPopup
         show={showPopup}
         onHide={() => setShowPopup(false)}

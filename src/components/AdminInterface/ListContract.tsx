@@ -1,55 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Table, Button, Spinner, Alert } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import { Table, Button, Spinner, Alert, Card } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import "./ListContract.css"
+import { Contract, ContractStatus } from './types/api.type';
+import * as authServicesForAdmin from './services/authServicesForAdmin';
 
-// Định nghĩa trạng thái Contract từ cấu trúc bảng
-type ContractStatus = 'ADMIN_SIGNED' | 'CANCELLED' | 'FULLY_SIGNED' | 'PENDING_ADMIN_SIGNATURE';
 
-// Interface cho Contract
-interface Contract {
-    id: number; // contract_id
-    renterName: string; // Tên Người thuê (Giả định JOIN)
-    bookingId: number; // booking_id
-    status: ContractStatus;
-    createdAt: string;
-}
 
-// Sidebar (giống AdminSidebar để giữ giao diện thống nhất)
-const AdminSidebar: React.FC = () => {
-    const sidebarStyle: React.CSSProperties = {
-        backgroundColor: '#000',
-        color: '#fff',
-        minHeight: '100vh',
-        paddingTop: '20px',
-    };
-    const linkStyle: React.CSSProperties = {
-        color: '#fff',
-        textDecoration: 'none',
-        fontSize: '18px',
-        padding: '10px 0',
-        display: 'block',
-        borderLeft: '3px solid transparent',
-        paddingLeft: '15px',
-        cursor: 'pointer',
-    };
-    const activeLinkStyle = {
-        ...linkStyle,
-        borderLeft: '3px solid #007bff',
-    };
-    return (
-        <div style={sidebarStyle}>
-            <div className="d-flex flex-column">
-                <Link to="/admin" style={linkStyle}>Dashboard</Link>
-                <Link to="/admin/locations" style={linkStyle}>List Điểm Thuê</Link>
-                <Link to="/admin/customers" style={linkStyle}>List Khách Hàng</Link>
-                <Link to="/admin/contract" style={activeLinkStyle as React.CSSProperties}>List Contract</Link>
-                <Link to="/admin/booking" style={linkStyle}>Hợp đồng chờ ký duyệt</Link>
-            </div>
-        </div>
-    );
-};
-
-// Hàm hiển thị Badge trạng thái
 const getStatusBadge = (status: ContractStatus) => {
     let variant: string;
     switch (status) {
@@ -71,77 +28,86 @@ const getStatusBadge = (status: ContractStatus) => {
     return <span className={`badge bg-${variant}`}>{status}</span>;
 };
 
-// Component chính ListContract
+
 const ListContract: React.FC = () => {
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Giả lập fetch API danh sách Contract
-    useEffect(() => {
+    const fetchContracts = async () => {
         setLoading(true);
         setError('');
-        // TODO: Thay bằng API thực tế: GET /api/admin/contracts
-        setTimeout(() => {
-            setContracts([
-                { id: 101, renterName: 'Nguyễn Văn A', bookingId: 1, createdAt: '2025-10-28 11:00', status: 'PENDING_ADMIN_SIGNATURE' },
-                { id: 102, renterName: 'Trần Thị B', bookingId: 2, createdAt: '2025-10-29 16:30', status: 'FULLY_SIGNED' },
-                { id: 103, renterName: 'Lê Văn C', bookingId: 3, createdAt: '2025-10-30 09:00', status: 'ADMIN_SIGNED' },
-                { id: 104, renterName: 'Phạm Thị D', bookingId: 4, createdAt: '2025-10-30 10:00', status: 'PENDING_ADMIN_SIGNATURE' },
-            ]);
+        try {
+            const data = await authServicesForAdmin.getAllContracts();
+            if (!data.success) {
+                setError(data.err);
+                setContracts([]);
+                return;
+            }
+            setContracts(data.data);
+        } catch (err: any) {
+            setError(err?.response?.data?.message || 'Có lỗi xảy ra khi tải danh sách hợp đồng');
+            console.error('Error fetching contracts:', err);
+        } finally {
             setLoading(false);
-        }, 800);
-    }, []);
-
-    // Handler cho nút "Xem chi tiết"
-    const handleViewDetails = (id: number) => {
-        // Chuyển hướng sang trang chi tiết Contract
-        navigate(`/admin/contract/${id}`);
+        }
     };
 
+    useEffect(() => {
+        fetchContracts();
+    }, []);
+
+    const handleViewDetails = (id: number) => {
+        navigate(`${id}`);
+    };
+
+
     return (
-        <Container className="p-4">
-            <h2 className="mb-4">Danh sách Hợp đồng</h2>
-            {error && <Alert variant="danger">{error}</Alert>}
-            {loading ? (
-                <div className="d-flex justify-content-center align-items-center" style={{ height: 200 }}>
-                    <Spinner animation="border" variant="primary" />
-                </div>
-            ) : (
-                <Table bordered hover responsive>
-                    <thead style={{ background: '#e9ecef' }}>
-                        <tr>
-                            <th>ID HĐ</th>
-                            <th>Mã Booking</th>
-                            <th>Name Renter</th>
-                            <th>Ngày Tạo</th>
-                            <th>Trạng thái</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {contracts.length === 0 ? (
-                            <tr><td colSpan={6} className="text-center">Không có hợp đồng nào</td></tr>
-                        ) : contracts.map((c, idx) => (
-                            <tr key={c.id}>
-                                <td>{c.id}</td>
-                                <td>{c.bookingId}</td>
-                                <td>{c.renterName}</td>
-                                <td>{c.createdAt}</td>
-                                <td>{getStatusBadge(c.status)}</td>
-                                <td>
-                                    <Button variant="outline-primary" size="sm" onClick={() => handleViewDetails(c.id)}>
-                                        Xem chi tiết
-                                    </Button>
-                                </td>
+        <Card className="shadow-sm border-0 list-contract-card">
+            <Card.Header className="bg-white pb-0 border-0">
+                <Card.Title as="h2">Danh sách Hợp đồng</Card.Title>
+            </Card.Header>
+            <Card.Body>
+                {error && <Alert variant="danger">{error}</Alert>}
+                {loading ? (
+                    <div className="d-flex justify-content-center align-items-center" style={{ height: 200 }}>
+                        <Spinner animation="border" variant="primary" />
+                        <span className="ms-3">Đang tải dữ liệu...</span>
+                    </div>
+                ) : contracts.length === 0 ? (
+                    <div className="text-center p-5">
+                        <h5 className="mt-3">Không có hợp đồng nào</h5>
+                        <p className="text-muted">Chưa có hợp đồng nào được tạo trong hệ thống.</p>
+                    </div>
+                ) : (
+                    <Table responsive hover className="contract-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID HĐ</th>
+                                <th>Mã Booking</th>
+                                <th>Tên Người thuê</th>
+                                <th>Ngày Tạo</th>
+                                <th>Trạng thái</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            )}
-        </Container>
+                        </thead>
+                        <tbody>
+                            {contracts.map((c) => (
+                                <tr key={c.bookingId} onClick={() => handleViewDetails(c.bookingId)} className="clickable-row">
+                                    <td><strong>#{c.bookingId}</strong></td>
+                                    <td>#{c.bookingId}</td>
+                                    <td>{c.renterName}</td>
+                                    <td>{c.createdAt?.replace("T", " ")}</td>
+                                    <td>{getStatusBadge(c.status)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                )}
+            </Card.Body>
+        </Card>
     );
+
 };
 
 export default ListContract;
