@@ -302,16 +302,23 @@ export const uploadCarImage = async (bookingId: number, imageType: string, vehic
             `${baseURL}/api/bookings/${bookingId}/images`,
             formData,
             {
-                params: { imageType, vehicleComponent, description },
+                params: { 
+                    imageType, 
+                    vehicleComponent, 
+                    description 
+                },
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             }
         );
+        
+        console.log('Upload response:', resp.data);
         return resp;
     } catch (error) {
         console.error('Lỗi khi upload ảnh:', error);
+        throw error;
     }
 };
 
@@ -335,10 +342,12 @@ export const deleteBookingImage = async (bookingId: number, imageId: number) => 
 };
 
 // Lấy danh sách ảnh đã upload theo bookingId và imageType
-export const getBookingImages = async (bookingId: number, imageType?: string) => {
+export const getBookingImages = async (bookingId: number, imageType?: string, vehicleComponent?: string) => {
     try {
         const token = localStorage.getItem('token');
-        const params = imageType ? { imageType } : {};
+        const params: any = {};
+        if (imageType) params.imageType = imageType;
+        if (vehicleComponent) params.vehicleComponent = vehicleComponent;
         
         const resp = await axios.get(`${baseURL}/api/bookings/${bookingId}/images`, {
             params,

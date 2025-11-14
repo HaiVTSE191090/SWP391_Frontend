@@ -101,10 +101,6 @@ const ListBookingStaff: React.FC = () => {
         }
     };
 
-    // Hàm xử lý khi bấm nút Trả xe
-    const handleReturnVehicle = (bookingId: number) => {
-        navigate(`/staff/booking/${bookingId}/detail`);
-    };
 
     // Hàm lấy text cho nút hành động
     const getButtonText = (contractStatus: string) => {
@@ -261,15 +257,6 @@ const ListBookingStaff: React.FC = () => {
                                                     {getButtonText(b.contractStatus)}
                                                 </Button>
                                                 
-                                                {isReadyToReturn && isContractFullySigned && (
-                                                    <Button
-                                                        variant="warning"
-                                                        size="sm"
-                                                        onClick={() => handleReturnVehicle(b.bookingId)}
-                                                    >
-                                                        Trả xe
-                                                    </Button>
-                                                )}
                                             </div>
                                         </td>
                                     </tr>
