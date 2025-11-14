@@ -27,7 +27,6 @@ export default function DepositPage() {
   const [payosQrCode, setPayosQrCode] = useState<string | null>(null);
   const { fetchPolicDeposit } = usePolicy();
 
-  // Helper function để lưu payment URLs vào localStorage
   const savePaymentUrl = (
     gateway: "momo" | "payos",
     url: string,
@@ -51,6 +50,7 @@ export default function DepositPage() {
       }
     }
   };
+
   const fetchDepositNumber = useCallback(async () => {
     const depositValue = await fetchPolicDeposit();
     if (depositValue.success) {
@@ -154,7 +154,7 @@ export default function DepositPage() {
     const initializeData = async () => {
       loadPaymentUrls(); // Load payment URLs từ localStorage nếu có
       fetchBooking();
-      
+
       // Kiểm tra invoice trước, nếu không có thì mới lấy từ policy
       const hasInvoice = await checkExistingInvoice();
       if (!hasInvoice) {
@@ -331,11 +331,11 @@ export default function DepositPage() {
 
       const data = res.data.data;
       if (data.checkoutUrl) {
-        // ✅ Lưu URL và chuyển hướng đến link thanh toán PayOS
+        // Lưu URL và chuyển hướng đến link thanh toán PayOS
         savePaymentUrl("payos", data.checkoutUrl);
         window.location.href = data.checkoutUrl;
       } else if (data.qrCode) {
-        // ✅ Lưu QR code và mở tab mới để hiển thị
+        // Lưu QR code và mở tab mới để hiển thị
         savePaymentUrl("payos", "", data.qrCode);
         const newTab = window.open();
         newTab!.document.write(
@@ -355,6 +355,51 @@ export default function DepositPage() {
     }
   };
 
+  const formatReadableRentalTime = (start: string, end: string) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    const optionsDate: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    };
+
+    const optionsTime: Intl.DateTimeFormatOptions = {
+      hour: "2-digit",
+      minute: "2-digit"
+    };
+
+    const startStr =
+      startDate.toLocaleTimeString("vi-VN", optionsTime) +
+      " " +
+      startDate.toLocaleDateString("vi-VN", optionsDate);
+
+    const endStr =
+      endDate.toLocaleTimeString("vi-VN", optionsTime) +
+      " " +
+      endDate.toLocaleDateString("vi-VN", optionsDate);
+
+    // TÍNH SỐ NGÀY – GIỜ
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    const remainHours = diffHours % 24;
+
+    let duration = "";
+    if (diffDays > 0) duration += `${diffDays} ngày `;
+    if (remainHours > 0) duration += `${remainHours} giờ`;
+
+    if (!duration) duration = "Dưới 1 giờ";
+
+    return {
+      startStr,
+      endStr,
+      duration
+    };
+  };
+
+
   return (
     <div className="container py-5 deposit-page">
       <h2 className="text-center fw-bold mb-5">XÁC NHẬN ĐẶT XE</h2>
@@ -371,10 +416,24 @@ export default function DepositPage() {
             <li>
               <strong>Mã đặt xe:</strong> {booking.bookingId}
             </li>
-            <li>
-              <strong>Thời gian thuê:</strong>{" "}
-              {booking.startDateTime.replace("T", " ")} -{" "}
-              {booking.endDateTime.replace("T", " ")}
+            <li className="d-flex">
+              <strong>Thời gian thuê:</strong>
+
+              <div className="ms-auto text-end">
+                <span className="fw-bold text-primary me-2">
+                  {formatReadableRentalTime(booking.startDateTime, booking.endDateTime).startStr}
+                </span>
+
+                <span className="fw-bold">→</span>
+
+                <span className="fw-bold text-primary ms-2">
+                  {formatReadableRentalTime(booking.startDateTime, booking.endDateTime).endStr}
+                </span>
+
+                <div className="text-muted small mt-1">
+                  ({formatReadableRentalTime(booking.startDateTime, booking.endDateTime).duration})
+                </div>
+              </div>
             </li>
             <li>
               <strong>Giá ước tính:</strong>{" "}
@@ -518,8 +577,7 @@ export default function DepositPage() {
                     Đang xử lý...
                   </>
                 ) : (
-                  `Tiếp tục đến ${
-                    selectedGateway === "momo" ? "MoMo" : "PayOS"
+                  `Tiếp tục đến ${selectedGateway === "momo" ? "MoMo" : "PayOS"
                   }`
                 )}
               </Button>
