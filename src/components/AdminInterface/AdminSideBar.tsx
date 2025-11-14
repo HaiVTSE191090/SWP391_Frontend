@@ -29,7 +29,6 @@ export const AdminSideBar = () => {
         loadNotifications();
     }, [loadAdminProfile, loadNotifications]);
     const unreadNotifications = notifications.filter((n) => !n.isRead);
-    const unreadCount = notifications.filter((n) => !n.isRead).length;
     const handleCloseModal = () => setShowNotifyModal(false);
     const handleShowModal = () => setShowNotifyModal(true);
 
@@ -151,16 +150,16 @@ export const AdminSideBar = () => {
     );
 };
 
-const NotificationBell = ({ unreadCount }: { unreadCount: number }) => {
-    return (
-        <Link to="/admin/notifications" className="notification-bell">
-            <Bell size={20} />
-            {unreadCount > 0 && (
-                <span className="notification-badge">{unreadCount}</span>
-            )}
-        </Link>
-    );
-};
+// const NotificationBell = ({ unreadCount }: { unreadCount: number }) => {
+//     return (
+//         <Link to="/admin/notifications" className="notification-bell">
+//             <Bell size={20} />
+//             {unreadCount > 0 && (
+//                 <span className="notification-badge">{unreadCount}</span>
+//             )}
+//         </Link>
+//     );
+// };
 
 const SidebarItem = ({ icon, text, active, alert, path }: any) => {
     return (

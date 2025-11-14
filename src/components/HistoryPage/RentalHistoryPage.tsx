@@ -5,7 +5,7 @@ import { Button, Spinner, Badge, Modal } from "react-bootstrap";
 import "./RentalHistoryPage.css";
 import { Booking } from "../../models/BookingModel";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import {  toast } from "react-toastify";
 import StarRating from "./StarRating";
 
 const formatDateTime = (isoString: string) => {

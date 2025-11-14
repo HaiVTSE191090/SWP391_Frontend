@@ -54,3 +54,4 @@ export interface KycVerificationResponse {
   message: string;
   data?: any;
 }
+

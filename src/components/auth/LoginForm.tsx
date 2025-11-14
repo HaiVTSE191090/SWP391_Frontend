@@ -6,11 +6,9 @@ import { FormContext, FormProvider } from "../../context/FormContext";
 import { useModal } from "../../hooks/useModal";
 import { toast } from "react-toastify";
 import ForgotPasswordForm from "./ForgotPasswordForm";
+import { Link } from "react-router-dom";
 
-/**
- * LoginForm Content - Sử dụng LOCAL form state từ FormContext
- * Không dùng global error/message từ UserContext
- */
+
 const LoginFormContent: React.FC = () => {
     const { closeModalAndReload } = useModal();
     const [showPassword, setShowPassword] = useState(false);
@@ -226,6 +224,14 @@ const LoginFormContent: React.FC = () => {
                                         Quên mật khẩu?
                                     </button>
                                 </div>
+                                    <div className="d-flex align-items-center justify-content-between mt-2 mb-3">
+                                        <a href="/admin/login" className="text-decoration-none">
+                                            Đăng nhập Admin
+                                        </a>
+                                        <a href="/staff/login" className="text-decoration-none">
+                                            Đăng nhập Staff
+                                        </a>
+                                    </div>
 
                                 <div className="d-grid mb-3">
                                     <button

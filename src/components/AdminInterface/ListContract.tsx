@@ -89,7 +89,6 @@ const ListContract: React.FC = () => {
                                 <th>Tên Người thuê</th>
                                 <th>Ngày Tạo</th>
                                 <th>Trạng thái</th>
-                                <th className="text-center">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -100,15 +99,6 @@ const ListContract: React.FC = () => {
                                     <td>{c.renterName}</td>
                                     <td>{c.createdAt?.replace("T", " ")}</td>
                                     <td>{getStatusBadge(c.status)}</td>
-                                    <td className="text-center">
-                                        <Button
-                                            variant="outline-primary"
-                                            size="sm"
-                                            onClick={(e) => { e.stopPropagation(); handleViewDetails(c.id); }}
-                                        >
-                                            Xem chi tiết
-                                        </Button>
-                                    </td>
                                 </tr>
                             ))}
                         </tbody>

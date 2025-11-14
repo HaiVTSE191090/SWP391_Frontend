@@ -1,4 +1,3 @@
-import axios from "axios";
 import api from "./AdminApiConfig";
 import {
   ApiResponse,
@@ -10,7 +9,6 @@ import {
 } from "../types/api.type";
 import { jwtDecode } from "jwt-decode";
 
-const baseURL = "http://localhost:8080";
 
 export const adminLogin = async (email: string, password: string) => {
   try {
@@ -363,4 +361,5 @@ export const updateBookingStatusToCancelled = async (
     };
   }
 };
+
 

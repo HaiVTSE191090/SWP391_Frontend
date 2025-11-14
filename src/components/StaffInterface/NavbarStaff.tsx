@@ -7,6 +7,7 @@ import { getUserName, staffLogout, getStaffNotifications } from "./services/auth
 import { useNavigate, useLocation } from "react-router-dom";
 
 
+
 // Khai báo type cho Notification
 interface Notification {
   notificationId: number;

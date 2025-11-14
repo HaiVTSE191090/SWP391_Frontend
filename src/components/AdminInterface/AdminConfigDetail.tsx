@@ -69,8 +69,8 @@ const AdminConfigDetail = () => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         const updatedData: PolicyResponse = {
-            policyId: Number(policyId),
-            policyType: policy?.policyType!,
+            policyId: Number(policyId) || 0,
+            policyType: policy?.policyType! || String(formData.get('policyType')),
             description: String(formData.get('description')),
             value: Number(formData.get('value')),
             status: String(formData.get('status')),
@@ -84,15 +84,15 @@ const AdminConfigDetail = () => {
         try {
             if (isCreateMode) {
                 const res = await createPolicy();
-                if (res?.success){
+                if (res?.success) {
                     toast.update(toastId, {
-                        render: "Cập nhật thành công!",
+                        render: res.message,
                         type: "success",
                         isLoading: false,
                         autoClose: 3000,
                     })
                 } else {
-                    toast.update(toastId, { 
+                    toast.update(toastId, {
                         render: res?.message,
                         type: "error",
                         isLoading: false,
@@ -100,14 +100,24 @@ const AdminConfigDetail = () => {
                     })
                 }
             } else {
-                
-                await setPolicyById(Number(policyId), updatedData);
-                toast.update(toastId, {
-                    render: "Cập nhật thành công!",
-                    type: "success",
-                    isLoading: false,
-                    autoClose: 3000,
-                });
+
+                const res = await setPolicyById(Number(policyId), updatedData);
+                if (res?.success) {
+
+                    toast.update(toastId, {
+                        render: res?.message,
+                        type: "success",
+                        isLoading: false,
+                        autoClose: 3000,
+                    });
+                } else {
+                    toast.update(toastId, {
+                        render: res?.err,
+                        type: "error",
+                        isLoading: false,
+                        autoClose: 3000,
+                    })
+                }
             }
             setTimeout(() => navigate(-1), 1000);
         } catch (error: any) {
@@ -138,7 +148,6 @@ const AdminConfigDetail = () => {
                                     <Form.Control
                                         type="text"
                                         defaultValue={policy?.policyId}
-                                        readOnly
                                         disabled
                                     />
                                 </Col>
@@ -153,11 +162,11 @@ const AdminConfigDetail = () => {
                             <Col sm={5}>
                                 <Form.Control
                                     type="text"
-                                    name="policyType" // <-- Thêm name
+                                    name="policyType"
                                     defaultValue={policy?.policyType || ''}
-                                    readOnly={!isCreateMode} // <-- Sửa logic
-                                    disabled={!isCreateMode} // <-- Sửa logic
-                                    required // <-- Bắt buộc nhập khi tạo
+                                    disabled={!isCreateMode} 
+                                    placeholder='Policy Type'
+                                    required
                                 />
                             </Col>
                         </Form.Group>
@@ -199,7 +208,7 @@ const AdminConfigDetail = () => {
                             <Col sm={5}>
                                 <Form.Select
                                     name="appliedScope"
-                                    defaultValue={policy?.appliedScope || 'GLOBAL'} // <-- Sửa
+                                    defaultValue={policy?.appliedScope || 'GLOBAL'}
                                 >
                                     <option value="GLOBAL">GLOBAL</option>
                                     <option value="LOCAL">LOCAL</option>
@@ -214,7 +223,7 @@ const AdminConfigDetail = () => {
                             <Col sm={5}>
                                 <Form.Select
                                     name="status"
-                                    defaultValue={policy?.status || 'ACTIVE'} // <-- Sửa
+                                    defaultValue={policy?.status || 'ACTIVE'}
                                 >
                                     <option value="ACTIVE">ACTIVE</option>
                                     <option value="INACTIVE">INACTIVE</option>

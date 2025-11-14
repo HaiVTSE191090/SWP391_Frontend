@@ -89,6 +89,10 @@ const ListBooking: React.FC = () => {
         return bookings.filter(booking => booking.status === filterStatus);
     }, [bookings, filterStatus]);
 
+    const handleViewInvoice = (bookingId: number) => {
+        navigate(`invoices/${bookingId}`)
+    }
+
     return (
         <Card className="shadow-sm border-0">
             <Card.Header className="bg-white pb-0 border-0">
@@ -224,7 +228,7 @@ const ListBooking: React.FC = () => {
                                             {booking.depositStatus}
                                         </span>
                                     </td>
-                                    <td className="text-center">
+                                    <td className="">
                                         <Button
                                             variant="outline-primary"
                                             size="sm"
@@ -232,8 +236,21 @@ const ListBooking: React.FC = () => {
                                                 e.stopPropagation();
                                                 handleViewDetails(booking.bookingId);
                                             }}
+                                            className='m-1'
                                         >
                                             Xem chi tiết
+                                        </Button>
+
+                                        <Button
+                                            variant="success"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleViewInvoice(booking.bookingId);
+                                            }}
+                                            
+                                        >
+                                            danh sách hóa đơn
                                         </Button>
                                     </td>
                                 </tr>

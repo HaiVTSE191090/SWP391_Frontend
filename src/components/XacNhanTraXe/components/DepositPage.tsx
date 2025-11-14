@@ -534,7 +534,7 @@ export default function DepositPage() {
               ) : (
                 <>
                   <img
-                    src="https://cdn.payos.vn/logo/payos-logo.svg"
+                      src="https://cas.so/img/payOS.png"
                     alt="PayOS"
                     width={35}
                     height={35}

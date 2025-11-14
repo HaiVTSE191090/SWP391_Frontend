@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { PolicyResponse, PolicyType } from "../models/PolicyModel";
 import api from "../services/apiClient";
-import { ApiResponse } from "../models/AuthModel";
+import { ApiResponse } from "../components/AdminInterface/types/api.type";
 
 export function usePolicy() {
   const [policy, setPolicy] = useState<PolicyResponse>();
@@ -96,12 +96,13 @@ export function usePolicy() {
     try {
       const res = await api.put<ApiResponse<PolicyResponse>>(
         `/api/policies/${policyId}`,
-        { updatedData }
+         updatedData 
       );
       if (res.data.status === "success") {
         return {
           success: true,
           data: res.data.data,
+          message: res.data.message
         };
       }
     } catch (error: any) {

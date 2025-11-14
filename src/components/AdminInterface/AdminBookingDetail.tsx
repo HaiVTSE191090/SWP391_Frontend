@@ -7,6 +7,8 @@ import {
     updateBookingStatusToReserved,
     updateBookingStatusToCancelled
 } from './services/authServicesForAdmin';
+import { toast } from 'react-toastify';
+import { useWallet } from '../../hooks/useWallet';
 
 const BookingDetail: React.FC = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
@@ -19,6 +21,8 @@ const BookingDetail: React.FC = () => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
 
+    const { refundByAdmin, refundByRenter, isLoading, error: walletError } = useWallet()
+ 
     useEffect(() => {
         const fetchBookingDetail = async () => {
             try {
@@ -121,6 +125,40 @@ const BookingDetail: React.FC = () => {
         const config = statusConfig[status] || { variant: 'secondary', text: status };
         return <Badge bg={config.variant}>{config.text}</Badge>;
     };
+
+    const handleAdminRefund = async () => {
+        if (!bookingId) {
+            toast.error("Không tìm thấy Booking ID!");
+            return;
+        }
+
+        const res = await refundByAdmin(bookingId);
+
+        if (res.success) {
+            toast.success(res.message || "Hoàn cọc toàn phần thành công!");
+        } else {
+            toast.error(res.message || "Có lỗi xảy ra");
+        }
+    };
+
+    // 4. Tạo hàm xử lý cho nút Renter Hủy
+    const handleRenterRefund = async () => {
+        if (!bookingId) {
+            toast.error("Không tìm thấy Booking ID!");
+            return;
+        }
+
+        // Gọi hàm từ hook
+        const res = await refundByRenter(bookingId);
+
+        if (res.success) {
+            toast.success(res.message || "Hoàn cọc (Renter) thành công!");
+        } else {
+            toast.error(res.message || "Có lỗi xảy ra");
+        }
+    };
+
+    // ===================================================== điều kiện
 
     if (loading) {
         return (
@@ -343,11 +381,34 @@ const BookingDetail: React.FC = () => {
                         </Alert>
                     )}
 
-                    {booking.status === 'CANCELLED' && (
-                        <Alert variant="danger" className="mt-3">
-                            <i className="bi bi-x-circle-fill me-2"></i>
-                            Booking này đã bị hủy
-                        </Alert>
+                    {booking.status === 'CANCELLED' && booking.depositStatus === 'PAID' && (
+                        <div>
+
+                            <Alert variant="danger" className="mt-3">
+                                <i className="bi bi-x-circle-fill me-2"></i>
+                                Booking này đã bị hủy vui lòng hoàn cọc
+                            </Alert>
+                            <div className='d-flex justify-content-between mt-3'>
+                                <Button
+                                    onClick={handleAdminRefund}
+                                    disabled={isLoading}
+                                    variant="primary"
+                                >
+                                    {isLoading && <Spinner animation="border" size="sm" className="me-1" />}
+                                    Hoàn Cọc Toàn Phần
+                                </Button>
+
+                                <Button
+                                    onClick={handleRenterRefund}
+                                    disabled={isLoading}
+                                    variant="secondary"
+                                >
+                                    {isLoading && <Spinner animation="border" size="sm" className="me-1" />}
+                                    Hoàn Cọc Do Renter Hủy
+                                </Button>
+                            </div>
+                        </div>
+
                     )}
 
                     {booking.status === 'COMPLETED' && (

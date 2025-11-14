@@ -5,6 +5,7 @@ import ListRenter from './ListRenter';
 import ChooseCar from './ChooseCar';
 import { useNavigate } from 'react-router-dom';
 import { getCarDetails, getStaffStation, getUserName, staffLogout } from './services/authServices';
+import "./StaffLogin.css"
 
 
 interface StationVehicle {
@@ -175,8 +176,8 @@ export default function Staff() {
   return (
     <div className="staff-interface">
       {/* Navigation Bar với Hamburger Menu */}
-      <Navbar className="px-3">
-        <Button variant="primary" onClick={handleShow} className="me-3">
+      <Navbar className="staff px-3">
+        <Button variant="primary" onClick={handleShow} className="staff me-3">
           ☰
         </Button>
       </Navbar>

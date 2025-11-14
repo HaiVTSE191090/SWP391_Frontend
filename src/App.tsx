@@ -21,7 +21,7 @@ import PaymentResultPage from "./pages/PaymentResultPage";
 // ======== Các trang cho Admin ========
 import AdminLayout from "./components/AdminInterface/Admin";
 import ListBooking from "./components/AdminInterface/ListBooking";
-import AdminBookingDetail from "./components/AdminInterface/BookingDetail";
+import AdminBookingDetail from "./components/AdminInterface/AdminBookingDetail";
 import ListContract from "./components/AdminInterface/ListContract";
 import AdminDashBoard from "./components/AdminInterface/AdminDashBoard";
 import AdminLogin from "./components/AdminInterface/AdminLogin";
@@ -55,6 +55,7 @@ import AdminVehicleDetail from "./components/AdminInterface/AdminVehicleDetail";
 import AdminBlacklist from "./components/AdminInterface/AdminBlackList";
 import AdminReportDetail from "./components/AdminInterface/AdminReportDetail";
 import AdminProfile from "./components/AdminInterface/AdminProfile";
+import AdminInvoices from "./components/AdminInterface/AdminInvoices";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
 //hàm này để trong config thì được chứ tự nhiên để đây nó bị sai logic vl
@@ -126,6 +127,7 @@ const App = () => {
                 <Route path="contract/:bookingId" element={<AdminContractPage />} />
                 <Route path="booking" element={<ListBooking />} />
                 <Route path="booking/:bookingId" element={<AdminBookingDetail />} />
+                <Route path="booking/invoices/:bookingId" element={<AdminInvoices/>}/>
                 <Route path="config" element={<AdminConfig />} />
                 <Route path="config/details/:policyId" element={<AdminConfigDetail />} />
                 <Route path="config/details" element={<AdminConfigDetail/>}/>
