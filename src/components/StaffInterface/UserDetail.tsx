@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Container, Row, Col, Card, Button, Spinner, Alert, Badge, ListGroup } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import ConfirmationPopup from './ConfirmationPopup';
 import { deleteRenter, getRenterDetails, verifyRenter } from './services/authServices';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface DocumentDetail {
   documentNumber: string;
@@ -38,17 +39,38 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
     message: '',
     type: 'success' as 'success' | 'danger' | 'warning' | 'info',
   });
+  const fetchDetail = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const userData = await getRenterDetails(renterId);
+      if (userData && userData.data && userData.data.status === 'success') {
+        setDetail(userData.data.data);
+      } else {
+        setError(userData?.data?.message || 'Không thể tải dữ liệu renter.');
+        setDetail(null);
+      }
+    } catch (err: any) {
+      console.error("Lỗi khi fetch chi tiết renter:", err);
+      setError(err.response?.data?.message || err.message || 'Lỗi mạng hoặc máy chủ.');
+      setDetail(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [renterId]);
 
   useEffect(() => {
     fetchDetail();
-  }, []); // chạy lại khi id đổi
+  }, [fetchDetail]); // chạy lại khi id đổi
 
-  const fetchDetail = async () => {
-    setLoading(true);
-    setError('');
-    const userData = await getRenterDetails(renterId);
-    setDetail(userData?.data?.data || null);
-    setLoading(false);
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
+    } catch {
+      return dateString; // Trả về chuỗi gốc nếu format lỗi
+    }
   };
 
   const handleVerify = async () => {
@@ -115,52 +137,127 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   }
 
   return (
-    <Container className="py-4 d-flex flex-column align-items-center">
-      <Card className="p-4 shadow" style={{ borderRadius: 24, minWidth: 400, maxWidth: 600, width: '100%' }}>
-        <Row className="align-items-center">
-          <Col xs={8}>
-            <Row>
-              <Col xs={6} className="mb-2">
-                <strong>Name:</strong> {detail?.fullName}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Birth:</strong> {detail?.dateOfBirth}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Phone:</strong> {detail?.phoneNumber}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Email:</strong> {detail?.email}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Address:</strong> {detail?.address}
-              </Col>
-              <Col xs={6} className="mb-2">
-                <strong>Identity Card:</strong> {detail?.cccd?.documentNumber}
-              </Col>
-              <Col xs={12} className="mb-2">
-                <strong>License:</strong> {detail?.gplx?.documentNumber}
-              </Col>
-            </Row>
-          </Col>
-        </Row>
+    <Container className="py-4">
+      {/* Nút quay lại (di chuyển lên trên) */}
+      {onBack && (
+        <Button variant="link" onClick={onBack} className="mb-2 p-0">
+          &larr; Quay lại danh sách
+        </Button>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <div>
+            <Card.Title as="h4" className="mb-0">
+              {detail?.fullName} (ID: {detail?.renterId})
+            </Card.Title>
+            <Card.Subtitle className="text-muted">Chi tiết Renter</Card.Subtitle>
+          </div>
+          <Badge
+            bg={detail?.status === 'VERIFIED' ? 'success' : 'warning'}
+            className="p-2"
+          >
+            {detail?.status === 'VERIFIED' ? 'Đã xác thực' : 'Chờ xác thực'}
+          </Badge>
+        </Card.Header>
+
+        <Card.Body>
+          {/* ---- THÔNG TIN CÁ NHÂN ---- */}
+          <Row className="mb-4">
+            <h5 className="mb-3 border-bottom pb-2">Thông tin cá nhân</h5>
+            <Col md={6}>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Ngày sinh:</strong> {formatDate(detail?.dateOfBirth)}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Số điện thoại:</strong> {detail?.phoneNumber}
+                </ListGroup.Item>
+              </ListGroup>
+            </Col>
+            <Col md={6}>
+              <ListGroup variant="flush">
+                <ListGroup.Item>
+                  <strong>Email:</strong> {detail?.email}
+                </ListGroup.Item>
+                <ListGroup.Item>
+                  <strong>Địa chỉ:</strong> {detail?.address}
+                </ListGroup.Item>
+              </ListGroup>
+            </Col>
+          </Row>
+
+          {/* ---- THÔNG TIN GIẤY TỜ ---- */}
+          <Row>
+            <h5 className="mb-3 border-bottom pb-2">Thông tin giấy tờ</h5>
+            {/* Cột CCCD */}
+            <Col md={6}>
+              <Card>
+                <Card.Header className="bg-light">
+                  <i className="bi bi-person-vcard-fill me-2"></i>
+                  Căn cước công dân (CCCD)
+                </Card.Header>
+                <ListGroup variant="flush">
+                  <ListGroup.Item>
+                    <strong>Số CCCD:</strong> {detail?.cccd?.documentNumber || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Họ tên:</strong> {detail?.cccd?.fullName || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày cấp:</strong> {formatDate(detail?.cccd?.issueDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày hết hạn:</strong> {formatDate(detail?.cccd?.expiryDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Xác thực lúc:</strong> {formatDate(detail?.cccd?.verifiedAt) || 'Chưa xác thực'}
+                  </ListGroup.Item>
+                </ListGroup>
+              </Card>
+            </Col>
+
+            {/* Cột GPLX */}
+            <Col md={6} className="mt-3 mt-md-0">
+              <Card>
+                <Card.Header className="bg-light">
+                  <i className="bi bi-car-front-fill me-2"></i>
+                  Giấy phép lái xe (GPLX)
+                </Card.Header>
+                <ListGroup variant="flush">
+                  <ListGroup.Item>
+                    <strong>Số GPLX:</strong> {detail?.gplx?.documentNumber || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Họ tên:</strong> {detail?.gplx?.fullName || 'N/A'}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày cấp:</strong> {formatDate(detail?.gplx?.issueDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Ngày hết hạn:</strong> {formatDate(detail?.gplx?.expiryDate)}
+                  </ListGroup.Item>
+                  <ListGroup.Item>
+                    <strong>Xác thực lúc:</strong> {formatDate(detail?.gplx?.verifiedAt) || 'Chưa xác thực'}
+                  </ListGroup.Item>
+                </ListGroup>
+              </Card>
+            </Col>
+          </Row>
+        </Card.Body>
       </Card>
 
       {detail?.status === 'PENDING_VERIFICATION' && (
         <div className="d-flex justify-content-center gap-4 mt-4">
           <Button variant="success" size="lg" onClick={handleVerify}>
+            <i className="bi bi-check-circle-fill me-2"></i>
             Verify
           </Button>
           <Button variant="danger" size="lg" onClick={handleDelete}>
+            <i className="bi bi-trash-fill me-2"></i>
             Delete
           </Button>
         </div>
-      )}
-
-      {onBack && (
-        <Button variant="link" className="mt-3" onClick={onBack}>
-          Quay lại danh sách
-        </Button>
       )}
 
       <ConfirmationPopup

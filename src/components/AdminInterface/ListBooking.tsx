@@ -250,7 +250,7 @@ const ListBooking: React.FC = () => {
                                             }}
                                             
                                         >
-                                            danh sách hóa đơn
+                                            Danh sách hóa đơn
                                         </Button>
                                     </td>
                                 </tr>

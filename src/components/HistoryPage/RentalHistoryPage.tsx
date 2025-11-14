@@ -1,12 +1,14 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Spinner, Badge, Modal } from "react-bootstrap";
 import "./RentalHistoryPage.css";
 import { Booking } from "../../models/BookingModel";
 import axios from "axios";
-import {  toast } from "react-toastify";
+import { toast } from "react-toastify";
 import StarRating from "./StarRating";
+import { User } from "../../models/AuthModel";
+import { UserContext } from "../../context/UserContext";
 
 const formatDateTime = (isoString: string) => {
   const date = new Date(isoString);
@@ -37,11 +39,50 @@ export default function RentalHistoryPage() {
   const [comment, setComment] = useState("");
   const [submittingRating, setSubmittingRating] = useState(false);
   const [ratedBookingIds, setRatedBookingIds] = useState<number[]>([]);
+  const [profileData, setProfileData] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const userContext = useContext(UserContext);
+
+
 
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      if (!userContext?.token) {
+        setError("Vui lòng đăng nhập để xem thông tin");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // 🔹 Gọi trực tiếp API renter/profile
+        const res = await axios.get("http://localhost:8080/api/renter/profile", {
+          headers: {
+            Authorization: `Bearer ${userContext.token}`,
+          },
+        });
+
+        if (res.data?.data) {
+          const renterData = res.data.data;
+          setProfileData(renterData);
+          setError(null);
+        }
+      } catch (err: any) {
+        console.error("❌ Lỗi khi tải thông tin người dùng:", err);
+        setError(
+          err.response?.data?.message || "Không thể tải thông tin người dùng"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -401,13 +442,13 @@ export default function RentalHistoryPage() {
 
                   if (contractStatus === "PENDING_ADMIN_SIGNATURE") {
                     return (
-                      <Button variant="secondary" disabled>
+                      <Button variant="secondary" disabled={profileData?.kycStatus !== "VERIFIED"}>
                         Ký hợp đồng
                       </Button>
                     );
                   }
 
-                  if (contractStatus === "ADMIN_SIGNED") {
+                  if (contractStatus === "ADMIN_SIGNED" && profileData?.kycStatus === "VERIFIED") {
                     return (
                       <Button
                         variant="success"
