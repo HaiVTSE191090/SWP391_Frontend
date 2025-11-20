@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Spinner, Table, Alert, Button, Form, Row, Col, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { getInvoiceDetail, getSpareParts, addInvoiceDetail, refundToWallet, refundToCash, completeBooking } from "./services/authServices";
+import { getInvoiceDetail, getSpareParts, addInvoiceDetail, refundToWallet, refundToCash, completeBooking, getBookingDetail } from "./services/authServices";
 
 interface SparePart {
   priceId: number;
@@ -40,10 +40,16 @@ interface Invoice {
   details: InvoiceDetail[];
 }
 
+interface BookingDetail {
+  bookingId: number;
+  depositStatus: string;
+}
+
 const InvoiceDetailPage: React.FC = () => {
   const { invoiceId } = useParams<{ invoiceId: string }>();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [spareParts, setSpareParts] = useState<SparePart[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -68,7 +74,16 @@ const InvoiceDetailPage: React.FC = () => {
         
         // Fetch invoice detail
         const invoiceRes = await getInvoiceDetail(Number(invoiceId));
-        setInvoice(invoiceRes.data.data);
+        const invoiceData = invoiceRes.data.data;
+        setInvoice(invoiceData);
+        
+        // Fetch booking detail để lấy depositStatus
+        if (invoiceData.bookingId) {
+          const bookingRes = await getBookingDetail(invoiceData.bookingId);
+          if (bookingRes?.data?.data) {
+            setBooking(bookingRes.data.data);
+          }
+        }
         
         // Fetch spare parts list
         const sparePartsRes = await getSpareParts();
@@ -280,6 +295,9 @@ const InvoiceDetailPage: React.FC = () => {
                     <span className="text-info fw-bold fs-5">
                       {invoice.depositAmount.toLocaleString("vi-VN")} VND
                     </span>
+                    {booking?.depositStatus === "PAID" && (
+                      <span className="badge bg-success ms-2">Đã thanh toán</span>
+                    )}
                   </p>
                 )}
                 {invoice.refundAmount > 0 && (
