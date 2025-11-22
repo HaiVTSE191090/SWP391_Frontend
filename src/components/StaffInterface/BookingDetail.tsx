@@ -220,7 +220,7 @@ function BookingDetail() {
 
         // Kiểm tra: Chỉ cho phép chụp ảnh AFTER_RENTAL khi đã xác nhận trả xe
         if (type === 'after' && !booking.actualReturnTime) {
-            toast.warning('⚠️ Vui lòng XÁC NHẬN TRẢ XE trước khi chụp ảnh sau trả!');
+            toast.warning('Vui lòng XÁC NHẬN TRẢ XE trước khi chụp ảnh sau trả!');
             return;
         }
 
@@ -246,7 +246,7 @@ function BookingDetail() {
 
         // Kiểm tra: Chỉ cho phép xóa ảnh AFTER_RENTAL khi đã xác nhận trả xe
         if (imageType === 'AFTER_RENTAL' && !booking.actualReturnTime) {
-            toast.warning('⚠️ Chỉ có thể xóa ảnh sau trả khi đã xác nhận trả xe!');
+            toast.warning('Chỉ có thể xóa ảnh sau trả khi đã xác nhận trả xe!');
             return;
         }
 
@@ -288,7 +288,7 @@ function BookingDetail() {
 
         // Kiểm tra: Chỉ cho phép update ảnh AFTER_RENTAL khi đã xác nhận trả xe
         if (imageType === 'AFTER_RENTAL' && !booking.actualReturnTime) {
-            toast.warning('⚠️ Chỉ có thể cập nhật ảnh sau trả khi đã xác nhận trả xe!');
+            toast.warning('Chỉ có thể cập nhật ảnh sau trả khi đã xác nhận trả xe!');
             return;
         }
 
@@ -311,7 +311,7 @@ function BookingDetail() {
         setSubmittingReturn(true);
         try {
             await confirmReturnVehicle(booking.bookingId, returnFormData);
-            toast.success("✅ Xác nhận trả xe thành công!");
+            toast.success("Xác nhận trả xe thành công!");
             setShowReturnModal(false);
 
             // Reload để cập nhật dữ liệu
@@ -320,7 +320,7 @@ function BookingDetail() {
             }, 1500);
         } catch (error) {
             console.error('Lỗi khi xác nhận trả xe:', error);
-            toast.error("❌ Lỗi khi xác nhận trả xe!");
+            toast.error("Lỗi khi xác nhận trả xe!");
         } finally {
             setSubmittingReturn(false);
         }
@@ -335,18 +335,18 @@ function BookingDetail() {
         const hasUnconfirmedAfterImages = afterRentalImages.some(img => img.confirmed !== true);
         
         if (hasUnconfirmedAfterImages) {
-            toast.error("❌ Tất cả ảnh sau trả xe phải được confirmed trước khi tạo hóa đơn!");
+            toast.error("Tất cả ảnh sau trả xe phải được confirmed trước khi tạo hóa đơn!");
             return;
         }
 
         // Kiểm tra 2: Đã có đủ ảnh trước và sau thuê chưa
         if (!canConfirmReturn) {
-            toast.error("❌ Vui lòng chụp đủ ảnh trước thuê và sau thuê trước khi tạo hóa đơn!");
+            toast.error("Vui lòng chụp đủ ảnh trước thuê và sau thuê trước khi tạo hóa đơn!");
             return;
         }
 
         // Kiểm tra trạng thái booking trước khi tạo invoice
-        console.log('📋 Booking info:', {
+        console.log('Booking info:', {
             bookingId: booking.bookingId,
             status: booking.status
         });
@@ -354,21 +354,21 @@ function BookingDetail() {
         setCreatingInvoice(true);
         try {
             const response = await createFinalInvoice(booking.bookingId);
-            console.log('✅ Invoice response:', response.data);
+            console.log(' Invoice response:', response.data);
             
             const invoiceId = response.data?.data?.invoiceId;
 
             if (invoiceId) {
-                toast.success("✅ Đã tạo hóa đơn thành công!");
+                toast.success(" Đã tạo hóa đơn thành công!");
                 // Chuyển hướng sang trang chi tiết hóa đơn
                 navigate(`/staff/invoice/${invoiceId}`);
             } else {
-                toast.error("❌ Không thể lấy ID hóa đơn!");
+                toast.error(" Không thể lấy ID hóa đơn!");
             }
         } catch (error: any) {
-            console.error('❌ Lỗi chi tiết:', error.response?.data);
+            console.error(' Lỗi chi tiết:', error.response?.data);
             const errorMsg = error.response?.data?.message || error.message || "Lỗi khi tạo hóa đơn!";
-            toast.error(`❌ ${errorMsg}`);
+            toast.error(` ${errorMsg}`);
         } finally {
             setCreatingInvoice(false);
         }
@@ -442,7 +442,7 @@ function BookingDetail() {
 
         // Kiểm tra trạng thái booking
         if (booking.status !== 'RESERVED') {
-            toast.warning('⚠️ Chỉ có thể xác nhận với booking đang ở trạng thái RESERVED!');
+            toast.warning('Chỉ có thể xác nhận với booking đang ở trạng thái RESERVED!');
             return;
         }
 
@@ -453,7 +453,7 @@ function BookingDetail() {
             const checklistRes = await getImageChecklist(booking.bookingId, 'BEFORE_RENTAL');
 
             if (!checklistRes?.data?.data) {
-                toast.error('❌ Không thể kiểm tra danh sách ảnh. Vui lòng thử lại!');
+                toast.error('Không thể kiểm tra danh sách ảnh. Vui lòng thử lại!');
                 setConfirmingBooking(false);
                 return;
             }
@@ -466,7 +466,7 @@ function BookingDetail() {
             const imagesWithoutDescription = beforeImages.filter((img: BookingImage) => !img.description || img.description.trim() === '');
 
             if (imagesWithoutDescription.length > 0) {
-                toast.error('❌ Tất cả ảnh BEFORE_RENTAL phải có mô tả!');
+                toast.error('Tất cả ảnh BEFORE_RENTAL phải có mô tả!');
                 setConfirmingBooking(false);
                 return;
             }
@@ -478,7 +478,7 @@ function BookingDetail() {
 
         } catch (error) {
             console.error('Lỗi khi kiểm tra checklist:', error);
-            toast.error('❌ Lỗi khi kiểm tra danh sách ảnh!');
+            toast.error('Lỗi khi kiểm tra danh sách ảnh!');
             setConfirmingBooking(false);
         }
     };
@@ -660,11 +660,11 @@ function BookingDetail() {
                         </Alert>
                     ) : !canConfirmReturn ? (
                         <Alert variant="warning" className="text-center">
-                            ⚠️ Chưa đủ ảnh trước thuê và sau thuê. Vui lòng chụp đầy đủ trước khi tạo hóa đơn!
+                            Chưa đủ ảnh trước thuê và sau thuê. Vui lòng chụp đầy đủ trước khi tạo hóa đơn!
                         </Alert>
                     ) : (
                         <Alert variant="success" className="text-center">
-                            ✅ Đã có đủ ảnh trước và sau thuê. Có thể tạo hóa đơn!
+                            Đã có đủ ảnh trước và sau thuê. Có thể tạo hóa đơn!
                         </Alert>
                     )}
 
@@ -676,7 +676,7 @@ function BookingDetail() {
                                 className="w-100"
                                 onClick={handleConfirmReturn}
                             >
-                                ✅ Xác nhận trả xe
+                                Xác nhận trả xe
                             </Button>
                         </Col>
                         <Col xs={12} md={4} className="mb-2">
@@ -698,7 +698,7 @@ function BookingDetail() {
                                     </>
                                 ) : (
                                     <>
-                                        🧾 Tạo hóa đơn
+                                         Tạo hóa đơn
                                         {!allAfterImagesConfirmed && afterImages.length > 0 && <small className="d-block">(Ảnh chưa confirmed)</small>}
                                     </>
                                 )}
@@ -753,7 +753,7 @@ function BookingDetail() {
                     {/* HIỂN THỊ ẢNH ĐÃ UPLOAD */}
                     <Row className="mt-4">
                         <Col md={6}>
-                            <h6 className="fw-bold mb-3">📷 Ảnh trước khi thuê ({beforeImages.length})</h6>
+                            <h6 className="fw-bold mb-3">Ảnh trước khi thuê ({beforeImages.length})</h6>
                             {beforeImages.length === 0 ? (
                                 <Alert variant="secondary">Chưa có ảnh nào được upload cho hạng mục này.</Alert>
                             ) : (
@@ -804,7 +804,7 @@ function BookingDetail() {
                                                                 Đang xóa...
                                                             </>
                                                         ) : (
-                                                            '🗑️ Xóa'
+                                                            'Xóa'
                                                         )}
                                                     </Button>
                                                 </div>
@@ -835,7 +835,7 @@ function BookingDetail() {
                         </Col>
 
                         <Col md={6}>
-                            <h6 className="fw-bold mb-3">📷 Ảnh sau khi trả ({afterImages.length})</h6>
+                            <h6 className="fw-bold mb-3">Ảnh sau khi trả ({afterImages.length})</h6>
                             {afterImages.length === 0 ? (
                                 <Alert variant="secondary">Chưa có ảnh nào được upload cho hạng mục này.</Alert>
                             ) : (
@@ -886,7 +886,7 @@ function BookingDetail() {
                                                                 Đang xóa...
                                                             </>
                                                         ) : (
-                                                            '🗑️ Xóa'
+                                                            'Xóa'
                                                         )}
                                                     </Button>
                                                 </div>
@@ -960,7 +960,7 @@ function BookingDetail() {
             {/* Modal xác nhận trả xe */}
             <Modal show={showReturnModal} onHide={() => setShowReturnModal(false)} centered size="lg">
                 <Modal.Header closeButton className="bg-success text-white">
-                    <Modal.Title>📋 Xác nhận trả xe</Modal.Title>
+                    <Modal.Title>Xác nhận trả xe</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
@@ -1032,7 +1032,7 @@ function BookingDetail() {
                                 Đang xử lý...
                             </>
                         ) : (
-                            '✅ Xác nhận trả xe'
+                            'Xác nhận trả xe'
                         )}
                     </Button>
                 </Modal.Footer>

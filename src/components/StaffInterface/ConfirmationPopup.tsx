@@ -40,11 +40,11 @@ const ConfirmationPopup: React.FC<ConfirmationPopupProps> = ({
   // Icon mặc định nếu không truyền prop icon
   const getDefaultIcon = () => {
     switch (type) {
-      case 'success': return '✓';
-      case 'danger': return '✕';
-      case 'warning': return '⚠';
-      case 'info': return 'ℹ';
-      default: return '✓';
+      case 'success': return '';
+      case 'danger': return '';
+      case 'warning': return '';
+      case 'info': return '';
+      default: return '';
     }
   };
 

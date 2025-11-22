@@ -94,7 +94,7 @@ export const VehicleProvider = ({ children }: VehicleProviderProps) => {
           ...vehicle,
           stationId: vehicle.stationId || stationId,
           stationName: vehicle.stationName || `Trạm ${stationId}`,
-          stationLocation: vehicle.stationLocation || 'Chưa có thông tin',
+          // stationLocation: vehicle.stationLocation || 'Chưa có thông tin',
         }));
         
         setVehicles(vehiclesWithStation);

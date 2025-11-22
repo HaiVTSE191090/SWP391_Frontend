@@ -39,7 +39,9 @@ const ListBookingStaff: React.FC = () => {
         try {
             const response = await getStaffStationBookings();
             const data = response?.data?.data || [];
-            setBookings(data);
+            // Sort bookings - mới nhất lên đầu (theo bookingId giảm dần)
+            const sortedData = data.sort((a: BookingContract, b: BookingContract) => b.bookingId - a.bookingId);
+            setBookings(sortedData);
         } catch (error) {
             console.error('Lỗi khi lấy danh sách booking:', error);
             setError('Không thể tải danh sách booking/hợp đồng của trạm.');

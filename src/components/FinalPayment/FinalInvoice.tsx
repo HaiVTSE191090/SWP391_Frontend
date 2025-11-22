@@ -206,9 +206,6 @@ const FinalPayment: React.FC = () => {
           <table className="table table-hover align-middle">
             <thead className="table-light">
               <tr>
-                <th>Mã chi tiết</th>
-                <th>Loại</th>
-                <th>ID bảng giá</th>
                 <th>Tên hạng mục</th>
                 <th>Mô tả</th>
                 <th>Số lượng</th>
@@ -219,21 +216,6 @@ const FinalPayment: React.FC = () => {
             <tbody>
               {invoice.details.map((d: any, idx: number) => (
                 <tr key={idx}>
-                  <td>{d.invoiceDetailId}</td>
-                  <td>
-                    <Badge
-                      bg={
-                        d.type === "SPAREPART"
-                          ? "info"
-                          : d.type === "DAMAGE"
-                            ? "danger"
-                            : "secondary"
-                      }
-                    >
-                      {d.type}
-                    </Badge>
-                  </td>
-                  <td>{d.priceListId || "-"}</td>
                   <td>{d.itemName || "-"}</td>
                   <td>{d.description || "-"}</td>
                   <td>{d.quantity}</td>

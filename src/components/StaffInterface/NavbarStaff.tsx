@@ -45,8 +45,8 @@ const Navbar: React.FC = () => {
       try {
         const response = await getStaffNotifications();
         if (response && response.data && response.data.data) {
-          // Chỉ lấy 10 thông báo gần nhất để hiển thị trong dropdown
-          setNotifications(response.data.data.slice(0, 10));
+          // Lưu tất cả thông báo để tính unreadCount chính xác
+          setNotifications(response.data.data);
         }
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
@@ -118,6 +118,9 @@ const Navbar: React.FC = () => {
   const renderNotificationDropdown = () => {
     if (!showNotificationsDropdown) return null;
 
+    // Chỉ hiển thị 10 thông báo đầu tiên trong dropdown
+    const displayNotifications = notifications.slice(0, 10);
+
     return (
       <div
         className="dropdown-menu dropdown-menu-end show p-3 shadow-lg"
@@ -132,9 +135,9 @@ const Navbar: React.FC = () => {
           backgroundColor: '#ffffff'
         }}
       >
-        <h5 className="fw-bold border-bottom pb-3 mb-3 text-dark">Thông báo ({unreadCount} chưa đọc)</h5>
-        {notifications.length > 0 ? (
-          notifications.map((notification) => (
+        <h5 className="fw-bold border-bottom pb-3 mb-3 text-dark">Thông báo ({unreadCount > 10 ? '10+' : unreadCount} chưa đọc)</h5>
+        {displayNotifications.length > 0 ? (
+          displayNotifications.map((notification) => (
             <a
               key={notification.notificationId}
               onClick={() => handleNotificationClick(notification.notificationId)}
@@ -200,7 +203,7 @@ const Navbar: React.FC = () => {
                   className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                   style={{ fontSize: '0.65rem' }}
                 >
-                  {unreadCount}
+                  {unreadCount > 10 ? '10+' : unreadCount}
                   <span className="visually-hidden">thông báo chưa đọc</span>
                 </span>
               )}
