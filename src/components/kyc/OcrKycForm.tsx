@@ -8,6 +8,7 @@ import { OcrCCCDData, OcrGPLXData, KycVerificationRequest } from "../../models/K
 import { authController } from "../../controller/AuthController";
 import { parseDateSafe, convertToDateInput } from "../../utils/dateHelpers";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 
 type Props = {
   onSwitchToManual: () => void;
@@ -254,9 +255,9 @@ const OcrKycForm = ({ onSwitchToManual }: Props) => {
           Nhập thủ công
         </button>
       </div>
-
-      {message && (
-        <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      
+      {message && createPortal(
+        <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999 }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className={`modal-header ${message.type === 'success' ? 'bg-success' :
@@ -288,7 +289,8 @@ const OcrKycForm = ({ onSwitchToManual }: Props) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body // <-- Tham số thứ 2: Đẩy modal ra body
       )}
 
       {/* CCCD Section */}

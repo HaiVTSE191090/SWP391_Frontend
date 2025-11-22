@@ -5,7 +5,6 @@ import OcrIdentityForm from "../components/indentity/OcrForm";
 export default function ManualIdentityPage() {
   const [mode, setMode] = useState<"ocr" | "manual">("ocr");
   
-// sau này có thể để cái này là popup trong trang cá nhân
 
   return (
     <div> 
