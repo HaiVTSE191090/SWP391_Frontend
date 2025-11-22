@@ -116,7 +116,7 @@ const App = () => {
                 <Route path="booking/:bookingId/create-invoice" element={<CreateInvoice />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="invoice/:invoiceId" element={<InvoiceDetailPage />} />
-                <Route path="payment" element={<PaymentPage />} />
+                <Route path="payment/:invoiceId" element={<PaymentPage />} />
               </Route>
             </Route>
             {/* admin */}

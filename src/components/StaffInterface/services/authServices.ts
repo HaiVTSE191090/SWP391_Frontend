@@ -497,6 +497,25 @@ export const addInvoiceDetail = async (invoiceId: number, detail: any) => {
     }
 };
 
+// Xóa chi tiết hóa đơn
+export const deleteInvoiceDetail = async (invoiceId: number, detailId: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.delete(
+            `${baseURL}/api/invoices/invoices/${invoiceId}/details/${detailId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi xóa chi tiết hóa đơn:', error);
+        throw error;
+    }
+};
+
 // Hoàn tiền qua ví
 export const refundToWallet = async (invoiceId: number, amount: number, reason: string) => {
     try {
@@ -555,6 +574,27 @@ export const completeBooking = async (bookingId: number) => {
         return resp;
     } catch (error) {
         console.error('Lỗi khi hoàn thành booking:', error);
+        throw error;
+    }
+};
+
+// Thanh toán tiền mặt cho invoice
+export const payInvoiceByCash = async (invoiceId: number, amount: number) => {
+    try {
+        const token = localStorage.getItem('token');
+        const resp = await axios.post(
+            `${baseURL}/api/payments/invoice/${invoiceId}/cash`,
+            { amount },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        return resp;
+    } catch (error) {
+        console.error('Lỗi khi thanh toán tiền mặt:', error);
         throw error;
     }
 };

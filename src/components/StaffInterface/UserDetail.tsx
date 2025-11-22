@@ -82,7 +82,12 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           message: 'The account has been successfully verified',
           type: 'success',
         });
-        setShowPopup(true)
+        setShowPopup(true);
+        
+        // Reload lại trang sau 1.5 giây
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       }
     } catch (err) {
       setPopupConfig({
@@ -103,11 +108,13 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
           message: 'The account has been successfully deleted',
           type: 'success',
         });
+        setShowPopup(true);
+        
+        // Reload lại trang sau 1.5 giây
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       }
-      setShowPopup(true);
-      setTimeout(() => {
-        if (onBack) onBack();
-      }, 2000);
     } catch (err) {
       setPopupConfig({
         title: 'Error',

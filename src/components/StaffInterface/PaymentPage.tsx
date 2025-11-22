@@ -1,229 +1,233 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, Button, Form, Row, Col, Table } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { Card, Button, Form, Row, Col, Spinner, Alert, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
+import { getBookingDetail, getInvoiceDetail, payInvoiceByCash } from "./services/authServices";
 
-interface PaymentItem {
-  id: number;
-  itemName: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  lineTotal: number;
+interface Booking {
+  bookingId: number;
+  renterId: number;
+  renterName: string;
+  vehicleId: number;
+  vehicleName: string;
+  staffReceiveId?: number;
+  staffReceiveName?: string;
+  staffReturnId?: number;
+  staffReturnName?: string;
+  startDateTime: string;
+  endDateTime: string;
+  actualReturnTime?: string;
+  totalAmount: number;
+  depositStatus: string;
+  status: string;
+  priceSnapshotPerHour?: number;
+  priceSnapshotPerDay?: number;
+}
+
+interface Invoice {
+  invoiceId: number;
+  bookingId: number;
+  totalAmount: number;
+  depositAmount: number;
+  amountRemaining: number;
+  status: string;
 }
 
 const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { invoiceId } = useParams<{ invoiceId: string }>();
   
-  const [customerName, setCustomerName] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("CASH");
-  const [notes, setNotes] = useState("");
-  const [items, setItems] = useState<PaymentItem[]>([
-    { id: 1, itemName: "", description: "", quantity: 1, unitPrice: 0, lineTotal: 0 }
-  ]);
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [amountToPay, setAmountToPay] = useState(0);
+  const [paying, setPaying] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Thêm hạng mục mới
-  const handleAddItem = () => {
-    const newItem: PaymentItem = {
-      id: Date.now(),
-      itemName: "",
-      description: "",
-      quantity: 1,
-      unitPrice: 0,
-      lineTotal: 0
-    };
-    setItems([...items, newItem]);
-  };
-
-  // Xóa hạng mục
-  const handleRemoveItem = (id: number) => {
-    if (items.length > 1) {
-      setItems(items.filter(item => item.id !== id));
-    }
-  };
-
-  // Cập nhật thông tin hạng mục
-  const handleItemChange = (id: number, field: keyof PaymentItem, value: string | number) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        // Tự động tính lineTotal khi thay đổi quantity hoặc unitPrice
-        if (field === 'quantity' || field === 'unitPrice') {
-          updatedItem.lineTotal = updatedItem.quantity * updatedItem.unitPrice;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Lấy amountToPay từ location.state nếu có
+        if (location.state?.amountToPay) {
+          setAmountToPay(location.state.amountToPay);
         }
-        return updatedItem;
+        
+        if (!invoiceId) {
+          toast.error("Không tìm thấy invoiceId!");
+          navigate(-1);
+          return;
+        }
+        
+        // Fetch invoice detail
+        const invoiceRes = await getInvoiceDetail(Number(invoiceId));
+        const invoiceData = invoiceRes.data.data;
+        setInvoice(invoiceData);
+        
+        // Nếu không có amountToPay từ state, tính từ invoice
+        if (!location.state?.amountToPay) {
+          const remaining = invoiceData.totalAmount - invoiceData.depositAmount;
+          setAmountToPay(remaining > 0 ? remaining : 0);
+        }
+        
+        // Fetch booking detail
+        if (invoiceData.bookingId) {
+          const bookingRes = await getBookingDetail(invoiceData.bookingId);
+          if (bookingRes?.data?.data) {
+            setBooking(bookingRes.data.data);
+          }
+        }
+        
+      } catch (error: any) {
+        console.error("❌ Lỗi khi tải dữ liệu:", error);
+        toast.error(
+          error.response?.data?.message || "Không thể tải thông tin!",
+          { position: "top-right", autoClose: 3000 }
+        );
+      } finally {
+        setLoading(false);
       }
-      return item;
-    }));
-  };
+    };
 
-  // Tính tổng tiền
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + item.lineTotal, 0);
-  };
+    fetchData();
+  }, [invoiceId, location.state, navigate]);
 
   // Xử lý thanh toán
   const handlePayment = () => {
-    if (!customerName.trim()) {
-      toast.error("Vui lòng nhập tên khách hàng!");
+    if (amountToPay === 0) {
+      toast.error("Số tiền thanh toán phải lớn hơn 0!");
       return;
     }
-
-    const hasEmptyItem = items.some(item => !item.itemName.trim() || item.unitPrice === 0);
-    if (hasEmptyItem) {
-      toast.error("Vui lòng điền đầy đủ thông tin các hạng mục!");
-      return;
-    }
-
-    const total = calculateTotal();
-    if (total === 0) {
-      toast.error("Tổng tiền phải lớn hơn 0!");
-      return;
-    }
-
-    if (!window.confirm(`Xác nhận thanh toán ${total.toLocaleString("vi-VN")} VND bằng ${paymentMethod}?`)) {
-      return;
-    }
-
-    toast.success("✅ Ghi nhận thanh toán thành công!");
+    setShowConfirmModal(true);
   };
 
-  // Xử lý in hóa đơn
-  const handlePrint = () => {
-    if (!customerName.trim()) {
-      toast.error("Vui lòng nhập tên khách hàng trước khi in!");
-      return;
-    }
+  const handleConfirmPayment = async () => {
+    if (!invoice) return;
 
-    const hasEmptyItem = items.some(item => !item.itemName.trim());
-    if (hasEmptyItem) {
-      toast.error("Vui lòng điền đầy đủ thông tin trước khi in!");
-      return;
+    setPaying(true);
+    setShowConfirmModal(false);
+    
+    try {
+      await payInvoiceByCash(invoice.invoiceId, amountToPay);
+      toast.success("✅ Thanh toán tiền mặt thành công!");
+      
+      // Chờ 1.5s rồi quay lại trang invoice detail
+      setTimeout(() => {
+        navigate(`/staff/invoice/${invoice.invoiceId}`);
+      }, 1500);
+      
+    } catch (error: any) {
+      console.error("❌ Lỗi khi thanh toán:", error);
+      const errorMsg = error.response?.data?.message || "Không thể thanh toán!";
+      toast.error(`❌ ${errorMsg}`);
+      setPaying(false);
     }
-
-    window.print();
-    toast.success("✅ In hóa đơn thành công!");
   };
 
-  const total = calculateTotal();
+  if (loading) {
+    return (
+      <div className="text-center mt-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Đang tải thông tin...</p>
+      </div>
+    );
+  }
+
+  if (!booking || !invoice) {
+    return (
+      <Alert variant="warning" className="text-center mt-5">
+        ❌ Không tìm thấy thông tin booking hoặc hóa đơn.
+      </Alert>
+    );
+  }
 
   return (
     <div className="container py-4">
-      {/* Phần hiển thị hóa đơn */}
+      {/* Phần hiển thị thông tin booking */}
       <Card className="shadow-sm p-4 mb-4">
         <h4 className="fw-bold text-center mb-4">
-          🧾 HÓA ĐƠN THANH TOÁN TIỀN MẶT
+          🧾 THANH TOÁN TIỀN MẶT
         </h4>
 
         <Row className="mb-4">
           <Col md={6}>
-            <h6 className="fw-bold border-bottom pb-2 mb-3">Thông tin khách hàng</h6>
-            <Form.Group className="mb-3">
-              <Form.Label>Tên khách hàng <span className="text-danger">*</span></Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Nhập tên khách hàng"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-              />
-            </Form.Group>
+            <h6 className="fw-bold border-bottom pb-2 mb-3">Thông tin Booking</h6>
+            <p className="mb-2">
+              <strong>Mã Booking:</strong> {booking.bookingId}
+            </p>
+            <p className="mb-2">
+              <strong>Tên khách hàng:</strong> {booking.renterName}
+            </p>
+            <p className="mb-2">
+              <strong>Xe thuê:</strong> {booking.vehicleName}
+            </p>
+            {booking.staffReceiveName && (
+              <p className="mb-2">
+                <strong>Nhân viên giao xe:</strong> {booking.staffReceiveName}
+              </p>
+            )}
+            {booking.staffReturnName && (
+              <p className="mb-2">
+                <strong>Nhân viên nhận xe:</strong> {booking.staffReturnName}
+              </p>
+            )}
+            <p className="mb-2">
+              <strong>Thời gian bắt đầu thuê:</strong><br />
+              {new Date(booking.startDateTime).toLocaleString("vi-VN")}
+            </p>
+            <p className="mb-2">
+              <strong>Thời gian kết thúc (dự kiến):</strong><br />
+              {new Date(booking.endDateTime).toLocaleString("vi-VN")}
+            </p>
+            {booking.actualReturnTime && (
+              <p className="mb-2">
+                <strong>Thời gian trả xe (thực tế):</strong><br />
+                <span className="text-success fw-bold">
+                  {new Date(booking.actualReturnTime).toLocaleString("vi-VN")}
+                </span>
+              </p>
+            )}
+            <p className="mb-2">
+              <strong>Trạng thái:</strong>{" "}
+              <span className={`badge ${
+                booking.status === 'COMPLETED' ? 'bg-success' :
+                booking.status === 'IN_USE' ? 'bg-primary' :
+                booking.status === 'CONFIRMED' ? 'bg-info' : 'bg-secondary'
+              }`}>
+                {booking.status}
+              </span>
+            </p>
           </Col>
           <Col md={6}>
             <h6 className="fw-bold border-bottom pb-2 mb-3">Thông tin thanh toán</h6>
             <p className="mb-2">
-              <strong>Ngày:</strong> {new Date().toLocaleDateString("vi-VN")}
+              <strong>Ngày thanh toán:</strong> {new Date().toLocaleString("vi-VN")}
             </p>
             <p className="mb-2">
-              <strong>Phương thức thanh toán:</strong>{" "}
-              <span className="badge bg-success">{paymentMethod}</span>
+              <strong>Phương thức:</strong>{" "}
+              <span className="badge bg-success">Tiền mặt</span>
             </p>
+            <p className="mb-2">
+              <strong>Tiền cọc:</strong>{" "}
+              <span className="text-info fw-bold">
+                {invoice.depositAmount.toLocaleString("vi-VN")} VND
+              </span>
+              {booking.depositStatus === "PAID" && (
+                <span className="badge bg-success ms-2">Đã thanh toán</span>
+              )}
+            </p>
+            <div className="border-start border-danger border-4 ps-3 py-2 bg-light mt-3">
+              <p className="mb-0">
+                <strong>Số tiền cần thanh toán:</strong>{" "}
+                <span className="text-danger fw-bold fs-4">
+                  {amountToPay.toLocaleString("vi-VN")} VND
+                </span>
+              </p>
+            </div>
           </Col>
         </Row>
-
-        <h5 className="fw-bold mt-4 mb-3 border-bottom pb-2">📦 Chi tiết hóa đơn</h5>
-        
-        <Table bordered hover responsive className="mt-2">
-          <thead className="table-dark">
-            <tr>
-              <th style={{ width: "5%" }}>STT</th>
-              <th style={{ width: "25%" }}>Tên hạng mục *</th>
-              <th style={{ width: "25%" }}>Mô tả</th>
-              <th style={{ width: "10%" }}>Số lượng</th>
-              <th style={{ width: "15%" }}>Đơn giá (VND) *</th>
-              <th style={{ width: "15%" }}>Thành tiền (VND)</th>
-              <th style={{ width: "5%" }} className="no-print">Xóa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, index) => (
-              <tr key={item.id}>
-                <td className="text-center">{index + 1}</td>
-                <td>
-                  <Form.Control
-                    type="text"
-                    placeholder="Tên hạng mục"
-                    value={item.itemName}
-                    onChange={(e) => handleItemChange(item.id, 'itemName', e.target.value)}
-                    size="sm"
-                  />
-                </td>
-                <td>
-                  <Form.Control
-                    type="text"
-                    placeholder="Mô tả"
-                    value={item.description}
-                    onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
-                    size="sm"
-                  />
-                </td>
-                <td>
-                  <Form.Control
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(item.id, 'quantity', parseInt(e.target.value) || 1)}
-                    size="sm"
-                  />
-                </td>
-                <td>
-                  <Form.Control
-                    type="number"
-                    min="0"
-                    value={item.unitPrice}
-                    onChange={(e) => handleItemChange(item.id, 'unitPrice', parseInt(e.target.value) || 0)}
-                    size="sm"
-                  />
-                </td>
-                <td className="text-end fw-bold">
-                  {item.lineTotal.toLocaleString("vi-VN")}
-                </td>
-                <td className="text-center no-print">
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleRemoveItem(item.id)}
-                    disabled={items.length === 1}
-                  >
-                    ✕
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            <tr className="table-secondary">
-              <td colSpan={5} className="text-end fw-bold">TỔNG CỘNG:</td>
-              <td className="text-end fw-bold text-danger fs-5">
-                {total.toLocaleString("vi-VN")} VND
-              </td>
-              <td className="no-print"></td>
-            </tr>
-          </tbody>
-        </Table>
-
-        <div className="text-center mb-3 no-print">
-          <Button variant="outline-primary" onClick={handleAddItem}>
-            + Thêm hạng mục
-          </Button>
-        </div>
 
         <div className="mt-4 text-center text-muted small">
           <p className="mb-0">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
@@ -231,85 +235,65 @@ const PaymentPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* Phần form thanh toán (không in) */}
-      <Card className="shadow-sm p-4 no-print">
-        <h5 className="fw-bold mb-3">💳 Xử lý thanh toán</h5>
-        
-        <Form>
-          <Row className="mb-3">
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label>Phương thức thanh toán</Form.Label>
-                <Form.Select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                >
-                  <option value="CASH">Tiền mặt</option>
-                  <option value="BANK_TRANSFER">Chuyển khoản</option>
-                  <option value="E_WALLET">Ví điện tử</option>
-                  <option value="CREDIT_CARD">Thẻ tín dụng</option>
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label>Ghi chú</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Nhập ghi chú (tùy chọn)"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+      {/* Phần nút xử lý */}
+      <Card className="shadow-sm p-4">
+        <div className="d-flex gap-3 justify-content-center">
+          <Button
+            variant="success"
+            size="lg"
+            onClick={handlePayment}
+            className="px-5"
+            disabled={paying}
+          >
+            {paying ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Đang xử lý...
+              </>
+            ) : (
+              <>💰 Xác nhận thanh toán ({amountToPay.toLocaleString("vi-VN")} VND)</>
+            )}
+          </Button>
 
-          <div className="d-flex gap-3 justify-content-center mt-4">
-            <Button
-              variant="success"
-              size="lg"
-              onClick={handlePayment}
-              className="px-5"
-            >
-              💰 Thanh toán ({total.toLocaleString("vi-VN")} VND)
-            </Button>
-
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handlePrint}
-              className="px-5"
-            >
-              🖨️ Xuất hóa đơn
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="lg"
-              onClick={() => navigate(-1)}
-              className="px-5"
-            >
-              ⬅️ Quay lại
-            </Button>
-          </div>
-        </Form>
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() => navigate(-1)}
+            className="px-5"
+            disabled={paying}
+          >
+            ⬅️ Quay lại
+          </Button>
+        </div>
       </Card>
 
-      {/* CSS cho in */}
-      <style>{`
-        @media print {
-          .no-print {
-            display: none !important;
-          }
-          body {
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
-          }
-          .table td, .table th {
-            padding: 8px !important;
-          }
-        }
-      `}</style>
+      {/* Modal xác nhận thanh toán */}
+      <Modal
+        show={showConfirmModal}
+        onHide={() => setShowConfirmModal(false)}
+        centered
+      >
+        <Modal.Header closeButton className="bg-success text-white">
+          <Modal.Title>💰 Xác nhận thanh toán tiền mặt</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert variant="info">
+            <strong>Số tiền thanh toán:</strong>{" "}
+            <span className="fs-5 fw-bold">
+              {amountToPay.toLocaleString("vi-VN")} VND
+            </span>
+          </Alert>
+          <p className="mb-0">Bạn có chắc chắn muốn xác nhận khách hàng đã thanh toán số tiền trên bằng tiền mặt?</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+            Hủy
+          </Button>
+          <Button variant="success" onClick={handleConfirmPayment}>
+            ✅ Xác nhận thanh toán
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

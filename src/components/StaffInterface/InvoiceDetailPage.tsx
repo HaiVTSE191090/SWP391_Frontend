@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Spinner, Table, Alert, Button, Form, Row, Col, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { getInvoiceDetail, getSpareParts, addInvoiceDetail, refundToWallet, refundToCash, completeBooking, getBookingDetail } from "./services/authServices";
+import { getInvoiceDetail, getSpareParts, addInvoiceDetail, deleteInvoiceDetail, refundToWallet, refundToCash, completeBooking, getBookingDetail } from "./services/authServices";
 
 interface SparePart {
   priceId: number;
@@ -66,6 +66,11 @@ const InvoiceDetailPage: React.FC = () => {
   // State cho completing booking
   const [completing, setCompleting] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  
+  // State cho xóa detail
+  const [deletingDetailId, setDeletingDetailId] = useState<number | null>(null);
+  const [showDeleteDetailModal, setShowDeleteDetailModal] = useState(false);
+  const [detailToDelete, setDetailToDelete] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -172,6 +177,35 @@ const InvoiceDetailPage: React.FC = () => {
       const errorMsg = error.response?.data?.message || "Không thể hoàn thành booking!";
       toast.error(`❌ ${errorMsg}`);
       setCompleting(false);
+    }
+  };
+
+  // Handler xóa chi tiết hóa đơn
+  const handleDeleteDetailClick = (detailId: number) => {
+    setDetailToDelete(detailId);
+    setShowDeleteDetailModal(true);
+  };
+
+  const handleConfirmDeleteDetail = async () => {
+    if (!invoice || !detailToDelete) return;
+
+    setShowDeleteDetailModal(false);
+    setDeletingDetailId(detailToDelete);
+    try {
+      await deleteInvoiceDetail(invoice.invoiceId, detailToDelete);
+      toast.success('✅ Đã xóa chi tiết hóa đơn!');
+      
+      // Reload lại invoice
+      const res = await getInvoiceDetail(Number(invoiceId));
+      setInvoice(res.data.data);
+      
+    } catch (error: any) {
+      console.error('❌ Lỗi khi xóa chi tiết:', error);
+      const errorMsg = error.response?.data?.message || 'Không thể xóa chi tiết!';
+      toast.error(`❌ ${errorMsg}`);
+    } finally {
+      setDeletingDetailId(null);
+      setDetailToDelete(null);
     }
   };
 
@@ -300,6 +334,14 @@ const InvoiceDetailPage: React.FC = () => {
                     )}
                   </p>
                 )}
+                {(invoice.totalAmount - invoice.depositAmount) > 0 && (
+                  <p className="mb-2">
+                    <strong>Số tiền còn lại phải thanh toán:</strong>{" "}
+                    <span className="text-info fw-bold fs-5">
+                      {(invoice.totalAmount - invoice.depositAmount).toLocaleString("vi-VN")} VND
+                    </span>
+                  </p>  
+                )}
                 {invoice.refundAmount > 0 && (
                   <p className="mb-0">
                     <strong>Số tiền hoàn lại:</strong>{" "}
@@ -315,7 +357,7 @@ const InvoiceDetailPage: React.FC = () => {
             <strong>Ghi chú:</strong> {invoice.notes || "Không có ghi chú"}
           </p>
           
-          {/* Nút hoàn tiền */}
+          {/* Nút hoàn tiền hoặc thanh toán */}
           {invoice.refundAmount > 0 && invoice.status !== 'PAID' && (
             <div className="mt-3">
               <Button 
@@ -325,6 +367,21 @@ const InvoiceDetailPage: React.FC = () => {
                 onClick={() => setShowRefundModal(true)}
               >
                 💰 Hoàn tiền {invoice.refundAmount.toLocaleString("vi-VN")} VND
+              </Button>
+            </div>
+          )}
+          
+          {(invoice.totalAmount - invoice.depositAmount) > 0 && invoice.status !== 'PAID' && (
+            <div className="mt-3">
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="w-100"
+                onClick={() => navigate(`/staff/payment/${invoice.invoiceId}`, {
+                  state: { amountToPay: invoice.totalAmount - invoice.depositAmount }
+                })}
+              >
+                💵 Thanh toán tiền mặt {(invoice.totalAmount - invoice.depositAmount).toLocaleString("vi-VN")} VND
               </Button>
             </div>
           )}
@@ -350,6 +407,7 @@ const InvoiceDetailPage: React.FC = () => {
                 <th>Số lượng</th>
                 <th>Đơn giá (VND)</th>
                 <th>Thành tiền (VND)</th>
+                <th style={{ width: '100px' }}>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -360,6 +418,20 @@ const InvoiceDetailPage: React.FC = () => {
                   <td>{item.quantity}</td>
                   <td>{item.unitPrice.toLocaleString("vi-VN")}</td>
                   <td>{item.lineTotal.toLocaleString("vi-VN")}</td>
+                  <td className="text-center">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDeleteDetailClick(item.invoiceDetailId)}
+                      disabled={deletingDetailId === item.invoiceDetailId}
+                    >
+                      {deletingDetailId === item.invoiceDetailId ? (
+                        <Spinner animation="border" size="sm" />
+                      ) : (
+                        '🗑️'
+                      )}
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -598,6 +670,29 @@ const InvoiceDetailPage: React.FC = () => {
             ) : (
               "✅ Xác nhận hoàn thành"
             )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal xác nhận xóa detail */}
+      <Modal
+        show={showDeleteDetailModal}
+        onHide={() => setShowDeleteDetailModal(false)}
+        centered
+      >
+        <Modal.Header closeButton className="bg-danger text-white">
+          <Modal.Title>⚠️ Xác nhận xóa</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="mb-0">Bạn có chắc chắn muốn xóa chi tiết hóa đơn này?</p>
+          <p className="text-muted small mt-2 mb-0">Hành động này không thể hoàn tác!</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteDetailModal(false)}>
+            Hủy
+          </Button>
+          <Button variant="danger" onClick={handleConfirmDeleteDetail}>
+            Xóa
           </Button>
         </Modal.Footer>
       </Modal>
