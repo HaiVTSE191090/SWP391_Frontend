@@ -81,7 +81,7 @@ const PaymentPage: React.FC = () => {
         }
         
       } catch (error: any) {
-        console.error("❌ Lỗi khi tải dữ liệu:", error);
+        console.error("Lỗi khi tải dữ liệu:", error);
         toast.error(
           error.response?.data?.message || "Không thể tải thông tin!",
           { position: "top-right", autoClose: 3000 }
@@ -111,7 +111,7 @@ const PaymentPage: React.FC = () => {
     
     try {
       await payInvoiceByCash(invoice.invoiceId, amountToPay);
-      toast.success("✅ Thanh toán tiền mặt thành công!");
+      toast.success("Thanh toán tiền mặt thành công!");
       
       // Chờ 1.5s rồi quay lại trang invoice detail
       setTimeout(() => {
@@ -119,9 +119,9 @@ const PaymentPage: React.FC = () => {
       }, 1500);
       
     } catch (error: any) {
-      console.error("❌ Lỗi khi thanh toán:", error);
+      console.error("Lỗi khi thanh toán:", error);
       const errorMsg = error.response?.data?.message || "Không thể thanh toán!";
-      toast.error(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
       setPaying(false);
     }
   };
@@ -138,7 +138,7 @@ const PaymentPage: React.FC = () => {
   if (!booking || !invoice) {
     return (
       <Alert variant="warning" className="text-center mt-5">
-        ❌ Không tìm thấy thông tin booking hoặc hóa đơn.
+        Không tìm thấy thông tin booking hoặc hóa đơn.
       </Alert>
     );
   }
@@ -148,7 +148,7 @@ const PaymentPage: React.FC = () => {
       {/* Phần hiển thị thông tin booking */}
       <Card className="shadow-sm p-4 mb-4">
         <h4 className="fw-bold text-center mb-4">
-          🧾 THANH TOÁN TIỀN MẶT
+          THANH TOÁN TIỀN MẶT
         </h4>
 
         <Row className="mb-4">
@@ -231,7 +231,7 @@ const PaymentPage: React.FC = () => {
 
         <div className="mt-4 text-center text-muted small">
           <p className="mb-0">Cảm ơn quý khách đã sử dụng dịch vụ!</p>
-          <p className="mb-0">📞 Hotline: 1900-xxxx | 📧 Email: support@example.com</p>
+          <p className="mb-0">Hotline: 1900-xxxx | Email: support@example.com</p>
         </div>
       </Card>
 
@@ -251,7 +251,7 @@ const PaymentPage: React.FC = () => {
                 Đang xử lý...
               </>
             ) : (
-              <>💰 Xác nhận thanh toán ({amountToPay.toLocaleString("vi-VN")} VND)</>
+              <>Xác nhận thanh toán ({amountToPay.toLocaleString("vi-VN")} VND)</>
             )}
           </Button>
 
@@ -262,7 +262,7 @@ const PaymentPage: React.FC = () => {
             className="px-5"
             disabled={paying}
           >
-            ⬅️ Quay lại
+            Quay lại
           </Button>
         </div>
       </Card>
@@ -274,7 +274,7 @@ const PaymentPage: React.FC = () => {
         centered
       >
         <Modal.Header closeButton className="bg-success text-white">
-          <Modal.Title>💰 Xác nhận thanh toán tiền mặt</Modal.Title>
+          <Modal.Title>Xác nhận thanh toán tiền mặt</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Alert variant="info">
@@ -290,7 +290,7 @@ const PaymentPage: React.FC = () => {
             Hủy
           </Button>
           <Button variant="success" onClick={handleConfirmPayment}>
-            ✅ Xác nhận thanh toán
+            Xác nhận thanh toán
           </Button>
         </Modal.Footer>
       </Modal>

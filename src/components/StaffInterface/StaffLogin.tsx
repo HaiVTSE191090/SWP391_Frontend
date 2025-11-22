@@ -97,7 +97,7 @@ const StaffLogin: React.FC = () => {
                 >
                     <Toast.Header>
                         <strong className="me-auto">
-                            {toastType === "success" ? "✅ Thành công" : "❌ Lỗi"}
+                            {toastType === "success" ? "Thành công" : "Lỗi"}
                         </strong>
                     </Toast.Header>
                     <Toast.Body className="text-white">{toastMessage}</Toast.Body>

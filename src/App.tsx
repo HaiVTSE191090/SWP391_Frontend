@@ -43,7 +43,6 @@ import ChooseCar from "./components/StaffInterface/ChooseCar";
 import StaffLayout from "./components/layouts/StaffLayout";
 import InvoiceDetailPage from "./components/StaffInterface/InvoiceDetailPage";
 import PaymentPage from "./components/StaffInterface/PaymentPage";
-import CreateInvoice from "./components/StaffInterface/CreateInvoice";
 import AdminConfig from "./components/AdminInterface/AdminConfig";
 import AdminConfigDetail from "./components/AdminInterface/AdminConfigDetail";
 import AdminVehicleModel from "./components/AdminInterface/AdminVehicleModel";
@@ -113,7 +112,6 @@ const App = () => {
                 <Route path="vehicle/:vehicleId" element={<ChooseCar />} />
                 <Route path="booking/:bookingId/create-contract" element={<CreateContract />} />
                 <Route path="booking/:bookingId/photo/:type" element={<PhotoCapturePage />} />
-                <Route path="booking/:bookingId/create-invoice" element={<CreateInvoice />} />
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="invoice/:invoiceId" element={<InvoiceDetailPage />} />
                 <Route path="payment/:invoiceId" element={<PaymentPage />} />
@@ -127,22 +125,22 @@ const App = () => {
                 <Route path="contract/:bookingId" element={<AdminContractPage />} />
                 <Route path="booking" element={<ListBooking />} />
                 <Route path="booking/:bookingId" element={<AdminBookingDetail />} />
-                <Route path="booking/invoices/:bookingId" element={<AdminInvoices/>}/>
+                <Route path="booking/invoices/:bookingId" element={<AdminInvoices />} />
                 <Route path="config" element={<AdminConfig />} />
                 <Route path="config/details/:policyId" element={<AdminConfigDetail />} />
-                <Route path="config/details" element={<AdminConfigDetail/>}/>
-                <Route path="vehicle-model" element={<AdminVehicleModel/>} />
-                <Route path="vehicle-model/detail/:modelId" element={<AdminVehicleModelDetail/>}/>
-                <Route path="vehicle-model/detail/" element={<AdminVehicleModelDetail/>}/>
-                <Route path="station" element={<AdminStation/>}/>
+                <Route path="config/details" element={<AdminConfigDetail />} />
+                <Route path="vehicle-model" element={<AdminVehicleModel />} />
+                <Route path="vehicle-model/detail/:modelId" element={<AdminVehicleModelDetail />} />
+                <Route path="vehicle-model/detail/" element={<AdminVehicleModelDetail />} />
+                <Route path="station" element={<AdminStation />} />
                 <Route path="station/detail/:stationId" element={<AdminStationDetail />} />
                 <Route path="station/detail" element={<AdminStationDetail />} />
-                <Route path="customers" element={<AdminBlacklist/>}/>
-                <Route path="reports/:bookingId" element={<AdminReportDetail/>}/>
-                <Route path="vehicles" element={<AdminVehicle/>}/>
-                <Route path="vehicles/details/:vehicleId" element={<AdminVehicleDetail/>}/>
-                <Route path="vehicles/details/" element={<AdminVehicleDetail/>}/>
-                <Route path="profile" element={<AdminProfile/>}/>
+                <Route path="customers" element={<AdminBlacklist />} />
+                <Route path="reports/:bookingId" element={<AdminReportDetail />} />
+                <Route path="vehicles" element={<AdminVehicle />} />
+                <Route path="vehicles/details/:vehicleId" element={<AdminVehicleDetail />} />
+                <Route path="vehicles/details/" element={<AdminVehicleDetail />} />
+                <Route path="profile" element={<AdminProfile />} />
               </Route>
             </Route>
           </Routes >

@@ -40,9 +40,19 @@ interface Invoice {
   details: InvoiceDetail[];
 }
 
+interface BookingImage {
+  imageId: number;
+  imageUrl: string;
+  description: string;
+  createdAt: string;
+  imageType: string;
+  vehicleComponent: string;
+}
+
 interface BookingDetail {
   bookingId: number;
   depositStatus: string;
+  bookingImages?: BookingImage[];
 }
 
 const InvoiceDetailPage: React.FC = () => {
@@ -92,13 +102,13 @@ const InvoiceDetailPage: React.FC = () => {
         
         // Fetch spare parts list
         const sparePartsRes = await getSpareParts();
-        console.log('📦 Spare parts response:', sparePartsRes.data);
+        console.log('Spare parts response:', sparePartsRes.data);
         const parts = sparePartsRes.data.data || [];
-        console.log('📦 Spare parts array:', parts);
+        console.log('Spare parts array:', parts);
         setSpareParts(parts);
         
       } catch (error: any) {
-        console.error("❌ Lỗi khi tải dữ liệu:", error);
+        console.error("Lỗi khi tải dữ liệu:", error);
         toast.error(
           error.response?.data?.message || "Không thể tải thông tin!",
           { position: "top-right", autoClose: 3000 }
@@ -138,7 +148,7 @@ const InvoiceDetailPage: React.FC = () => {
       // Gọi API thêm spare part vào invoice
       await addInvoiceDetail(Number(invoiceId), detail);
       
-      toast.success("✅ Đã thêm phụ tùng vào hóa đơn!");
+      toast.success("Đã thêm phụ tùng vào hóa đơn!");
       
       // Reload lại invoice
       const res = await getInvoiceDetail(Number(invoiceId));
@@ -149,9 +159,9 @@ const InvoiceDetailPage: React.FC = () => {
       setQuantity(1);
       
     } catch (error: any) {
-      console.error("❌ Lỗi khi thêm spare part:", error);
+      console.error("Lỗi khi thêm spare part:", error);
       const errorMsg = error.response?.data?.message || "Không thể thêm phụ tùng!";
-      toast.error(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
     } finally {
       setAdding(false);
     }
@@ -164,7 +174,7 @@ const InvoiceDetailPage: React.FC = () => {
     setCompleting(true);
     try {
       await completeBooking(invoice.bookingId);
-      toast.success("✅ Đã hoàn thành booking thành công!");
+      toast.success("Đã hoàn thành booking thành công!");
       setShowCompleteModal(false);
       
       // Chuyển về trang danh sách booking
@@ -173,9 +183,9 @@ const InvoiceDetailPage: React.FC = () => {
       }, 1500);
       
     } catch (error: any) {
-      console.error("❌ Lỗi khi hoàn thành booking:", error);
+      console.error("Lỗi khi hoàn thành booking:", error);
       const errorMsg = error.response?.data?.message || "Không thể hoàn thành booking!";
-      toast.error(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
       setCompleting(false);
     }
   };
@@ -193,16 +203,16 @@ const InvoiceDetailPage: React.FC = () => {
     setDeletingDetailId(detailToDelete);
     try {
       await deleteInvoiceDetail(invoice.invoiceId, detailToDelete);
-      toast.success('✅ Đã xóa chi tiết hóa đơn!');
+      toast.success('Đã xóa chi tiết hóa đơn!');
       
       // Reload lại invoice
       const res = await getInvoiceDetail(Number(invoiceId));
       setInvoice(res.data.data);
       
     } catch (error: any) {
-      console.error('❌ Lỗi khi xóa chi tiết:', error);
+      console.error('Lỗi khi xóa chi tiết:', error);
       const errorMsg = error.response?.data?.message || 'Không thể xóa chi tiết!';
-      toast.error(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
     } finally {
       setDeletingDetailId(null);
       setDetailToDelete(null);
@@ -214,7 +224,7 @@ const InvoiceDetailPage: React.FC = () => {
     if (!invoice) return;
     
     if (!refundReason.trim()) {
-      toast.warning("⚠️ Vui lòng nhập lý do hoàn tiền!");
+      toast.warning("Vui lòng nhập lý do hoàn tiền!");
       return;
     }
 
@@ -223,7 +233,7 @@ const InvoiceDetailPage: React.FC = () => {
       const refundFunc = method === 'WALLET' ? refundToWallet : refundToCash;
       await refundFunc(invoice.invoiceId, invoice.refundAmount, refundReason.trim());
       
-      toast.success(`✅ Đã hoàn tiền ${method === 'WALLET' ? 'vào ví' : 'mặt'} thành công!`);
+      toast.success(`Đã hoàn tiền ${method === 'WALLET' ? 'vào ví' : 'mặt'} thành công!`);
       setShowRefundModal(false);
       setRefundReason("");
       
@@ -232,9 +242,9 @@ const InvoiceDetailPage: React.FC = () => {
       setInvoice(res.data.data);
       
     } catch (error: any) {
-      console.error("❌ Lỗi khi hoàn tiền:", error);
+      console.error("Lỗi khi hoàn tiền:", error);
       const errorMsg = error.response?.data?.message || "Không thể hoàn tiền!";
-      toast.error(`❌ ${errorMsg}`);
+      toast.error(errorMsg);
     } finally {
       setRefunding(false);
     }
@@ -252,7 +262,7 @@ const InvoiceDetailPage: React.FC = () => {
   if (!invoice) {
     return (
       <Alert variant="warning" className="text-center mt-5">
-        ❌ Không tìm thấy hóa đơn #{invoiceId}.
+        Không tìm thấy hóa đơn #{invoiceId}.
       </Alert>
     );
   }
@@ -266,7 +276,7 @@ const InvoiceDetailPage: React.FC = () => {
         <Col md={8}>
           <Card className="shadow-sm p-4">
             <h4 className="fw-bold text-center mb-3">
-              🧾 Chi tiết hóa đơn #{invoice.invoiceId}
+              Chi tiết hóa đơn #{invoice.invoiceId}
             </h4>
 
         <div className="mb-3">
@@ -366,7 +376,7 @@ const InvoiceDetailPage: React.FC = () => {
                 className="w-100"
                 onClick={() => setShowRefundModal(true)}
               >
-                💰 Hoàn tiền {invoice.refundAmount.toLocaleString("vi-VN")} VND
+                Hoàn tiền {invoice.refundAmount.toLocaleString("vi-VN")} VND
               </Button>
             </div>
           )}
@@ -381,7 +391,7 @@ const InvoiceDetailPage: React.FC = () => {
                   state: { amountToPay: invoice.totalAmount - invoice.depositAmount }
                 })}
               >
-                💵 Thanh toán tiền mặt {(invoice.totalAmount - invoice.depositAmount).toLocaleString("vi-VN")} VND
+                Thanh toán tiền mặt {(invoice.totalAmount - invoice.depositAmount).toLocaleString("vi-VN")} VND
               </Button>
             </div>
           )}
@@ -397,7 +407,7 @@ const InvoiceDetailPage: React.FC = () => {
           )}
         </div>
 
-        <h5 className="fw-bold mt-4">📦 Chi tiết hóa đơn</h5>
+        <h5 className="fw-bold mt-4">Chi tiết hóa đơn</h5>
         {invoice.details && invoice.details.length > 0 ? (
           <Table bordered hover responsive className="mt-2">
             <thead className="table-light">
@@ -428,7 +438,7 @@ const InvoiceDetailPage: React.FC = () => {
                       {deletingDetailId === item.invoiceDetailId ? (
                         <Spinner animation="border" size="sm" />
                       ) : (
-                        '🗑️'
+                        'Xóa'
                       )}
                     </Button>
                   </td>
@@ -445,7 +455,7 @@ const InvoiceDetailPage: React.FC = () => {
         {/* Cột phải - Form thêm spare parts */}
         <Col md={4}>
           <Card className="shadow-sm p-4 sticky-top" style={{ top: '20px' }}>
-            <h5 className="fw-bold mb-3">🔧 Thêm phụ tùng</h5>
+            <h5 className="fw-bold mb-3">Thêm phụ tùng</h5>
             
             {spareParts.length === 0 ? (
               <Alert variant="warning">
@@ -520,7 +530,7 @@ const InvoiceDetailPage: React.FC = () => {
                       Đang thêm...
                     </>
                   ) : (
-                    "➕ Thêm vào hóa đơn"
+                    "Thêm vào hóa đơn"
                   )}
                 </Button>
               </Form>
@@ -531,7 +541,7 @@ const InvoiceDetailPage: React.FC = () => {
               <div className="mt-4">
                 <hr />
                 <Alert variant="info" className="small mb-3">
-                  ℹ️ Hóa đơn đã thanh toán. Bấm nút bên dưới để hoàn thành booking.
+                  Hóa đơn đã thanh toán. Bấm nút bên dưới để hoàn thành booking.
                 </Alert>
                 <Button
                   variant="success"
@@ -540,8 +550,51 @@ const InvoiceDetailPage: React.FC = () => {
                   onClick={() => setShowCompleteModal(true)}
                   disabled={completing}
                 >
-                  ✅ Hoàn thành Booking
+                  Hoàn thành Booking
                 </Button>
+              </div>
+            )}
+
+            {/* Hiển thị ảnh DAMAGE nếu có */}
+            {booking?.bookingImages && booking.bookingImages.filter(img => img.imageType === 'DAMAGE').length > 0 && (
+              <div className="mt-4">
+                <hr />
+                <Alert variant="warning" className="mb-3">
+                  <strong>Phát hiện hư hỏng!</strong>
+                  <p className="mb-0 small mt-1">
+                    Có {booking.bookingImages.filter(img => img.imageType === 'DAMAGE').length} ảnh hư hỏng được ghi nhận. 
+                    Vui lòng kiểm tra và thêm phụ tùng cần thiết.
+                  </p>
+                </Alert>
+                
+                <h6 className="fw-bold mb-3">Ảnh hư hỏng</h6>
+                <div className="damage-images-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                  {booking.bookingImages
+                    .filter(img => img.imageType === 'DAMAGE')
+                    .map((img) => (
+                      <Card key={img.imageId} className="mb-3">
+                        <Card.Img 
+                          variant="top" 
+                          src={img.imageUrl} 
+                          alt={img.vehicleComponent}
+                          style={{ height: '200px', objectFit: 'cover', cursor: 'pointer' }}
+                          onClick={() => window.open(img.imageUrl, '_blank')}
+                        />
+                        <Card.Body className="p-2">
+                          <p className="mb-1 small">
+                            <strong>Bộ phận:</strong>{" "}
+                            <span className="badge bg-danger">{img.vehicleComponent}</span>
+                          </p>
+                          <p className="mb-1 small">
+                            <strong>Mô tả:</strong> {img.description || "Không có mô tả"}
+                          </p>
+                          <p className="mb-0 text-muted" style={{ fontSize: '0.75rem' }}>
+                            {new Date(img.createdAt).toLocaleString('vi-VN')}
+                          </p>
+                        </Card.Body>
+                      </Card>
+                    ))}
+                </div>
               </div>
             )}
           </Card>
@@ -556,7 +609,7 @@ const InvoiceDetailPage: React.FC = () => {
         backdrop={refunding ? "static" : true}
       >
         <Modal.Header closeButton={!refunding} className="bg-success text-white">
-          <Modal.Title>💰 Hoàn tiền cho khách hàng</Modal.Title>
+          <Modal.Title>Hoàn tiền cho khách hàng</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Alert variant="info">
@@ -590,7 +643,7 @@ const InvoiceDetailPage: React.FC = () => {
               {refunding ? (
                 <><Spinner animation="border" size="sm" className="me-2" />Đang xử lý...</>
               ) : (
-                <>🏦 Hoàn vào Ví điện tử</>
+                <>Hoàn vào Ví điện tử</>
               )}
             </Button>
             
@@ -603,7 +656,7 @@ const InvoiceDetailPage: React.FC = () => {
               {refunding ? (
                 <><Spinner animation="border" size="sm" className="me-2" />Đang xử lý...</>
               ) : (
-                <>💵 Hoàn bằng Tiền mặt</>
+                <>Hoàn bằng Tiền mặt</>
               )}
             </Button>
           </div>
@@ -628,12 +681,12 @@ const InvoiceDetailPage: React.FC = () => {
         size="lg"
       >
         <Modal.Header closeButton={!completing} className="bg-warning">
-          <Modal.Title className="fs-4 fw-bold">⚠️ Xác nhận hoàn thành Booking</Modal.Title>
+          <Modal.Title className="fs-4 fw-bold">Xác nhận hoàn thành Booking</Modal.Title>
         </Modal.Header>
         <Modal.Body className="p-4">
           <Alert variant="warning" className="mb-4">
             <div className="d-flex align-items-center">
-              <span className="fs-3 me-2">⚠️</span>
+              <span className="fs-3 me-2">!</span>
               <div>
                 <strong className="fs-5">Cảnh báo:</strong>
                 <p className="mb-0 mt-1">Hành động này không thể hoàn tác!</p>
@@ -668,7 +721,7 @@ const InvoiceDetailPage: React.FC = () => {
                 Đang xử lý...
               </>
             ) : (
-              "✅ Xác nhận hoàn thành"
+              "Xác nhận hoàn thành"
             )}
           </Button>
         </Modal.Footer>
@@ -681,7 +734,7 @@ const InvoiceDetailPage: React.FC = () => {
         centered
       >
         <Modal.Header closeButton className="bg-danger text-white">
-          <Modal.Title>⚠️ Xác nhận xóa</Modal.Title>
+          <Modal.Title>Xác nhận xóa</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p className="mb-0">Bạn có chắc chắn muốn xóa chi tiết hóa đơn này?</p>
