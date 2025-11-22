@@ -665,11 +665,11 @@ export default function RentalHistoryPage() {
                   💳 Xem chi tiết hóa đơn
                 </Button>
 
-                {/* 🖼️ Hình ảnh xe */}
+                {/* Hình ảnh xe */}
                 {selectedBooking.bookingImages && selectedBooking.bookingImages.length > 0 && (
                   <>
                     <hr />
-                    <h5 className="fw-bold mb-3 text-primary">📷 Hình ảnh xe</h5>
+                    <h5 className="fw-bold mb-3 text-primary">Hình ảnh xe</h5>
 
                     {["BEFORE_RENTAL", "AFTER_RENTAL", "DAMAGE", "OTHER"].map((type) => {
                       const imagesOfType = selectedBooking.bookingImages?.filter(
@@ -679,10 +679,10 @@ export default function RentalHistoryPage() {
                       if (!imagesOfType || imagesOfType.length === 0) return null;
 
                       const typeTitle: Record<string, string> = {
-                        BEFORE_RENTAL: "📦 Ảnh xe trước khi thuê",
-                        AFTER_RENTAL: "🚗 Ảnh xe sau khi trả",
-                        DAMAGE: "⚠️ Ảnh hư hỏng (nếu có)",
-                        OTHER: "🗂️ Ảnh khác",
+                        BEFORE_RENTAL: "Ảnh xe trước khi thuê",
+                        AFTER_RENTAL: "Ảnh xe sau khi trả",
+                        DAMAGE: " Ảnh hư hỏng (nếu có)",
+                        OTHER: "Ảnh khác",
                       };
 
                       // ✅ Số ảnh confirm

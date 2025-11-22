@@ -58,7 +58,6 @@ const AdminStation = () => {
                         <th>ID</th>
                         <th>Tên trạm</th>
                         <th>Địa chỉ</th>
-                        <th>Số xe (Hiện/Tổng)</th>
                         <th>Trạng thái</th>
                     </tr>
                 </thead>
@@ -74,9 +73,6 @@ const AdminStation = () => {
                                 <strong>{station.name}</strong>
                             </td>
                             <td>{station.location}</td>
-                            <td>
-                                {station.capacity ?? "N/A"} / {station.capacity}
-                            </td>
                             <td>{station.status}</td>
                         </tr>
                     ))}
