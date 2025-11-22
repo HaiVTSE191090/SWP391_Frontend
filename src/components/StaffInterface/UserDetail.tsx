@@ -78,12 +78,12 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       const resp = await verifyRenter(renterId);
       if (resp?.data?.status === 'success') {
         setPopupConfig({
-          title: 'Success',
-          message: 'The account has been successfully verified',
+          title: 'Thành công',
+          message: 'Tài khoản đã được xác minh thành công.',
           type: 'success',
         });
         setShowPopup(true);
-        
+
         // Reload lại trang sau 1.5 giây
         setTimeout(() => {
           window.location.reload();
@@ -91,8 +91,8 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       }
     } catch (err) {
       setPopupConfig({
-        title: 'Error',
-        message: 'Failed to verify account',
+        title: 'Lỗi',
+        message: 'Xác minh tài khoản thất bại.',
         type: 'danger',
       });
       setShowPopup(true);
@@ -104,12 +104,12 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       const resp = await deleteRenter(renterId);
       if (resp?.data?.status === 'success') {
         setPopupConfig({
-          title: 'Success',
-          message: 'The account has been successfully deleted',
+          title: 'Thành công',
+          message: 'Tài khoản đã được xóa thành công.',
           type: 'success',
         });
         setShowPopup(true);
-        
+
         // Reload lại trang sau 1.5 giây
         setTimeout(() => {
           window.location.reload();
@@ -117,8 +117,8 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
       }
     } catch (err) {
       setPopupConfig({
-        title: 'Error',
-        message: 'Failed to delete account',
+        title: 'Lỗi',
+        message: 'Xóa tài khoản thất bại.',
         type: 'danger',
       });
       setShowPopup(true);
@@ -217,9 +217,6 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   <ListGroup.Item>
                     <strong>Ngày hết hạn:</strong> {formatDate(detail?.cccd?.expiryDate)}
                   </ListGroup.Item>
-                  <ListGroup.Item>
-                    <strong>Xác thực lúc:</strong> {formatDate(detail?.cccd?.verifiedAt) || 'Chưa xác thực'}
-                  </ListGroup.Item>
                 </ListGroup>
               </Card>
             </Col>
@@ -244,9 +241,6 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
                   <ListGroup.Item>
                     <strong>Ngày hết hạn:</strong> {formatDate(detail?.gplx?.expiryDate)}
                   </ListGroup.Item>
-                  <ListGroup.Item>
-                    <strong>Xác thực lúc:</strong> {formatDate(detail?.gplx?.verifiedAt) || 'Chưa xác thực'}
-                  </ListGroup.Item>
                 </ListGroup>
               </Card>
             </Col>
@@ -258,11 +252,11 @@ const UserDetail: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         <div className="d-flex justify-content-center gap-4 mt-4">
           <Button variant="success" size="lg" onClick={handleVerify}>
             <i className="bi bi-check-circle-fill me-2"></i>
-            Verify
+            Xác thực
           </Button>
           <Button variant="danger" size="lg" onClick={handleDelete}>
             <i className="bi bi-trash-fill me-2"></i>
-            Delete
+            Xóa
           </Button>
         </div>
       )}

@@ -192,20 +192,6 @@ export default function ContractPage() {
             </div>
 
             <div className="col-md-6">
-              <div className="border border-2 rounded-3 p-3 h-100 bg-success bg-opacity-10">
-                <div className="d-flex align-items-center">
-                  <i className="bi bi-cash-stack text-success fs-4 me-3"></i>
-                  <div>
-                    <small className="text-muted d-block mb-1">Đơn giá theo ngày</small>
-                    <span className="fw-bold text-success fs-5">
-                      {booking?.priceSnapshotPerDay?.toLocaleString()} VND
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-6">
               <div className="border border-2 rounded-3 p-3 h-100">
                 <div className="d-flex align-items-center">
                   <i className="bi bi-check-circle-fill text-info fs-4 me-3"></i>
@@ -217,7 +203,7 @@ export default function ContractPage() {
               </div>
             </div>
 
-            <div className="col-md-6">
+            <div className="col-md-12">
               <div className="border border-2 rounded-3 p-3 h-100">
                 <div className="d-flex align-items-center">
                   <i className="bi bi-piggy-bank-fill text-warning fs-4 me-3"></i>
