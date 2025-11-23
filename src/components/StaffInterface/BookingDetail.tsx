@@ -874,12 +874,6 @@ function BookingDetail() {
                     <p className="mb-0">
                         Xác nhận đã kiểm tra đầy đủ ảnh trước khi thuê và bắt đầu cho thuê xe?
                     </p>
-                    {checklistData && (
-                        <p className="mt-2 mb-0 text-muted small">
-                            Tiến độ: {checklistData.completionPercentage.toFixed(0)}%
-                            ({checklistData.capturedComponents.length}/{checklistData.requiredComponents.length} hạng mục)
-                        </p>
-                    )}
                     <p className="mt-2 mb-0 text-muted small">
                         Booking sẽ chuyển sang trạng thái IN_USE.
                     </p>
