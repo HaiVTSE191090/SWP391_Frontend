@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { Button, Spinner, Alert } from "react-bootstrap";
 import "./DepositPage.css";
-import { Vehicle } from "../../../models/VehicleModel";
+import { Vehicle, VehicleDetail } from "../../../models/VehicleModel";
 import { Booking } from "../../../models/BookingModel";
 import { useParams } from "react-router-dom";
 import { usePolicy } from "../../../hooks/usePolicy";
@@ -11,7 +11,7 @@ export default function DepositPage() {
   const [invoiceId, setInvoiceId] = useState<number>(0);
   const { bookingId } = useParams<{ bookingId: string }>();
   const [booking, setBooking] = useState<Booking | null>(null);
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [vehicle, setVehicle] = useState<VehicleDetail | null>(null);
   const [loadingBooking, setLoadingBooking] = useState(true);
   const [loadingVehicle, setLoadingVehicle] = useState(true);
   const [showConfirmBox, setShowConfirmBox] = useState(false);
@@ -444,7 +444,7 @@ export default function DepositPage() {
               {depositNumber > 0
                 ? depositNumber.toLocaleString("vi-VN") + " VND"
                 : "Đang tải..."}
-            </li>
+            </li>        
           </ul>
         ) : (
           <p className="text-muted">Không tìm thấy thông tin đặt xe.</p>
@@ -475,6 +475,9 @@ export default function DepositPage() {
               <li>
                 <strong>Trạng thái:</strong> {vehicle.status}
               </li>
+              <li>
+              <strong>Giá thuê của xe: </strong> {vehicle?.pricePerDay.toLocaleString("vi-VN")} VND / ngày
+            </li>
             </ul>
           </div>
         ) : (

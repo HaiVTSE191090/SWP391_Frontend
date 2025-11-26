@@ -341,7 +341,6 @@ export default function RentalHistoryPage() {
       ) : (
         bookings.map((b) => {
           const contractStatus = contractStatuses[b.bookingId];
-
           return (
             <div
               key={b.bookingId}
@@ -467,7 +466,7 @@ export default function RentalHistoryPage() {
 
                 {/* 💰 Nút Đặt cọc / Đã hoàn tiền */}
                 {(() => {
-                  if (b.depositStatus === "PENDING") {
+                  if (b.depositStatus === "PENDING" && b.status !== "CANCELLED") {
                     return (
                       <Button
                         variant="warning"
@@ -624,7 +623,6 @@ export default function RentalHistoryPage() {
                 >
                   💳 Xem chi tiết hóa đơn
                 </Button>
-            
 
                 {/* 🖼️ Hình ảnh xe */}
                 {selectedBooking.bookingImages && selectedBooking.bookingImages.length > 0 && (
